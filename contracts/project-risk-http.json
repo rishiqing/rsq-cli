@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "operations": [
+    {
+      "service": "account",
+      "method": "GET",
+      "route": "/task/v3/kanban/risk/matrix",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "read",
+      "idempotency": "idempotent",
+      "response": "json",
+      "encoding": "json",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "possible": {
+              "type": "integer"
+            },
+            "impact": {
+              "type": "integer"
+            },
+            "level": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "possible",
+            "impact",
+            "level"
+          ]
+        }
+      },
+      "description": "发现服务端风险评估矩阵，CLI 按概率、影响自动解析唯一等级，不要求 Agent 猜等级",
+      "module": "project",
+      "name": "transport-risk-get-matrix"
+    },
+    {
+      "service": "account",
+      "method": "GET",
+      "route": "/task/v3/kanban/risk/progress/list",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "read",
+      "idempotency": "idempotent",
+      "response": "json",
+      "encoding": "json",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "riskId": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "lastId": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 200
+              }
+            },
+            "required": [
+              "riskId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "id": {
+              "type": [
+                "integer",
+                "string"
+              ]
+            },
+            "riskId": {
+              "type": [
+                "integer",
+                "string"
+              ]
+            },
+            "status": {
+              "type": "integer"
+            },
+            "note": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "id",
+            "riskId",
+            "status",
+            "note"
+          ]
+        }
+      },
+      "description": "分页读取当前风险进展；服务端未单独检查项目可见性，CLI 必须先核对风险详情及项目归属",
+      "module": "project",
+      "name": "transport-risk-get-list"
+    }
+  ]
+}

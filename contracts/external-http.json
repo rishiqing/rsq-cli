@@ -1,0 +1,710 @@
+{
+  "version": 1,
+  "operations": [
+    {
+      "method": "GET",
+      "route": "/task/mt/datasheet/{datasheetId}/dataPack",
+      "service": "account",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "write",
+      "idempotency": "unknown",
+      "encoding": "json",
+      "queryArray": "repeat",
+      "response": "business",
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "datasheet": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "permissions": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": true
+                  }
+                },
+                "required": [
+                  "id",
+                  "revision",
+                  "permissions"
+                ],
+                "additionalProperties": true
+              },
+              "snapshot": {
+                "type": "object",
+                "properties": {
+                  "datasheetId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "recordMap": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "meta": {
+                    "type": "object",
+                    "properties": {
+                      "fieldMap": {
+                        "type": "object",
+                        "additionalProperties": true
+                      },
+                      "views": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": true
+                        }
+                      }
+                    },
+                    "required": [
+                      "fieldMap",
+                      "views"
+                    ],
+                    "additionalProperties": true
+                  }
+                },
+                "required": [
+                  "datasheetId",
+                  "recordMap",
+                  "meta"
+                ],
+                "additionalProperties": true
+              },
+              "datasheetPermission": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "datasheet",
+              "snapshot"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "success",
+          "code",
+          "data"
+        ],
+        "additionalProperties": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "object",
+            "properties": {
+              "datasheetId": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_-]+$"
+              }
+            },
+            "required": [
+              "datasheetId"
+            ],
+            "additionalProperties": false
+          },
+          "query": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": [
+                  "integer",
+                  "string"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "module": "datasheet",
+      "name": "datasheet-context-get",
+      "description": "读取数据表字段、记录、视图、权限与 revision"
+    },
+    {
+      "method": "POST",
+      "route": "/task/mt/resource/apply/changesets",
+      "service": "account",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "write",
+      "idempotency": "unknown",
+      "encoding": "json",
+      "queryArray": "repeat",
+      "response": "json",
+      "responseSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "object",
+            "properties": {
+              "roomId": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_-]+$"
+              },
+              "changesets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "baseRevision": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "messageId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "^[A-Za-z0-9_-]+$"
+                    },
+                    "resourceId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "^[A-Za-z0-9_-]+$"
+                    },
+                    "resourceType": {
+                      "const": 0
+                    },
+                    "operations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "cmd": {
+                            "type": "string"
+                          },
+                          "actions": {
+                            "type": "array"
+                          },
+                          "fieldTypeMap": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "integer"
+                            }
+                          }
+                        },
+                        "required": [
+                          "cmd",
+                          "actions"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "baseRevision",
+                    "messageId",
+                    "resourceId",
+                    "resourceType",
+                    "operations"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1
+              }
+            },
+            "required": [
+              "roomId",
+              "changesets"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "module": "datasheet",
+      "name": "datasheet-transport-commit",
+      "description": "提交按数据表业务上下文构造的 HTTP 变更集；优先使用 record/field/view 命令"
+    },
+    {
+      "method": "POST",
+      "route": "/task/mt/datasheet/{datasheetId}/records",
+      "service": "account",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "read",
+      "idempotency": "idempotent",
+      "encoding": "json",
+      "queryArray": "repeat",
+      "response": "business",
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "revision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "recordMap": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "revision",
+              "recordMap"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "success",
+          "code",
+          "data"
+        ],
+        "additionalProperties": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "object",
+            "properties": {
+              "datasheetId": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_-]+$"
+              }
+            },
+            "required": [
+              "datasheetId"
+            ],
+            "additionalProperties": false
+          },
+          "body": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]+$"
+            }
+          }
+        },
+        "required": [
+          "path",
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "module": "datasheet",
+      "name": "datasheet-record-fetch",
+      "description": "按记录 ID 查询数据表记录及 revision"
+    },
+    {
+      "method": "POST",
+      "route": "/task/mt/datasheet/save",
+      "service": "account",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "write",
+      "idempotency": "unknown",
+      "encoding": "json",
+      "queryArray": "repeat",
+      "response": "business",
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "dstId": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_-]+$"
+              },
+              "dstName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "dstId"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "success",
+          "code",
+          "data"
+        ],
+        "additionalProperties": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "module": "datasheet",
+      "name": "datasheet-create",
+      "description": "创建数据表（关联项目模块需另执行）"
+    },
+    {
+      "method": "POST",
+      "route": "/task/mt/datasheet/import",
+      "service": "account",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "write",
+      "idempotency": "unknown",
+      "encoding": "multipart",
+      "queryArray": "repeat",
+      "response": "business",
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": [
+                        "integer",
+                        "string"
+                      ]
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "datasheetInfo": {
+                      "type": "object",
+                      "properties": {
+                        "datasheetId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "pattern": "^[A-Za-z0-9_-]+$"
+                        },
+                        "viewId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "pattern": "^[A-Za-z0-9_-]+$"
+                        }
+                      },
+                      "required": [
+                        "datasheetId"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "datasheetInfo"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "failureMessage": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "results",
+              "failureMessage"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "success",
+          "code",
+          "data"
+        ],
+        "additionalProperties": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": [
+                  "integer",
+                  "string"
+                ],
+                "pattern": "^[1-9][0-9]*$",
+                "x-rsq-max-integer": 9007199254740991
+              }
+            },
+            "required": [
+              "projectId"
+            ],
+            "additionalProperties": false
+          },
+          "files": {
+            "type": "object",
+            "properties": {
+              "file": {
+                "type": "string",
+                "minLength": 1,
+                "x-rsq-extensions": [
+                  ".xls",
+                  ".xlsx",
+                  ".csv"
+                ],
+                "x-rsq-maxBytes": 52428800,
+                "x-rsq-csv-encoding": "utf8",
+                "description": "本地 Excel/CSV 文件；UTF-8 CSV 自动补 BOM，防止服务端按单字节编码解析中文；fileEncodings.file=original 可显式保留原字节。至多 20 个 sheet，每个 sheet 至多 20000 行。"
+              }
+            },
+            "required": [
+              "file"
+            ],
+            "additionalProperties": false
+          },
+          "fileEncodings": {
+            "type": "object",
+            "properties": {
+              "file": {
+                "type": "string",
+                "enum": [
+                  "utf8",
+                  "original"
+                ],
+                "description": "CLI 本地 CSV 编码处理选项，不转发到服务端。"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "body",
+          "files"
+        ],
+        "additionalProperties": false
+      },
+      "module": "datasheet",
+      "name": "datasheet-transport-import",
+      "description": "上传 Excel/CSV 并创建数据表和项目模块；优先使用 datasheet import 编排核对关联与读回"
+    },
+    {
+      "id": "rsq.d04c7521598b",
+      "command": "identity inspect",
+      "method": "GET",
+      "route": "/task/login/authAjax",
+      "service": "account",
+      "auth": "token",
+      "effect": "write",
+      "idempotency": "unknown",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "response": "json",
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "const": true
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1
+              },
+              {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            ]
+          },
+          "username": {
+            "type": "string",
+            "minLength": 1
+          },
+          "token": {
+            "type": "string",
+            "minLength": 1
+          },
+          "team": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      {
+                        "type": "string",
+                        "pattern": "^[1-9][0-9]*$"
+                      }
+                    ]
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "introduction": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "region": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "industry": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "size": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "creator": {
+                    "type": "object"
+                  },
+                  "status": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "id",
+          "username",
+          "token",
+          "team"
+        ],
+        "additionalProperties": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

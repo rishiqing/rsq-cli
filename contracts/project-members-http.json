@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "operations": [
+    {
+      "operationId": "rsq.413532ad4886",
+      "method": "GET",
+      "route": "/task/v1/kanban/getDepartmentUserRoles"
+    },
+    {
+      "operationId": "rsq.faaaa5351afb",
+      "method": "GET",
+      "route": "/task/v1/kanban/listKanbanRole"
+    },
+    {
+      "operationId": "rsq.5d960f45271c",
+      "method": "PUT",
+      "route": "/task/v1/kanban/updateMember"
+    },
+    {
+      "operationId": "rsq.b950c113ce52",
+      "method": "PUT",
+      "route": "/task/v1/kanban/updateUserRole"
+    },
+    {
+      "operationId": "rsq.797397f8bec7",
+      "method": "PUT",
+      "route": "/task/v1/kanban/updateMember/"
+    }
+  ]
+}
