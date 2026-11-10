@@ -1,0 +1,164 @@
+{
+  "version": 1,
+  "operations": [
+    {
+      "id": "rsq.4594cf138d6c",
+      "command": "doc transport editor-delta",
+      "service": "account",
+      "method": "GET",
+      "route": "/task/reditor/client/resource/get-delta",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "read",
+      "idempotency": "idempotent",
+      "encoding": "json",
+      "response": "json",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "doc"
+              },
+              "id": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            },
+            "required": [
+              "type",
+              "id"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "insert": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            },
+            "attributes": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "insert"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "description": "通过与 rcode 相同的现用 Reditor HTTP 入口读取完整文档快照；CLI 先完成同公司目录及编辑器预览权限检查。此接口不提供可用于正文替换的版本前提。",
+      "requiresBusinessContext": [
+        "doc body get"
+      ]
+    },
+    {
+      "id": "rsq.4188e688f58a",
+      "command": "replay topic transport editor-delta",
+      "service": "account",
+      "method": "GET",
+      "route": "/task/reditor/client/resource/get-delta",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "read",
+      "idempotency": "idempotent",
+      "encoding": "json",
+      "response": "json",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "replay"
+              },
+              "id": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            },
+            "required": [
+              "type",
+              "id"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "insert": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            },
+            "attributes": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "insert"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "description": "读取已经完整可见目录及详情验证的专题复盘完整 Delta；资源类型固定 replay，与普通文档分别验证权限。",
+      "requiresBusinessContext": [
+        "replay topic body get"
+      ],
+      "defaults": {
+        "query": {
+          "type": "replay"
+        }
+      }
+    }
+  ],
+  "historicalRecovery": {
+    "deletion": "d6a13063f6c4e911d9d2ef107dcbb144e856331e",
+    "restoredRevision": "3e12159c4185c6d034df51c99e027fc5c987e95e",
+    "sourceDirectory": "server/src",
+    "status": "reference-only-current-server-not-verified",
+    "exclusions": [
+      "development-certificates-and-keys",
+      "runtime-secrets-and-config"
+    ]
+  }
+}

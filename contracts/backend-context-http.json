@@ -1,0 +1,310 @@
+{
+  "version": 1,
+  "purpose": "required-current-business-context",
+  "operations": [
+    {
+      "id": "rsq.390f385d1811",
+      "method": "GET",
+      "route": "/task/v1/kanbanCardCrud/list",
+      "service": "account",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "read",
+      "idempotency": "idempotent",
+      "response": "json",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "kanbanChildId": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            },
+            "required": [
+              "kanbanChildId"
+            ],
+            "additionalProperties": false
+          },
+          "headers": {
+            "type": "object",
+            "properties": {
+              "Plan-Type": {
+                "const": "template"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "integer"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "kanbanChildId": {
+              "type": [
+                "string",
+                "integer"
+              ]
+            },
+            "displayOrder": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "editControl": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "editControl"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "module": "project",
+      "name": "project card transport list"
+    },
+    {
+      "id": "rsq.9961eedac754",
+      "method": "GET",
+      "route": "/task/v1/kanbanCardCrud",
+      "service": "account",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "read",
+      "idempotency": "idempotent",
+      "response": "json",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          "headers": {
+            "type": "object",
+            "properties": {
+              "Plan-Type": {
+                "const": "template"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "integer"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "kanbanChildId": {
+            "type": [
+              "string",
+              "integer"
+            ]
+          },
+          "displayOrder": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "editControl": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "editControl"
+        ],
+        "additionalProperties": true
+      },
+      "module": "project",
+      "name": "project card transport get"
+    },
+    {
+      "id": "rsq.f539d2b65908",
+      "route": "/task/performance/member/select",
+      "method": "GET",
+      "service": "account",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "read",
+      "idempotency": "idempotent",
+      "response": "business",
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "msg": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Type_f8addab3e2ed"
+            }
+          }
+        },
+        "required": [
+          "code",
+          "data"
+        ],
+        "additionalProperties": true,
+        "$defs": {
+          "Type_f8addab3e2ed": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "anyOf": [
+                  {
+                    "type": [
+                      "integer",
+                      "string"
+                    ],
+                    "pattern": "^-?[0-9]+$",
+                    "description": "64 位整数可用十进制字符串，避免精度丢失"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "showName": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "showNamePinyin": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "用户名字拼音"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "hasAvatar": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "avatar": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "defaults": {
+        "query": {
+          "type": "all"
+        }
+      },
+      "review": "reviewed",
+      "command": "appraisal members company",
+      "description": "读取当前公司全部绩效成员，供模板评分人与确认人选择；不扩大考核对象管理范围。",
+      "encoding": "json",
+      "queryArray": "repeat",
+      "examples": [
+        "rsq appraisal member select get --dry-run"
+      ],
+      "fields": []
+    }
+  ]
+}

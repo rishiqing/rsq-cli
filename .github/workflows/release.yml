@@ -1,0 +1,79 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.4
+          cache: npm
+      - run: npm ci
+      - run: node -e 'if ("v"+JSON.parse(require("fs").readFileSync("package.json")).version !== process.env.GITHUB_REF_NAME) process.exit(1)'
+      - run: test -s "docs/releases/$GITHUB_REF_NAME.md"
+      - run: npm test
+      - run: npm run public:check
+      - run: node scripts/check-coverage.mjs
+      - run: node scripts/build-release.mjs --output "$RUNNER_TEMP/rsq-assets"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rsq-release-assets
+          path: ${{ runner.temp }}/rsq-assets/*
+          compression-level: 0
+  install:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.4
+      - uses: actions/download-artifact@v4
+        with:
+          name: rsq-release-assets
+          path: release-assets
+      - if: runner.os != 'Windows'
+        run: node scripts/test-release-install.mjs release-assets
+      - if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/test-release-install.ps1 -Assets release-assets
+  publish:
+    needs: install
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: rsq-release-assets
+          path: release-assets
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=()
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then flags+=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" release-assets/* --title "rsq $GITHUB_REF_NAME" --notes-file "docs/releases/$GITHUB_REF_NAME.md" "${flags[@]}"
+      - name: Update installer version pointer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node --input-type=module - <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';import{execFileSync}from'node:child_process';
+          const path=process.env.RUNNER_TEMP+'/rsq-latest-update.json';
+          const current=JSON.parse(execFileSync('gh',['api','repos/'+process.env.GITHUB_REPOSITORY+'/contents/latest.json'],{encoding:'utf8'}));
+          const content=readFileSync('release-assets/latest.json');
+          if(Buffer.from(current.content,'base64').equals(content))process.exit(0);
+          writeFileSync(path,JSON.stringify({message:'chore: update installer to '+process.env.GITHUB_REF_NAME,content:content.toString('base64'),sha:current.sha,branch:'main'}));
+          execFileSync('gh',['api','--method','PUT','repos/'+process.env.GITHUB_REPOSITORY+'/contents/latest.json','--input',path],{stdio:'ignore'});
+          JS

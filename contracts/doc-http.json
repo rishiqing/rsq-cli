@@ -1,0 +1,195 @@
+{
+  "version": 1,
+  "operations": [
+    {
+      "id": "rsq.20b195e14e49",
+      "service": "account",
+      "method": "GET",
+      "route": "/task/v1/corpus/summary/authority",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "command": "doc transport authority",
+      "review": "reviewed",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "auth": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          },
+          "status": {
+            "enum": [
+              "",
+              "corpusDelete",
+              "docDelete",
+              "noPreview",
+              "noEdit"
+            ]
+          }
+        },
+        "required": [
+          "auth",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "effect": "read",
+      "idempotency": "idempotent",
+      "encoding": "json",
+      "response": "json",
+      "requiresBusinessContext": [
+        "doc inspect",
+        "doc tree inspect",
+        "doc create",
+        "doc draft new",
+        "doc template inspect",
+        "doc template create"
+      ],
+      "fields": [
+        {
+          "option": "id",
+          "in": "query",
+          "name": "id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        }
+      ],
+      "examples": [
+        "printf '%s\\n' '{\"query\":{\"id\":\"123\"}}' | rsq doc transport authority --input - --dry-run"
+      ],
+      "description": "当前编辑器预览与编辑权限检查；必须通过当前用户可见目录再调用，拒绝 noPreview/删除状态后才读取正文。"
+    },
+    {
+      "id": "rsq.999159cf6c7b",
+      "service": "account",
+      "method": "POST",
+      "route": "/task/v1/corpus/summary",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "command": "doc transport folder-create",
+      "description": "在已核对归属和 createNoteBook 权限的普通文集中创建目录；固定 isNoteBook=true，与普通文档/草稿共享 HTTP 接口但保留独立业务上下文。",
+      "review": "inferred",
+      "defaults": {
+        "body": {
+          "isNoteBook": true
+        }
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "pattern": "\\S"
+              },
+              "isNoteBook": {
+                "const": true
+              },
+              "corpusId": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "noteBookId": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            },
+            "required": [
+              "name",
+              "isNoteBook"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "corpusId": {
+            "type": [
+              "integer",
+              "string",
+              "null"
+            ]
+          },
+          "noteBookId": {
+            "type": [
+              "integer",
+              "string",
+              "null"
+            ]
+          },
+          "isNoteBook": {
+            "type": "boolean"
+          },
+          "creator": {
+            "type": "object"
+          },
+          "editControl": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": true
+      },
+      "effect": "write",
+      "idempotency": "unknown",
+      "encoding": "json",
+      "response": "json"
+    }
+  ]
+}

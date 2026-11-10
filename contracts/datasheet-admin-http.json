@@ -1,0 +1,1114 @@
+{
+  "version": 1,
+  "operations": [
+    {
+      "method": "GET",
+      "route": "/task/mt/permission/{datasheetId}/roleList",
+      "service": "account",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "read",
+      "idempotency": "idempotent",
+      "encoding": "json",
+      "queryArray": "repeat",
+      "response": "business",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "object",
+            "properties": {
+              "datasheetId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]+$"
+              }
+            },
+            "required": [
+              "datasheetId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "roleId": {
+                  "type": "integer",
+                  "minimum": -1,
+                  "maximum": 9007199254740991
+                },
+                "name": {
+                  "type": "string"
+                },
+                "datasheetId": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]+$"
+                }
+              },
+              "required": [
+                "roleId",
+                "name"
+              ],
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "success",
+          "code",
+          "data"
+        ],
+        "additionalProperties": true
+      },
+      "module": "datasheet",
+      "name": "datasheet-transport-role-list",
+      "description": "读取当前数据表自定义角色及内置全员角色；CLI 先核对主项目 dataManage"
+    },
+    {
+      "method": "POST",
+      "route": "/task/mt/permission/{datasheetId}/role",
+      "service": "account",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "write",
+      "idempotency": "unknown",
+      "encoding": "json",
+      "queryArray": "repeat",
+      "response": "business",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "object",
+            "properties": {
+              "datasheetId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]+$"
+              }
+            },
+            "required": [
+              "datasheetId"
+            ],
+            "additionalProperties": false
+          },
+          "body": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "\\S"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "path",
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "roleId": {
+                "type": "integer",
+                "minimum": -1,
+                "maximum": 9007199254740991
+              },
+              "name": {
+                "type": "string"
+              },
+              "datasheetId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]+$"
+              }
+            },
+            "required": [
+              "roleId",
+              "name"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "success",
+          "code",
+          "data"
+        ],
+        "additionalProperties": true
+      },
+      "module": "datasheet",
+      "name": "datasheet-transport-role-create",
+      "description": "新建当前数据表的自定义角色；返回 roleId，属于资源权限写入"
+    },
+    {
+      "method": "PUT",
+      "route": "/task/mt/permission/role",
+      "service": "account",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "write",
+      "idempotency": "unknown",
+      "encoding": "json",
+      "queryArray": "repeat",
+      "response": "business",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "object",
+            "properties": {
+              "roleId": {
+                "type": "integer",
+                "minimum": -1,
+                "maximum": 9007199254740991,
+                "not": {
+                  "const": 0
+                }
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "\\S"
+              }
+            },
+            "required": [
+              "roleId",
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "success",
+          "code"
+        ],
+        "additionalProperties": true
+      },
+      "module": "datasheet",
+      "name": "datasheet-transport-role-rename",
+      "description": "按当前数据表角色列表核对归属后改名"
+    },
+    {
+      "method": "DELETE",
+      "route": "/task/mt/permission/role",
+      "service": "account",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "destructive",
+      "idempotency": "unknown",
+      "encoding": "json",
+      "queryArray": "repeat",
+      "response": "business",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "roleId": {
+                "type": "integer",
+                "minimum": -1,
+                "maximum": 9007199254740991,
+                "not": {
+                  "const": 0
+                }
+              }
+            },
+            "required": [
+              "roleId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "success",
+          "code"
+        ],
+        "additionalProperties": true
+      },
+      "module": "datasheet",
+      "name": "datasheet-transport-role-remove",
+      "description": "按当前数据表角色列表核对归属后删除角色及其权限、成员关系"
+    },
+    {
+      "method": "GET",
+      "route": "/task/mt/permission/{datasheetId}/permission",
+      "service": "account",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "write",
+      "idempotency": "unknown",
+      "encoding": "json",
+      "queryArray": "repeat",
+      "response": "business",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "object",
+            "properties": {
+              "datasheetId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]+$"
+              }
+            },
+            "required": [
+              "datasheetId"
+            ],
+            "additionalProperties": false
+          },
+          "query": {
+            "type": "object",
+            "properties": {
+              "roleId": {
+                "type": "integer",
+                "minimum": -1,
+                "maximum": 9007199254740991,
+                "not": {
+                  "const": 0
+                }
+              }
+            },
+            "required": [
+              "roleId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "path",
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "dstId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]+$"
+              },
+              "roleId": {
+                "type": "integer",
+                "minimum": -1,
+                "maximum": 9007199254740991
+              },
+              "permissionMode": {
+                "enum": [
+                  "custom",
+                  "readOnly"
+                ]
+              },
+              "members": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            },
+            "required": [
+              "dstId",
+              "roleId",
+              "permissionMode"
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "code",
+          "data"
+        ],
+        "additionalProperties": true
+      },
+      "module": "datasheet",
+      "name": "datasheet-transport-role-permission",
+      "description": "读取或初始化、规范化数据表角色权限；GET 可能写入默认配置，不视为纯读取"
+    },
+    {
+      "method": "PUT",
+      "route": "/task/mt/permission/{datasheetId}/permission",
+      "service": "account",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "destructive",
+      "idempotency": "unknown",
+      "encoding": "json",
+      "queryArray": "repeat",
+      "response": "business",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "object",
+            "properties": {
+              "datasheetId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]+$"
+              }
+            },
+            "required": [
+              "datasheetId"
+            ],
+            "additionalProperties": false
+          },
+          "body": {
+            "type": "object",
+            "properties": {
+              "dstId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]+$"
+              },
+              "roleId": {
+                "type": "integer",
+                "minimum": -1,
+                "maximum": 9007199254740991,
+                "not": {
+                  "const": 0
+                }
+              },
+              "permissionMode": {
+                "enum": [
+                  "custom",
+                  "readOnly"
+                ]
+              },
+              "canCreateRecord": {
+                "type": "boolean"
+              },
+              "canDeleteRecord": {
+                "type": "boolean"
+              },
+              "editRecordScope": {
+                "enum": [
+                  "all",
+                  "partial",
+                  "none"
+                ]
+              },
+              "viewRecordScope": {
+                "enum": [
+                  "all",
+                  "partial"
+                ]
+              },
+              "recordEditFilterInfo": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "conjunction": {
+                        "enum": [
+                          "and",
+                          "or"
+                        ]
+                      },
+                      "conditions": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 100,
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "fieldId": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_-]+$"
+                            },
+                            "fieldType": {
+                              "type": "integer",
+                              "enum": [
+                                7,
+                                8,
+                                17,
+                                18
+                              ]
+                            },
+                            "operator": {
+                              "enum": [
+                                "is",
+                                "isNot",
+                                "contains",
+                                "doesNotContain",
+                                "isEmpty",
+                                "isNotEmpty"
+                              ]
+                            },
+                            "value": {
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "items": {
+                                "type": [
+                                  "string",
+                                  "integer"
+                                ]
+                              },
+                              "uniqueItems": true
+                            }
+                          },
+                          "required": [
+                            "fieldId",
+                            "operator",
+                            "value"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "conjunction",
+                      "conditions"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "recordViewFilterInfo": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "conjunction": {
+                        "enum": [
+                          "and",
+                          "or"
+                        ]
+                      },
+                      "conditions": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 100,
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "fieldId": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_-]+$"
+                            },
+                            "fieldType": {
+                              "type": "integer",
+                              "enum": [
+                                7,
+                                8,
+                                17,
+                                18
+                              ]
+                            },
+                            "operator": {
+                              "enum": [
+                                "is",
+                                "isNot",
+                                "contains",
+                                "doesNotContain",
+                                "isEmpty",
+                                "isNotEmpty"
+                              ]
+                            },
+                            "value": {
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "items": {
+                                "type": [
+                                  "string",
+                                  "integer"
+                                ]
+                              },
+                              "uniqueItems": true
+                            }
+                          },
+                          "required": [
+                            "fieldId",
+                            "operator",
+                            "value"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "conjunction",
+                      "conditions"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fieldEditMode": {
+                "enum": [
+                  "manageFields",
+                  "editAll",
+                  "custom",
+                  "readOnly"
+                ]
+              },
+              "fieldPermissions": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "newAddFiled": {
+                        "type": "object",
+                        "properties": {
+                          "canView": {
+                            "type": "boolean"
+                          },
+                          "canEdit": {
+                            "type": "boolean"
+                          },
+                          "canAdd": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "canView",
+                          "canEdit",
+                          "canAdd"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "fields": {
+                        "type": "array",
+                        "maxItems": 1000,
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "fieldId": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_-]+$"
+                            },
+                            "canView": {
+                              "type": "boolean"
+                            },
+                            "canEdit": {
+                              "type": "boolean"
+                            },
+                            "canAdd": {
+                              "type": "boolean"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "disable": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "fieldId",
+                            "canView"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "newAddFiled",
+                      "fields"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "manageView": {
+                "type": "boolean"
+              },
+              "viewAccessScope": {
+                "enum": [
+                  "all",
+                  "partial"
+                ]
+              },
+              "viewPermissions": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "maxItems": 100,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[A-Za-z0-9_-]+$"
+                        },
+                        "canManage": {
+                          "type": "boolean"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "canManage"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "memberIds": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "uniqueItems": true,
+                "maxItems": 10000
+              }
+            },
+            "required": [
+              "dstId",
+              "roleId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "path",
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "success",
+          "code",
+          "data"
+        ],
+        "additionalProperties": true
+      },
+      "module": "datasheet",
+      "name": "datasheet-transport-role-configure",
+      "description": "设置数据表角色、行列视图权限及成员；需先读取完整旧值，独立读回验证动态配置"
+    },
+    {
+      "method": "GET",
+      "route": "/task/mt/permission/{datasheetId}/spareUserList",
+      "service": "account",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "read",
+      "idempotency": "idempotent",
+      "encoding": "json",
+      "queryArray": "repeat",
+      "response": "business",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "object",
+            "properties": {
+              "datasheetId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]+$"
+              }
+            },
+            "required": [
+              "datasheetId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "success",
+          "code",
+          "data"
+        ],
+        "additionalProperties": true
+      },
+      "module": "datasheet",
+      "name": "datasheet-transport-role-spare-users",
+      "description": "发现当前公司未分配到其他自定义角色的可选成员"
+    },
+    {
+      "method": "GET",
+      "route": "/task/mt/permission/{datasheetId}/sharedData",
+      "service": "account",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "write",
+      "idempotency": "unknown",
+      "encoding": "json",
+      "queryArray": "repeat",
+      "response": "business",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "object",
+            "properties": {
+              "datasheetId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]+$"
+              }
+            },
+            "required": [
+              "datasheetId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "dstId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]+$"
+              },
+              "isOpen": {
+                "type": "boolean"
+              },
+              "sharedScope": {
+                "enum": [
+                  "all",
+                  "partial"
+                ]
+              },
+              "memberIds": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            },
+            "required": [
+              "dstId",
+              "isOpen",
+              "sharedScope",
+              "memberIds"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "success",
+          "code",
+          "data"
+        ],
+        "additionalProperties": true
+      },
+      "module": "datasheet",
+      "name": "datasheet-transport-sharing-get",
+      "description": "读取或初始化数据表共享开关、范围与可引用成员；GET 可写入初始化配置"
+    },
+    {
+      "method": "PUT",
+      "route": "/task/mt/permission/{datasheetId}/sharedData",
+      "service": "account",
+      "auth": "both",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "destructive",
+      "idempotency": "unknown",
+      "encoding": "json",
+      "queryArray": "repeat",
+      "response": "business",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "object",
+            "properties": {
+              "datasheetId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]+$"
+              }
+            },
+            "required": [
+              "datasheetId"
+            ],
+            "additionalProperties": false
+          },
+          "body": {
+            "type": "object",
+            "properties": {
+              "dstId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]+$"
+              },
+              "isOpen": {
+                "type": "boolean"
+              },
+              "sharedScope": {
+                "enum": [
+                  "all",
+                  "partial"
+                ]
+              },
+              "memberIds": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "uniqueItems": true,
+                "maxItems": 10000
+              }
+            },
+            "required": [
+              "dstId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "path",
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "dstId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]+$"
+              },
+              "isOpen": {
+                "type": "boolean"
+              },
+              "sharedScope": {
+                "enum": [
+                  "all",
+                  "partial"
+                ]
+              },
+              "memberIds": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            },
+            "required": [
+              "dstId",
+              "isOpen",
+              "sharedScope",
+              "memberIds"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "success",
+          "code",
+          "data"
+        ],
+        "additionalProperties": true
+      },
+      "module": "datasheet",
+      "name": "datasheet-transport-sharing-set",
+      "description": "修改当前主数据表共享范围；现有业务引用与项目权限分别保留，不扩大组织权限"
+    }
+  ]
+}

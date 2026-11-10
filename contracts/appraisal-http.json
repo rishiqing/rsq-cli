@@ -1,0 +1,385 @@
+{
+  "version": 1,
+  "operations": [
+    {
+      "operationId": "rsq.2c6967699e2b",
+      "method": "GET",
+      "route": "/task/performance/appraisals/contentAcknowledgement"
+    },
+    {
+      "operationId": "rsq.03f8481ce84d",
+      "method": "GET",
+      "route": "/task/performance/appraisals/contentConfirm"
+    },
+    {
+      "operationId": "rsq.dc88e6fff70e",
+      "method": "GET",
+      "route": "/task/performance/appraisals/interview"
+    },
+    {
+      "operationId": "rsq.659846a9eacf",
+      "method": "GET",
+      "route": "/task/performance/appraisals/invitingColleagues"
+    },
+    {
+      "operationId": "rsq.4dc08a855da5",
+      "method": "GET",
+      "route": "/task/performance/appraisals/my"
+    },
+    {
+      "operationId": "rsq.177745975cbd",
+      "method": "GET",
+      "route": "/task/performance/appraisals/resultAcknowledgement"
+    },
+    {
+      "operationId": "rsq.97ea27b807b2",
+      "method": "GET",
+      "route": "/task/performance/appraisals/resultConfirm"
+    },
+    {
+      "operationId": "rsq.2b33d30a8bdf",
+      "method": "GET",
+      "route": "/task/performance/appraisals/resultValue"
+    },
+    {
+      "operationId": "rsq.a08ac9706b4a",
+      "method": "GET",
+      "route": "/task/performance/appraisals/score"
+    },
+    {
+      "operationId": "rsq.14f1827f3736",
+      "method": "GET",
+      "route": "/task/performance/authority/role"
+    },
+    {
+      "operationId": "rsq.d0251280662e",
+      "method": "POST",
+      "route": "/task/performance/appraisal/batch"
+    },
+    {
+      "operationId": "rsq.ef076514d125",
+      "method": "POST",
+      "route": "/task/performance/appraisal/batchHas"
+    },
+    {
+      "operationId": "rsq.012a12abd659",
+      "method": "POST",
+      "route": "/task/performance/appraisal/confirmSubmit"
+    },
+    {
+      "operationId": "rsq.41d12a1b9396",
+      "method": "POST",
+      "route": "/task/performance/v2/content"
+    },
+    {
+      "operationId": "rsq.edb5eaf98f16",
+      "method": "GET",
+      "route": "/task/performance/content/flowInfo"
+    },
+    {
+      "operationId": "rsq.3f8852aa3293",
+      "method": "GET",
+      "route": "/task/performance/v2/content"
+    },
+    {
+      "operationId": "rsq.e81ffc5472be",
+      "method": "PUT",
+      "route": "/task/performance/v2/content"
+    },
+    {
+      "operationId": "rsq.c3f3bb34e152",
+      "method": "POST",
+      "route": "/task/performance/appraisal/contentAcknowledgement"
+    },
+    {
+      "operationId": "rsq.52a308a06c68",
+      "method": "POST",
+      "route": "/task/performance/appraisal"
+    },
+    {
+      "operationId": "rsq.a1ccbd584646",
+      "method": "GET",
+      "route": "/task/performance/appraisal/periodList"
+    },
+    {
+      "operationId": "rsq.e817b975a3ed",
+      "method": "DELETE",
+      "route": "/task/performance/appraisal"
+    },
+    {
+      "operationId": "rsq.330740b0fe2a",
+      "method": "PUT",
+      "route": "/task/performance/appraisal/entry"
+    },
+    {
+      "operationId": "rsq.38255c6775c4",
+      "method": "GET",
+      "route": "/task/performance/appraisal"
+    },
+    {
+      "operationId": "rsq.8a47d8fe8c30",
+      "method": "GET",
+      "route": "/task/performance/appraisal/getUser"
+    },
+    {
+      "operationId": "rsq.0c5be7d96a55",
+      "method": "POST",
+      "route": "/task/performance/init"
+    },
+    {
+      "operationId": "rsq.1d58b8a8e643",
+      "method": "GET",
+      "route": "/task/performance/init"
+    },
+    {
+      "operationId": "rsq.8dd3282ebb94",
+      "method": "GET",
+      "route": "/task/performance/appraisals/all"
+    },
+    {
+      "operationId": "rsq.f6f4d5061946",
+      "method": "GET",
+      "route": "/task/performance/member/select"
+    },
+    {
+      "operationId": "rsq.f539d2b65908",
+      "method": "GET",
+      "route": "/task/performance/member/select"
+    },
+    {
+      "operationId": "rsq.201f1fb84da6",
+      "method": "GET",
+      "route": "/task/performance/preference/dimension/dictionaries"
+    },
+    {
+      "operationId": "rsq.0888ac0daf33",
+      "method": "GET",
+      "route": "/task/performance/preference/field/relation"
+    },
+    {
+      "operationId": "rsq.c09654c6f05a",
+      "method": "PUT",
+      "route": "/task/performance/preference/field/sort"
+    },
+    {
+      "operationId": "rsq.059ccbc87604",
+      "method": "POST",
+      "route": "/task/performance/preference/fields"
+    },
+    {
+      "operationId": "rsq.ca2580569c44",
+      "method": "DELETE",
+      "route": "/task/performance/preference/fields"
+    },
+    {
+      "operationId": "rsq.0747827c6192",
+      "method": "GET",
+      "route": "/task/performance/preference/fields"
+    },
+    {
+      "operationId": "rsq.21b05b885424",
+      "method": "GET",
+      "route": "/task/performance/preference/fields/all"
+    },
+    {
+      "operationId": "rsq.f57992ef5701",
+      "method": "PUT",
+      "route": "/task/performance/preference/fields"
+    },
+    {
+      "operationId": "rsq.a42001760774",
+      "method": "GET",
+      "route": "/task/performance/preference"
+    },
+    {
+      "operationId": "rsq.458bf26fd5ff",
+      "method": "GET",
+      "route": "/task/performance/preference/rule/list"
+    },
+    {
+      "operationId": "rsq.c7a50eff161c",
+      "method": "PUT",
+      "route": "/task/performance/preference"
+    },
+    {
+      "operationId": "rsq.dab24742fcfb",
+      "method": "POST",
+      "route": "/task/performance/appraisal/resultAcknowledgement"
+    },
+    {
+      "operationId": "rsq.01d0f54d5554",
+      "method": "PUT",
+      "route": "/task/performance/resultConfirm/calibration"
+    },
+    {
+      "operationId": "rsq.064b982a6b12",
+      "method": "POST",
+      "route": "/task/performance/appraisal/resultConfirmSubmit"
+    },
+    {
+      "operationId": "rsq.bf28d364a833",
+      "method": "GET",
+      "route": "/task/performance/appraisal/reviews"
+    },
+    {
+      "operationId": "rsq.0e34c62242e9",
+      "method": "PUT",
+      "route": "/task/performance/appraisal/reviews"
+    },
+    {
+      "operationId": "rsq.53a8a48e89b7",
+      "method": "GET",
+      "route": "/task/performance/appraisal/rule"
+    },
+    {
+      "operationId": "rsq.7d2de9abaeca",
+      "method": "PUT",
+      "route": "/task/performance/appraisal/score"
+    },
+    {
+      "operationId": "rsq.50a2bbdc4ae4",
+      "method": "POST",
+      "route": "/task/performance/appraisal/startScore"
+    },
+    {
+      "operationId": "rsq.3aa997744916",
+      "method": "POST",
+      "route": "/task/performance/template/confirm"
+    },
+    {
+      "operationId": "rsq.cb8f37355f39",
+      "method": "DELETE",
+      "route": "/task/performance/template/confirm"
+    },
+    {
+      "operationId": "rsq.57a5d1f5b1a8",
+      "method": "PUT",
+      "route": "/task/performance/template/confirm"
+    },
+    {
+      "operationId": "rsq.347fc727af8b",
+      "method": "GET",
+      "route": "/task/performance/template/confirms"
+    },
+    {
+      "operationId": "rsq.ce2fbb95f90c",
+      "method": "POST",
+      "route": "/task/performance/template/content"
+    },
+    {
+      "operationId": "rsq.fa379712b45c",
+      "method": "DELETE",
+      "route": "/task/performance/template/content"
+    },
+    {
+      "operationId": "rsq.4f0ef0930fe7",
+      "method": "GET",
+      "route": "/task/performance/template/content"
+    },
+    {
+      "operationId": "rsq.abd6391e3aaf",
+      "method": "PUT",
+      "route": "/task/performance/template/content"
+    },
+    {
+      "operationId": "rsq.430ae101c4ab",
+      "method": "GET",
+      "route": "/task/performance/template/contents"
+    },
+    {
+      "operationId": "rsq.05023d87b52c",
+      "method": "POST",
+      "route": "/task/performance/template/copy"
+    },
+    {
+      "operationId": "rsq.ce78d7eb8136",
+      "method": "POST",
+      "route": "/task/performance/template"
+    },
+    {
+      "operationId": "rsq.aa2ace890ced",
+      "method": "DELETE",
+      "route": "/task/performance/template"
+    },
+    {
+      "operationId": "rsq.13b72b446388",
+      "method": "GET",
+      "route": "/task/performance/template"
+    },
+    {
+      "operationId": "rsq.3e51db4011a6",
+      "method": "POST",
+      "route": "/task/performance/template/group"
+    },
+    {
+      "operationId": "rsq.a18d582fae8c",
+      "method": "DELETE",
+      "route": "/task/performance/template/group"
+    },
+    {
+      "operationId": "rsq.aa87a26425e7",
+      "method": "GET",
+      "route": "/task/performance/template/group"
+    },
+    {
+      "operationId": "rsq.ff8010ecaad5",
+      "method": "PUT",
+      "route": "/task/performance/template/group/move"
+    },
+    {
+      "operationId": "rsq.564d2b85f2f6",
+      "method": "GET",
+      "route": "/task/performance/template/inviteColleagues/list"
+    },
+    {
+      "operationId": "rsq.087a2bc2fae7",
+      "method": "GET",
+      "route": "/task/performance/templates/my"
+    },
+    {
+      "operationId": "rsq.59d471350030",
+      "method": "POST",
+      "route": "/task/performance/template/node"
+    },
+    {
+      "operationId": "rsq.8dffb0e961f8",
+      "method": "DELETE",
+      "route": "/task/performance/template/node"
+    },
+    {
+      "operationId": "rsq.f5862d344f65",
+      "method": "PUT",
+      "route": "/task/performance/template/node"
+    },
+    {
+      "operationId": "rsq.7796fd5829e3",
+      "method": "GET",
+      "route": "/task/performance/template/nodes"
+    },
+    {
+      "operationId": "rsq.aaf0baf4cd2a",
+      "method": "POST",
+      "route": "/task/performance/template/resultConfirm"
+    },
+    {
+      "operationId": "rsq.5331c5962227",
+      "method": "DELETE",
+      "route": "/task/performance/template/resultConfirm"
+    },
+    {
+      "operationId": "rsq.4f06cf630a1e",
+      "method": "PUT",
+      "route": "/task/performance/template/resultConfirm"
+    },
+    {
+      "operationId": "rsq.afc72b628909",
+      "method": "GET",
+      "route": "/task/performance/template/resultConfirms"
+    },
+    {
+      "operationId": "rsq.791d89d21d44",
+      "method": "PUT",
+      "route": "/task/performance/template"
+    }
+  ]
+}

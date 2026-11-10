@@ -1,0 +1,1824 @@
+{
+  "version": 1,
+  "stage": "core-http-v1",
+  "frozenAt": "2026-11-09T10:34:53.980Z",
+  "goal": "覆盖全部当前业务的主要流程，让 Agent 能完成日常核心操作；代表性验证，不追求所有细分场景。",
+  "scope": {
+    "protocols": [
+      "http",
+      "https"
+    ],
+    "excluded": [
+      "旧版业务",
+      "简报",
+      "下载/导出",
+      "Socket.IO/WebSocket",
+      "静态资源和纯浏览器本地操作"
+    ],
+    "identities": [
+      "password",
+      "wecom"
+    ],
+    "deferred": []
+  },
+  "policy": [
+    "保留已通过的主流程原始报告，不重签或改写。",
+    "后续只复核实际变化涉及的命令及实现；修改未涉及的主流程不反复真实重跑。",
+    "拒绝、空列表、受理回执不能证明成功；权限/套餐阻塞单列。",
+    "凭证安全、服务端权限、公司到期与超员限制、确认和写请求不自动重放继续执行。"
+  ],
+  "evidenceMeaning": "状态表示代表性主流程的已有验证记录，不代表所有细分分支均已验证。",
+  "summary": {
+    "modules": 35,
+    "verified": 34,
+    "pending": 0,
+    "blocked": 1,
+    "reviewRequired": 0
+  },
+  "modules": [
+    {
+      "id": "identity",
+      "name": "身份与账号",
+      "flows": [
+        {
+          "id": "session",
+          "name": "账号密码会话、身份/组织核对、切换与本地凭证隔离",
+          "commands": [
+            "organization list",
+            "organization context",
+            "organization switch",
+            "identity profile get",
+            "identity profile update",
+            "identity preferences get",
+            "identity preferences update"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"organization list\"",
+            "rsq schema \"organization context\"",
+            "rsq schema \"organization switch\"",
+            "rsq schema \"identity profile get\"",
+            "rsq schema \"identity profile update\"",
+            "rsq schema \"identity preferences get\"",
+            "rsq schema \"identity preferences update\""
+          ]
+        },
+        {
+          "id": "wecom-login",
+          "name": "企业微信扫码登录",
+          "commands": [
+            "login",
+            "auth status",
+            "whoami",
+            "logout"
+          ],
+          "status": "verified",
+          "verification": {
+            "method": "user-confirmed",
+            "scope": "企业微信浏览器扫码登录主流程"
+          }
+        }
+      ],
+      "later": [
+        "账号绑定、头像和安全设置的全部分支。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "task",
+      "name": "任务与日程",
+      "flows": [
+        {
+          "id": "lifecycle",
+          "name": "任务与子任务创建、编辑、成员/日期、完成和重开、评论工时、读取及删除",
+          "commands": [
+            "task context inspect",
+            "task change",
+            "task schedule create",
+            "task schedule set",
+            "task subtask create",
+            "task member set",
+            "task comment add",
+            "task hours add",
+            "task remove"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"task context inspect\"",
+            "rsq schema \"task change\"",
+            "rsq schema \"task schedule create\"",
+            "rsq schema \"task schedule set\"",
+            "rsq schema \"task subtask create\"",
+            "rsq schema \"task member set\"",
+            "rsq schema \"task comment add\"",
+            "rsq schema \"task hours add\"",
+            "rsq schema \"task remove\""
+          ]
+        },
+        {
+          "id": "daily-discovery",
+          "name": "个人待办与日工作：日期/筛选/排序分页、任务和流程目标、任务完成后读回",
+          "status": "verified",
+          "commands": [
+            "todo context",
+            "todo list",
+            "todo calendar",
+            "todo pending list"
+          ],
+          "review": {
+            "method": "real-http-main-path-and-final-affected-readback",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"todo context\"",
+            "rsq schema \"todo list\"",
+            "rsq schema \"todo calendar\"",
+            "rsq schema \"todo pending list\""
+          ]
+        },
+        {
+          "id": "activity",
+          "name": "任务操作记录：实际任务上下文与非空事件 ID 游标分页",
+          "status": "verified",
+          "commands": [
+            "task activity list"
+          ],
+          "review": {
+            "method": "real-http-main-path-and-final-affected-readback",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"task activity list\""
+          ]
+        }
+      ],
+      "later": [
+        "循环、会议、外部日历及所有提醒组合；字段零值的特定服务端读回缺陷单列。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "task-template",
+      "name": "任务模板",
+      "flows": [
+        {
+          "id": "lifecycle",
+          "name": "任务类型发现、维护常用字段、应用到新任务并核对结果",
+          "commands": [
+            "task template list",
+            "task template inspect",
+            "task template create",
+            "task template configure",
+            "task template field add",
+            "task template remove",
+            "task template default set"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"task template list\"",
+            "rsq schema \"task template inspect\"",
+            "rsq schema \"task template create\"",
+            "rsq schema \"task template configure\"",
+            "rsq schema \"task template field add\"",
+            "rsq schema \"task template remove\"",
+            "rsq schema \"task template default set\""
+          ]
+        }
+      ],
+      "later": [
+        "全部字段类型与企业角色组合。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "project",
+      "name": "项目",
+      "flows": [
+        {
+          "id": "lifecycle",
+          "name": "普通项目发现、新建、编辑分组和视图、模块及成员、回收/恢复",
+          "commands": [
+            "project groups inspect",
+            "project list",
+            "project create",
+            "project inspect",
+            "project update",
+            "project view set",
+            "project remove",
+            "project module create",
+            "project members inspect"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"project groups inspect\"",
+            "rsq schema \"project list\"",
+            "rsq schema \"project create\"",
+            "rsq schema \"project inspect\"",
+            "rsq schema \"project update\"",
+            "rsq schema \"project view set\"",
+            "rsq schema \"project remove\"",
+            "rsq schema \"project module create\"",
+            "rsq schema \"project members inspect\""
+          ]
+        },
+        {
+          "id": "management",
+          "name": "常用风险、甘特依赖和变更流程的创建维护、状态与读回",
+          "commands": [
+            "project risk create",
+            "project risk update",
+            "project schedule context",
+            "project alteration context inspect"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"project risk create\"",
+            "rsq schema \"project risk update\"",
+            "rsq schema \"project schedule context\"",
+            "rsq schema \"project alteration context inspect\""
+          ]
+        },
+        {
+          "id": "custom-views",
+          "name": "普通项目命名视图：发现、创建编辑、筛选应用、显示字段及选择、删除读回",
+          "status": "verified",
+          "commands": [
+            "project view list",
+            "project view inspect",
+            "project view create",
+            "project view update",
+            "project view select",
+            "project view remove",
+            "project view tasks list",
+            "project view fields set"
+          ],
+          "review": {
+            "method": "real-http-main-path-and-final-affected-readback",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"project view list\"",
+            "rsq schema \"project view inspect\"",
+            "rsq schema \"project view create\"",
+            "rsq schema \"project view update\"",
+            "rsq schema \"project view select\"",
+            "rsq schema \"project view remove\"",
+            "rsq schema \"project view tasks list\"",
+            "rsq schema \"project view fields set\""
+          ]
+        }
+      ],
+      "later": [
+        "完整基线、复杂嵌入应用与全部角色。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "project-template",
+      "name": "项目模板",
+      "flows": [
+        {
+          "id": "lifecycle",
+          "name": "模板发现、创建维护、保存普通项目为模板、应用并核对独立项目",
+          "commands": [
+            "project template categories list",
+            "project template list",
+            "project template get",
+            "project template create",
+            "project template update",
+            "project template save",
+            "project template apply",
+            "project template delete"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"project template categories list\"",
+            "rsq schema \"project template list\"",
+            "rsq schema \"project template get\"",
+            "rsq schema \"project template create\"",
+            "rsq schema \"project template update\"",
+            "rsq schema \"project template save\"",
+            "rsq schema \"project template apply\"",
+            "rsq schema \"project template delete\""
+          ]
+        },
+        {
+          "id": "contents",
+          "name": "模板模块、卡片及常用任务内容维护，应用后核对复制结果",
+          "commands": [
+            "project template module catalogue",
+            "project template module create",
+            "project template task-type list",
+            "project template task-type create"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"project template module catalogue\"",
+            "rsq schema \"project template module create\"",
+            "rsq schema \"project template task-type list\"",
+            "rsq schema \"project template task-type create\""
+          ]
+        },
+        {
+          "id": "custom-views",
+          "name": "项目模板命名视图：独立模板上下文、维护、筛选应用、字段及删除读回",
+          "status": "verified",
+          "commands": [
+            "project template view list",
+            "project template view inspect",
+            "project template view create",
+            "project template view update",
+            "project template view select",
+            "project template view remove",
+            "project template view tasks list",
+            "project template view fields set"
+          ],
+          "review": {
+            "method": "real-http-main-path-and-final-affected-readback",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"project template view list\"",
+            "rsq schema \"project template view inspect\"",
+            "rsq schema \"project template view create\"",
+            "rsq schema \"project template view update\"",
+            "rsq schema \"project template view select\"",
+            "rsq schema \"project template view remove\"",
+            "rsq schema \"project template view tasks list\"",
+            "rsq schema \"project template view fields set\""
+          ]
+        }
+      ],
+      "later": [
+        "个人模板主路径已验；企业模板受实际编辑权限制，不绕过限制。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "project-collection",
+      "name": "项目集",
+      "flows": [
+        {
+          "id": "lifecycle",
+          "name": "项目集发现、创建编辑、成员和普通字段、项目关联/解除、读取与删除",
+          "commands": [
+            "project collection list",
+            "project collection create",
+            "project collection update",
+            "project collection projects list",
+            "project collection delete",
+            "project collection field create",
+            "project collection field value set"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"project collection list\"",
+            "rsq schema \"project collection create\"",
+            "rsq schema \"project collection update\"",
+            "rsq schema \"project collection projects list\"",
+            "rsq schema \"project collection delete\"",
+            "rsq schema \"project collection field create\"",
+            "rsq schema \"project collection field value set\""
+          ]
+        }
+      ],
+      "later": [
+        "项目集基线、全部报表/公式与日期清空的服务端缺陷。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "milestone",
+      "name": "里程碑",
+      "flows": [
+        {
+          "id": "lifecycle",
+          "name": "里程碑发现、创建、修改名称/日期、完成/重开、读取及删除",
+          "commands": [
+            "milestone list",
+            "milestone create",
+            "milestone update",
+            "milestone complete",
+            "milestone remove"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"milestone list\"",
+            "rsq schema \"milestone create\"",
+            "rsq schema \"milestone update\"",
+            "rsq schema \"milestone complete\"",
+            "rsq schema \"milestone remove\""
+          ]
+        }
+      ],
+      "later": [
+        "项目集路线图全部权限和展示组合。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "workflow-template",
+      "name": "流程模板",
+      "flows": [
+        {
+          "id": "lifecycle",
+          "name": "流程模板发现、应用/复制、常用表单和步骤维护、部署及实例核对",
+          "commands": [
+            "workflow template list",
+            "workflow template context",
+            "workflow template inspect",
+            "workflow template apply",
+            "workflow application clone",
+            "workflow configuration inspect",
+            "workflow configuration deploy"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"workflow template list\"",
+            "rsq schema \"workflow template context\"",
+            "rsq schema \"workflow template inspect\"",
+            "rsq schema \"workflow template apply\"",
+            "rsq schema \"workflow application clone\"",
+            "rsq schema \"workflow configuration inspect\"",
+            "rsq schema \"workflow configuration deploy\""
+          ]
+        }
+      ],
+      "later": [
+        "系统模板和企业模板的全部配置组合。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "workflow",
+      "name": "流程",
+      "flows": [
+        {
+          "id": "configuration",
+          "name": "流程配置：表单和常用字段、执行人、两步编排、部署",
+          "commands": [
+            "workflow configuration inspect",
+            "workflow form define",
+            "workflow form field add",
+            "workflow step insert",
+            "workflow step configure",
+            "workflow configuration graph inspect",
+            "workflow configuration graph apply",
+            "workflow configuration deploy"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"workflow configuration inspect\"",
+            "rsq schema \"workflow form define\"",
+            "rsq schema \"workflow form field add\"",
+            "rsq schema \"workflow step insert\"",
+            "rsq schema \"workflow step configure\"",
+            "rsq schema \"workflow configuration graph inspect\"",
+            "rsq schema \"workflow configuration graph apply\"",
+            "rsq schema \"workflow configuration deploy\""
+          ]
+        },
+        {
+          "id": "execution",
+          "name": "流程执行：发起、填写、推进、关闭/重开、终态与独立读回",
+          "commands": [
+            "workflow instance start",
+            "workflow instance inspect",
+            "workflow instance fill",
+            "workflow instance act",
+            "workflow instance close",
+            "workflow instance reopen"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"workflow instance start\"",
+            "rsq schema \"workflow instance inspect\"",
+            "rsq schema \"workflow instance fill\"",
+            "rsq schema \"workflow instance act\"",
+            "rsq schema \"workflow instance close\"",
+            "rsq schema \"workflow instance reopen\""
+          ]
+        },
+        {
+          "id": "table-and-children",
+          "name": "流程表格筛选分页、父步骤发现、显式子流程发起、填写完成及父子终态读回",
+          "status": "verified",
+          "commands": [
+            "workflow instances context",
+            "workflow instances list",
+            "workflow instance children list",
+            "workflow instance child start"
+          ],
+          "review": {
+            "method": "real-http-main-path-and-final-affected-readback",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"workflow instances context\"",
+            "rsq schema \"workflow instances list\"",
+            "rsq schema \"workflow instance children list\"",
+            "rsq schema \"workflow instance child start\""
+          ]
+        },
+        {
+          "id": "project-discovery",
+          "name": "项目内流程：按实际项目模块权限发现应用、筛选实例及子步骤",
+          "status": "verified",
+          "commands": [
+            "project workflow instances context",
+            "project workflow instances list",
+            "project workflow instance children list"
+          ],
+          "review": {
+            "method": "real-http-main-path-and-final-affected-readback",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"project workflow instances context\"",
+            "rsq schema \"project workflow instances list\"",
+            "rsq schema \"project workflow instance children list\""
+          ]
+        }
+      ],
+      "later": [
+        "复杂条件、多人审批、公式/跨表联动的全部组合；不继续扩展非核心重算入口。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "field",
+      "name": "跨业务字段与关联配置",
+      "flows": [
+        {
+          "id": "common-types",
+          "name": "常用文本、数字、单选字段定义及实际赋值、清空、读回与删除",
+          "commands": [
+            "datasheet field create",
+            "datasheet field configure",
+            "datasheet record update",
+            "workflow form field add",
+            "workflow instance fill",
+            "task template field add"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"datasheet field create\"",
+            "rsq schema \"datasheet field configure\"",
+            "rsq schema \"datasheet record update\"",
+            "rsq schema \"workflow form field add\"",
+            "rsq schema \"workflow instance fill\"",
+            "rsq schema \"task template field add\""
+          ]
+        }
+      ],
+      "later": [
+        "各业务全部字段组合、引用/公式依赖与跨业务级联。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "datasheet",
+      "name": "数据表／多维表",
+      "flows": [
+        {
+          "id": "structure",
+          "name": "表创建、复制、改名、常用字段和视图维护、表删除",
+          "commands": [
+            "datasheet table create",
+            "datasheet table inspect",
+            "datasheet table rename",
+            "datasheet table copy",
+            "datasheet table remove",
+            "datasheet field create",
+            "datasheet view create"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"datasheet table create\"",
+            "rsq schema \"datasheet table inspect\"",
+            "rsq schema \"datasheet table rename\"",
+            "rsq schema \"datasheet table copy\"",
+            "rsq schema \"datasheet table remove\"",
+            "rsq schema \"datasheet field create\"",
+            "rsq schema \"datasheet view create\""
+          ]
+        },
+        {
+          "id": "records",
+          "name": "HTTP 记录/单元格创建编辑、常用筛选分页、读取与删除",
+          "commands": [
+            "datasheet describe",
+            "datasheet record create",
+            "datasheet record update",
+            "datasheet record list",
+            "datasheet record get",
+            "datasheet record delete"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"datasheet describe\"",
+            "rsq schema \"datasheet record create\"",
+            "rsq schema \"datasheet record update\"",
+            "rsq schema \"datasheet record list\"",
+            "rsq schema \"datasheet record get\"",
+            "rsq schema \"datasheet record delete\""
+          ]
+        },
+        {
+          "id": "import",
+          "name": "CSV/XLSX 导入并核对实际表、字段和内容",
+          "commands": [
+            "datasheet import"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"datasheet import\""
+          ]
+        },
+        {
+          "id": "collaboration",
+          "name": "数据表记录协作：评论发布、分页、本人删除及非空 revision 历史读回",
+          "status": "verified",
+          "commands": [
+            "datasheet record comments list",
+            "datasheet record comment add",
+            "datasheet record comment remove",
+            "datasheet record activity list"
+          ],
+          "review": {
+            "method": "real-http-main-path-and-final-affected-readback",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"datasheet record comments list\"",
+            "rsq schema \"datasheet record comment add\"",
+            "rsq schema \"datasheet record comment remove\"",
+            "rsq schema \"datasheet record activity list\""
+          ]
+        }
+      ],
+      "later": [
+        "复杂视图筛选引擎、所有字段类型及多角色组合。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "appraisal",
+      "name": "绩效",
+      "flows": [
+        {
+          "id": "templates",
+          "name": "绩效内容与考核模板发现、维护、复制应用、结果核对与清理",
+          "commands": [
+            "appraisal context inspect",
+            "appraisal templates list",
+            "appraisal templates create",
+            "appraisal templates configure",
+            "appraisal templates copy",
+            "appraisal templates remove"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"appraisal context inspect\"",
+            "rsq schema \"appraisal templates list\"",
+            "rsq schema \"appraisal templates create\"",
+            "rsq schema \"appraisal templates configure\"",
+            "rsq schema \"appraisal templates copy\"",
+            "rsq schema \"appraisal templates remove\""
+          ]
+        },
+        {
+          "id": "assessment",
+          "name": "绩效发起周期、填写保存提交、评分提交、完成状态及读回",
+          "commands": [
+            "appraisal context inspect",
+            "appraisal assessments launch",
+            "appraisal assessments inspect",
+            "appraisal assessments entry save",
+            "appraisal assessments score save"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"appraisal context inspect\"",
+            "rsq schema \"appraisal assessments launch\"",
+            "rsq schema \"appraisal assessments inspect\"",
+            "rsq schema \"appraisal assessments entry save\"",
+            "rsq schema \"appraisal assessments score save\""
+          ]
+        }
+      ],
+      "later": [
+        "薪酬、全部校准/面谈/邀请与复杂评分模式；评分清空等服务端缺陷单列。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "okr",
+      "name": "OKR",
+      "flows": [
+        {
+          "id": "objectives",
+          "name": "周期与目标/KR 发现、创建编辑、手工进展、对齐、关联行动和删除",
+          "commands": [
+            "okr objectives context",
+            "okr objectives list",
+            "okr objectives create",
+            "okr objectives rename",
+            "okr objectives progress set",
+            "okr objectives results add",
+            "okr objectives results progress set",
+            "okr objectives remove",
+            "okr actions inspect",
+            "okr actions task create"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"okr objectives context\"",
+            "rsq schema \"okr objectives list\"",
+            "rsq schema \"okr objectives create\"",
+            "rsq schema \"okr objectives rename\"",
+            "rsq schema \"okr objectives progress set\"",
+            "rsq schema \"okr objectives results add\"",
+            "rsq schema \"okr objectives results progress set\"",
+            "rsq schema \"okr objectives remove\"",
+            "rsq schema \"okr actions inspect\"",
+            "rsq schema \"okr actions task create\""
+          ]
+        }
+      ],
+      "later": [
+        "自动进展、绩效联动、所有组织层级与历史计分。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "action",
+      "name": "行动",
+      "flows": [
+        {
+          "id": "workspace",
+          "name": "行动工作区上下文、分组维护、任务筛选分页、视图配置及任务操作",
+          "commands": [
+            "action workspace inspect",
+            "action group add",
+            "action group rename",
+            "action group reorder",
+            "action group tasks",
+            "action group count",
+            "action view configure",
+            "action group remove",
+            "task change",
+            "action task create",
+            "task context inspect",
+            "task remove"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "actual-workspace-task-main-path-and-current-branch-review",
+            "evidenceScope": "representative-password-personal-main-path;not-exhaustive-or-wecom",
+            "note": "保留原生产主流程报告；随后仅新增执行台筛选/优先级分支及未支持类型的拒绝，行动普通自定义组分支未改变，定向回归通过。"
+          },
+          "schemas": [
+            "rsq schema \"action workspace inspect\"",
+            "rsq schema \"action group add\"",
+            "rsq schema \"action group rename\"",
+            "rsq schema \"action group reorder\"",
+            "rsq schema \"action group tasks\"",
+            "rsq schema \"action group count\"",
+            "rsq schema \"action view configure\"",
+            "rsq schema \"action group remove\"",
+            "rsq schema \"task change\"",
+            "rsq schema \"action task create\"",
+            "rsq schema \"task context inspect\"",
+            "rsq schema \"task remove\""
+          ]
+        }
+      ],
+      "later": [
+        "所有组织范围和复杂业务视图。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "execution",
+      "name": "执行台",
+      "flows": [
+        {
+          "id": "workspace",
+          "name": "执行台范围和分组发现、筛选分页、任务创建编辑完成及结果读取",
+          "commands": [
+            "execution scope list",
+            "execution workspace inspect",
+            "execution items list",
+            "execution items count",
+            "execution view configure",
+            "task change",
+            "execution task create",
+            "task context inspect",
+            "task remove"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "actual-workspace-task-main-path-and-current-branch-review",
+            "evidenceScope": "representative-password-personal-main-path;not-exhaustive-or-wecom",
+            "note": "已验证生产混合模式、目标优先级、任务创建编辑完成、查询筛选与非空分页、统计及清理。 Schema 生成修正仅隔离共享属性对象，恢复未提供查询筛选的 fields inspect 参数；业务请求未改变。 显示字段配置路由在正式服务返回 404，明确移入非核心后续；本流程只用任务详情实际字段验证日常操作。"
+          },
+          "schemas": [
+            "rsq schema \"execution scope list\"",
+            "rsq schema \"execution workspace inspect\"",
+            "rsq schema \"execution items list\"",
+            "rsq schema \"execution items count\"",
+            "rsq schema \"execution view configure\"",
+            "rsq schema \"task change\"",
+            "rsq schema \"execution task create\"",
+            "rsq schema \"task context inspect\"",
+            "rsq schema \"task remove\""
+          ]
+        }
+      ],
+      "later": [
+        "公司模式及所有字段分组组合。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "replay",
+      "name": "复盘",
+      "flows": [
+        {
+          "id": "template",
+          "name": "复盘模板发现、创建维护常用内容组件、应用并核对",
+          "commands": [
+            "replay template list",
+            "replay template context",
+            "replay template create",
+            "replay template rename",
+            "replay template question add",
+            "replay template remove",
+            "replay collection add"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"replay template list\"",
+            "rsq schema \"replay template context\"",
+            "rsq schema \"replay template create\"",
+            "rsq schema \"replay template rename\"",
+            "rsq schema \"replay template question add\"",
+            "rsq schema \"replay template remove\"",
+            "rsq schema \"replay collection add\""
+          ]
+        },
+        {
+          "id": "submit-review",
+          "name": "复盘集创建编辑、周期填写、提交、常见审核/撤回、终态读取和清理",
+          "commands": [
+            "replay collection context",
+            "replay collection add",
+            "replay collection rename",
+            "replay collection remove",
+            "replay report context"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"replay collection context\"",
+            "rsq schema \"replay collection add\"",
+            "rsq schema \"replay collection rename\"",
+            "rsq schema \"replay collection remove\"",
+            "rsq schema \"replay report context\""
+          ]
+        },
+        {
+          "id": "topic",
+          "name": "专题复盘创建、初始正文和元信息、原生任务、评论及读取清理",
+          "commands": [
+            "replay topic list",
+            "replay topic create",
+            "replay topic context",
+            "replay topic update",
+            "replay topic remove"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"replay topic list\"",
+            "rsq schema \"replay topic create\"",
+            "rsq schema \"replay topic context\"",
+            "rsq schema \"replay topic update\"",
+            "rsq schema \"replay topic remove\""
+          ]
+        }
+      ],
+      "later": [
+        "教练、智能规则、多人审核与全部周期/内容组合；简报已排除。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "doc",
+      "name": "文档与知识库",
+      "flows": [
+        {
+          "id": "documents",
+          "name": "知识库/目录与文档创建、初始正文、元信息编辑、复制移动、读取及删除",
+          "commands": [
+            "doc spaces list",
+            "doc space create",
+            "doc tree inspect",
+            "doc folder create",
+            "doc create",
+            "doc inspect",
+            "doc body get",
+            "doc rename",
+            "doc copy",
+            "doc move",
+            "doc remove"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"doc spaces list\"",
+            "rsq schema \"doc space create\"",
+            "rsq schema \"doc tree inspect\"",
+            "rsq schema \"doc folder create\"",
+            "rsq schema \"doc create\"",
+            "rsq schema \"doc inspect\"",
+            "rsq schema \"doc body get\"",
+            "rsq schema \"doc rename\"",
+            "rsq schema \"doc copy\"",
+            "rsq schema \"doc move\"",
+            "rsq schema \"doc remove\""
+          ]
+        },
+        {
+          "id": "templates-drafts",
+          "name": "个人文档模板发现维护、应用核对，个人草稿发布及内容读取",
+          "commands": [
+            "doc templates list",
+            "doc template inspect",
+            "doc template create",
+            "doc template rename",
+            "doc template apply",
+            "doc template save",
+            "doc draft publish"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"doc templates list\"",
+            "rsq schema \"doc template inspect\"",
+            "rsq schema \"doc template create\"",
+            "rsq schema \"doc template rename\"",
+            "rsq schema \"doc template apply\"",
+            "rsq schema \"doc template save\"",
+            "rsq schema \"doc draft publish\""
+          ]
+        }
+      ],
+      "later": [
+        "现有协同正文覆盖编辑和多人同步不纳入本阶段；WS 协作不实现，不能声称支持 HTTP 原子正文版本。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "file",
+      "name": "云盘、文件与附件",
+      "flows": [
+        {
+          "id": "lifecycle",
+          "name": "文件库/目录创建维护、上传秒传、文件替换/复制移动、读取及删除",
+          "commands": [
+            "file library list",
+            "file library create",
+            "file folder create",
+            "file entry upload",
+            "file entry rename",
+            "file entry copy",
+            "file entry move",
+            "file entry replace",
+            "file entry remove"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"file library list\"",
+            "rsq schema \"file library create\"",
+            "rsq schema \"file folder create\"",
+            "rsq schema \"file entry upload\"",
+            "rsq schema \"file entry rename\"",
+            "rsq schema \"file entry copy\"",
+            "rsq schema \"file entry move\"",
+            "rsq schema \"file entry replace\"",
+            "rsq schema \"file entry remove\""
+          ]
+        }
+      ],
+      "later": [
+        "MinIO 与全部角色/文件类型组合。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "deliverable",
+      "name": "交付物",
+      "flows": [
+        {
+          "id": "directories",
+          "name": "交付物模块启用、分类维护、普通基线创建、读取及清理",
+          "commands": [
+            "deliverable context",
+            "deliverable enable",
+            "deliverable category create",
+            "deliverable category rename",
+            "deliverable category move",
+            "deliverable category remove",
+            "deliverable baseline create",
+            "deliverable baseline remove"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"deliverable context\"",
+            "rsq schema \"deliverable enable\"",
+            "rsq schema \"deliverable category create\"",
+            "rsq schema \"deliverable category rename\"",
+            "rsq schema \"deliverable category move\"",
+            "rsq schema \"deliverable category remove\"",
+            "rsq schema \"deliverable baseline create\"",
+            "rsq schema \"deliverable baseline remove\""
+          ]
+        },
+        {
+          "id": "files",
+          "name": "交付物文件上传、替换、版本、移动、任务关联、读取及删除",
+          "commands": [
+            "deliverable file upload",
+            "deliverable file replace",
+            "deliverable files list",
+            "deliverable file get",
+            "deliverable file move",
+            "deliverable file remove",
+            "deliverable version snapshot",
+            "deliverable task link"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom",
+            "note": "普通项目文件主路径的独立成功场景与清理已核对；随后非核心历史基线查询失败，保留整份失败报告，不把基线提升为成功。任务关联使用原有独立通过记录。"
+          },
+          "schemas": [
+            "rsq schema \"deliverable file upload\"",
+            "rsq schema \"deliverable file replace\"",
+            "rsq schema \"deliverable files list\"",
+            "rsq schema \"deliverable file get\"",
+            "rsq schema \"deliverable file move\"",
+            "rsq schema \"deliverable file remove\"",
+            "rsq schema \"deliverable version snapshot\"",
+            "rsq schema \"deliverable task link\""
+          ]
+        }
+      ],
+      "later": [
+        "全部历史基线策略、版本组合与 MinIO。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "company-statistics",
+      "name": "公司统计",
+      "flows": [
+        {
+          "id": "reports",
+          "name": "公司统计概览、成员/任务/项目分析、常用筛选分页与 OKR/流程下钻",
+          "commands": [
+            "statistics company context get",
+            "statistics company usage context",
+            "statistics company usage list",
+            "statistics company task summary",
+            "statistics company person analyze",
+            "statistics company okr people analyze",
+            "statistics company workflow people analyze"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"statistics company context get\"",
+            "rsq schema \"statistics company usage context\"",
+            "rsq schema \"statistics company usage list\"",
+            "rsq schema \"statistics company task summary\"",
+            "rsq schema \"statistics company person analyze\"",
+            "rsq schema \"statistics company okr people analyze\"",
+            "rsq schema \"statistics company workflow people analyze\""
+          ]
+        }
+      ],
+      "later": [
+        "公司历史全量 totalInfo 超时单列；不穷尽所有指标和日期组合。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "project-statistics",
+      "name": "项目统计模块",
+      "flows": [
+        {
+          "id": "dashboard",
+          "name": "项目统计模块与仪表盘/自定义图表创建编辑、布局、计算读取及删除",
+          "commands": [
+            "statistics project module enable",
+            "statistics project dashboard create",
+            "statistics project dashboard update",
+            "statistics project chart create",
+            "statistics project chart update",
+            "statistics project chart layout update",
+            "statistics project chart get",
+            "statistics project chart delete",
+            "statistics project dashboard delete"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"statistics project module enable\"",
+            "rsq schema \"statistics project dashboard create\"",
+            "rsq schema \"statistics project dashboard update\"",
+            "rsq schema \"statistics project chart create\"",
+            "rsq schema \"statistics project chart update\"",
+            "rsq schema \"statistics project chart layout update\"",
+            "rsq schema \"statistics project chart get\"",
+            "rsq schema \"statistics project chart delete\"",
+            "rsq schema \"statistics project dashboard delete\""
+          ]
+        },
+        {
+          "id": "drilldown",
+          "name": "任务、风险、流程与数据表图表来源发现、正常分页和必要下钻",
+          "commands": [
+            "statistics project drilldown discover",
+            "statistics project drilldown tasks list",
+            "statistics project drilldown risks list",
+            "statistics project drilldown workflows list",
+            "statistics project drilldown records list"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom",
+            "note": "保留任务、风险、流程记录；本次仅回归受影响的数据表分支。修正默认排序、Loom 的 token+Cookie 和随机指标列归一化后，实际记录分页及来源重读通过。"
+          },
+          "schemas": [
+            "rsq schema \"statistics project drilldown discover\"",
+            "rsq schema \"statistics project drilldown tasks list\"",
+            "rsq schema \"statistics project drilldown risks list\"",
+            "rsq schema \"statistics project drilldown workflows list\"",
+            "rsq schema \"statistics project drilldown records list\""
+          ]
+        }
+      ],
+      "later": [
+        "项目集、全部图表指标与罕见筛选组合。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "contact",
+      "name": "通讯录",
+      "flows": [
+        {
+          "id": "organization",
+          "name": "通讯录、部门层级和小组发现、创建维护、成员归属及删除读回",
+          "commands": [
+            "contact department list",
+            "contact department create",
+            "contact department update",
+            "contact department remove",
+            "contact group create",
+            "contact group rename",
+            "contact group remove"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"contact department list\"",
+            "rsq schema \"contact department create\"",
+            "rsq schema \"contact department update\"",
+            "rsq schema \"contact department remove\"",
+            "rsq schema \"contact group create\"",
+            "rsq schema \"contact group rename\"",
+            "rsq schema \"contact group remove\""
+          ]
+        }
+      ],
+      "later": [
+        "邀请外部真实人员、多用户可见性与所有角色组合。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "company-management",
+      "name": "组织管理",
+      "flows": [
+        {
+          "id": "lifecycle",
+          "name": "公司创建、资料维护、切换、成员/角色上下文及隔离测试公司解散",
+          "commands": [
+            "organization list",
+            "organization create",
+            "organization switch",
+            "organization context",
+            "organization update",
+            "organization lifecycle context",
+            "organization remove",
+            "organization roles company list",
+            "organization role company create",
+            "organization role company permissions set"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"organization list\"",
+            "rsq schema \"organization create\"",
+            "rsq schema \"organization switch\"",
+            "rsq schema \"organization context\"",
+            "rsq schema \"organization update\"",
+            "rsq schema \"organization lifecycle context\"",
+            "rsq schema \"organization remove\"",
+            "rsq schema \"organization roles company list\"",
+            "rsq schema \"organization role company create\"",
+            "rsq schema \"organization role company permissions set\""
+          ]
+        },
+        {
+          "id": "apps-billing-developer",
+          "name": "当前应用、到期/容量/套餐与开发配置的有权读取及安全维护入口",
+          "commands": [
+            "statistics company usage context",
+            "organization developer context",
+            "organization context"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"statistics company usage context\"",
+            "rsq schema \"organization developer context\"",
+            "rsq schema \"organization context\""
+          ]
+        }
+      ],
+      "later": [
+        "实际付费下单、真实成员高危操作及密钥轮换不纳入代表性验收。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "cooperation",
+      "name": "协作",
+      "flows": [
+        {
+          "id": "queries",
+          "name": "协作任务与流程的正常范围筛选、分页及资源定位",
+          "commands": [
+            "cooperation tasks executing list",
+            "cooperation tasks participating list",
+            "cooperation tasks created list",
+            "cooperation workflow context",
+            "cooperation workflow list"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"cooperation tasks executing list\"",
+            "rsq schema \"cooperation tasks participating list\"",
+            "rsq schema \"cooperation tasks created list\"",
+            "rsq schema \"cooperation workflow context\"",
+            "rsq schema \"cooperation workflow list\""
+          ]
+        }
+      ],
+      "later": [
+        "其他身份、他人任务和全部协作状态。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "notify",
+      "name": "通知",
+      "flows": [
+        {
+          "id": "messages",
+          "name": "通知读取、业务分类和分页、已读状态维护及读回",
+          "commands": [
+            "notification list",
+            "notification unread list",
+            "notification unread count",
+            "notification read",
+            "notification settings inspect",
+            "notification settings set"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"notification list\"",
+            "rsq schema \"notification unread list\"",
+            "rsq schema \"notification unread count\"",
+            "rsq schema \"notification read\"",
+            "rsq schema \"notification settings inspect\"",
+            "rsq schema \"notification settings set\""
+          ]
+        }
+      ],
+      "later": [
+        "多用户消息送达与所有消息类别。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "search",
+      "name": "全局搜索",
+      "flows": [
+        {
+          "id": "query",
+          "name": "跨业务类型发现、正常筛选分页、实际资源搜索命中与定位",
+          "commands": [
+            "search types",
+            "search query",
+            "search suggest"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"search types\"",
+            "rsq schema \"search query\"",
+            "rsq schema \"search suggest\""
+          ]
+        }
+      ],
+      "later": [
+        "全部资源类型、排序和权限组合。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "archive",
+      "name": "档案与回收站",
+      "flows": [
+        {
+          "id": "restore",
+          "name": "资源归档/回收站发现、归档、恢复、必要清理及原资源读回",
+          "commands": [
+            "archive groups list",
+            "archive group create",
+            "archive context",
+            "archive bag create",
+            "archive task restore",
+            "task archive"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"archive groups list\"",
+            "rsq schema \"archive group create\"",
+            "rsq schema \"archive context\"",
+            "rsq schema \"archive bag create\"",
+            "rsq schema \"archive task restore\"",
+            "rsq schema \"task archive\""
+          ]
+        }
+      ],
+      "later": [
+        "所有归档资源类型和嵌套权限。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "collection",
+      "name": "收藏与灵感",
+      "flows": [
+        {
+          "id": "personal",
+          "name": "收藏和灵感发现、创建编辑、状态读取与删除",
+          "commands": [
+            "favorite list",
+            "favorite add link",
+            "favorite remove",
+            "inspiration list",
+            "inspiration create",
+            "inspiration update",
+            "inspiration remove"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"favorite list\"",
+            "rsq schema \"favorite add link\"",
+            "rsq schema \"favorite remove\"",
+            "rsq schema \"inspiration list\"",
+            "rsq schema \"inspiration create\"",
+            "rsq schema \"inspiration update\"",
+            "rsq schema \"inspiration remove\""
+          ]
+        }
+      ],
+      "later": [
+        "全部业务收藏来源。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "minder",
+      "name": "思维导图",
+      "flows": [
+        {
+          "id": "content",
+          "name": "思维导图发现、创建编辑内容/名称、读取、回收/恢复和清理",
+          "commands": [
+            "minder list",
+            "minder create",
+            "minder inspect",
+            "minder rename",
+            "minder content replace",
+            "minder remove",
+            "minder recycle restore"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"minder list\"",
+            "rsq schema \"minder create\"",
+            "rsq schema \"minder inspect\"",
+            "rsq schema \"minder rename\"",
+            "rsq schema \"minder content replace\"",
+            "rsq schema \"minder remove\"",
+            "rsq schema \"minder recycle restore\""
+          ]
+        }
+      ],
+      "later": [
+        "全部 KityMinder 节点属性组合。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "efficiency",
+      "name": "效率中心",
+      "flows": [
+        {
+          "id": "personal",
+          "name": "效率设置读取维护、当日统计、番茄钟完成/放弃及结果读取",
+          "commands": [
+            "efficiency settings inspect",
+            "efficiency settings set",
+            "efficiency today inspect",
+            "efficiency focus inspect",
+            "efficiency tomato complete",
+            "efficiency tomato abandon"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"efficiency settings inspect\"",
+            "rsq schema \"efficiency settings set\"",
+            "rsq schema \"efficiency today inspect\"",
+            "rsq schema \"efficiency focus inspect\"",
+            "rsq schema \"efficiency tomato complete\"",
+            "rsq schema \"efficiency tomato abandon\""
+          ]
+        }
+      ],
+      "later": [
+        "全部统计时间粒度。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "automation",
+      "name": "自动化",
+      "flows": [
+        {
+          "id": "rules",
+          "name": "自动化规则发现、创建复制、常用触发/动作配置、启停与删除",
+          "commands": [
+            "automation context",
+            "automation resources",
+            "automation rules list",
+            "automation rule create",
+            "automation rule copy",
+            "automation rule configure",
+            "automation rule state set",
+            "automation rule remove"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"automation context\"",
+            "rsq schema \"automation resources\"",
+            "rsq schema \"automation rules list\"",
+            "rsq schema \"automation rule create\"",
+            "rsq schema \"automation rule copy\"",
+            "rsq schema \"automation rule configure\"",
+            "rsq schema \"automation rule state set\"",
+            "rsq schema \"automation rule remove\""
+          ]
+        },
+        {
+          "id": "execution",
+          "name": "一条常用规则触发执行，读回实际目标业务结果",
+          "commands": [
+            "task context inspect",
+            "task change",
+            "automation rule logs"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "representative-live-trigger-and-independent-target-readback",
+            "evidenceScope": "self-owned-project-auto-complete-parent;password",
+            "note": "自动规则由两个实际子任务完成事件触发；父任务无直接完成请求，实际父任务及成功日志均已读回。"
+          },
+          "schemas": [
+            "rsq schema \"task context inspect\"",
+            "rsq schema \"task change\"",
+            "rsq schema \"automation rule logs\""
+          ]
+        }
+      ],
+      "later": [
+        "全部触发器/动作、并发与罕见恢复组合。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "ai",
+      "name": "AI 员工",
+      "flows": [
+        {
+          "id": "market-conversation",
+          "name": "AI 员工发现、订阅和会话的 HTTP 主路径",
+          "commands": [
+            "ai market list",
+            "ai market get",
+            "ai subscriptions list",
+            "ai subscriptions subscribe",
+            "ai conversation create",
+            "ai conversation resolve"
+          ],
+          "status": "blocked",
+          "blockers": [
+            "已授权组织未开通所需 AI 能力；拒绝分支不算成功，不能绕过套餐或自行付费。HTTP 会话及执行成功路径仍待有权限条件验证。"
+          ],
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"ai market list\"",
+            "rsq schema \"ai market get\"",
+            "rsq schema \"ai subscriptions list\"",
+            "rsq schema \"ai subscriptions subscribe\"",
+            "rsq schema \"ai conversation create\"",
+            "rsq schema \"ai conversation resolve\""
+          ]
+        }
+      ],
+      "later": [
+        "收费订阅、模型密钥和全部模型组合；WS 消息排除。"
+      ],
+      "status": "blocked"
+    },
+    {
+      "id": "import",
+      "name": "项目导入",
+      "flows": [
+        {
+          "id": "project",
+          "name": "项目导入发现、HTTP 上传一次、异步结果恢复及实际任务内容核对",
+          "commands": [
+            "project import context",
+            "project import tasks list",
+            "project import task inspect",
+            "project import excel inspect",
+            "project import excel apply",
+            "project import excel verify"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"project import context\"",
+            "rsq schema \"project import tasks list\"",
+            "rsq schema \"project import task inspect\"",
+            "rsq schema \"project import excel inspect\"",
+            "rsq schema \"project import excel apply\"",
+            "rsq schema \"project import excel verify\""
+          ]
+        }
+      ],
+      "later": [
+        "所有第三方项目格式与大文件边界。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "share",
+      "name": "分享",
+      "flows": [
+        {
+          "id": "access",
+          "name": "文档/知识库分享发现、启用、匿名实际内容读取、撤销及拒绝读回",
+          "commands": [
+            "doc share inspect",
+            "doc share enable",
+            "doc share disable",
+            "doc space publication inspect",
+            "doc space publication enable",
+            "doc space publication disable"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"doc share inspect\"",
+            "rsq schema \"doc share enable\"",
+            "rsq schema \"doc share disable\"",
+            "rsq schema \"doc space publication inspect\"",
+            "rsq schema \"doc space publication enable\"",
+            "rsq schema \"doc space publication disable\""
+          ]
+        }
+      ],
+      "later": [
+        "其他资源的全部分享模式；私有文档禁止误发布的服务端缺陷保留防护。"
+      ],
+      "status": "verified"
+    },
+    {
+      "id": "signature",
+      "name": "签名",
+      "flows": [
+        {
+          "id": "manage",
+          "name": "本人签名读取、文件上传登记及实际归属读回",
+          "commands": [
+            "signature latest",
+            "signature upload",
+            "signature register"
+          ],
+          "status": "verified",
+          "review": {
+            "method": "current-main-path-commands-and-retained-real-http-report-review",
+            "evidenceScope": "representative-password-main-path;not-exhaustive-or-wecom"
+          },
+          "schemas": [
+            "rsq schema \"signature latest\"",
+            "rsq schema \"signature upload\"",
+            "rsq schema \"signature register\""
+          ]
+        }
+      ],
+      "later": [
+        "所有使用签名的业务场景。"
+      ],
+      "status": "verified"
+    }
+  ]
+}

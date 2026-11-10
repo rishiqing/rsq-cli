@@ -1,0 +1,1013 @@
+{
+  "version": 1,
+  "types": [
+    {
+      "name": "Number",
+      "type": 1,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "defaultValue": {
+            "type": "string"
+          },
+          "precision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "unit": {
+            "type": "string"
+          },
+          "unitAlign": {
+            "type": "integer",
+            "enum": [
+              1,
+              2,
+              3
+            ]
+          },
+          "rate": {
+            "type": "number"
+          },
+          "max": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "precision",
+          "unit",
+          "unitAlign",
+          "rate"
+        ],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "defaultValue": "",
+        "precision": 1,
+        "unit": "",
+        "unitAlign": 3,
+        "rate": 1
+      }
+    },
+    {
+      "name": "Text",
+      "type": 2,
+      "attrSchema": {
+        "type": "null"
+      },
+      "defaultAttr": null
+    },
+    {
+      "name": "SingleText",
+      "type": 3,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "defaultValue": {
+            "type": "string"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "defaultValue": ""
+      }
+    },
+    {
+      "name": "Currency",
+      "type": 4,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "defaultValue": {
+            "type": "string"
+          },
+          "precision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "unit": {
+            "type": "string"
+          },
+          "unitAlign": {
+            "type": "integer",
+            "enum": [
+              1,
+              2,
+              3
+            ]
+          },
+          "rate": {
+            "type": "number"
+          },
+          "max": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "precision",
+          "unit",
+          "unitAlign",
+          "rate"
+        ],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "defaultValue": "",
+        "precision": 1,
+        "unit": "CNY - ¥",
+        "unitAlign": 1,
+        "rate": 1
+      }
+    },
+    {
+      "name": "Percent",
+      "type": 5,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "defaultValue": {
+            "type": "string"
+          },
+          "precision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "unit": {
+            "type": "string"
+          },
+          "unitAlign": {
+            "type": "integer",
+            "enum": [
+              1,
+              2,
+              3
+            ]
+          },
+          "rate": {
+            "type": "number"
+          },
+          "max": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "precision",
+          "unit",
+          "unitAlign",
+          "rate"
+        ],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "defaultValue": "",
+        "precision": 1,
+        "unit": "%",
+        "unitAlign": 1,
+        "rate": 0.01
+      }
+    },
+    {
+      "name": "Rank",
+      "type": 6,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "defaultValue": {
+            "type": "string"
+          },
+          "precision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "unit": {
+            "type": "string"
+          },
+          "unitAlign": {
+            "type": "integer",
+            "enum": [
+              1,
+              2,
+              3
+            ]
+          },
+          "rate": {
+            "type": "number"
+          },
+          "max": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "precision",
+          "unit",
+          "unitAlign",
+          "rate"
+        ],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "precision": 0,
+        "unit": "",
+        "unitAlign": 1,
+        "rate": 1,
+        "max": 5
+      }
+    },
+    {
+      "name": "SingleSelect",
+      "type": 7,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "defaultValue": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "optionList": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]+$"
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "color": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 39
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "color"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "optionList"
+        ],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "defaultValue": [],
+        "optionList": []
+      }
+    },
+    {
+      "name": "MultiSelect",
+      "type": 8,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "defaultValue": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "optionList": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]+$"
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "color": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 39
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "color"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "optionList"
+        ],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "defaultValue": [],
+        "optionList": []
+      }
+    },
+    {
+      "name": "DateTime",
+      "type": 9,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "dateFormat": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 13
+          },
+          "timeFormat": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ]
+          },
+          "showTime": {
+            "type": "boolean"
+          },
+          "autoFill": {
+            "type": "boolean"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "showTimeZone": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "dateFormat",
+          "timeFormat",
+          "showTime",
+          "autoFill"
+        ],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "dateFormat": 0,
+        "timeFormat": 0,
+        "showTime": false,
+        "autoFill": false
+      }
+    },
+    {
+      "name": "Checkbox",
+      "type": 10,
+      "attrSchema": {
+        "type": "null"
+      },
+      "defaultAttr": null
+    },
+    {
+      "name": "Attach",
+      "type": 11,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "isMulti": {
+            "type": "boolean"
+          },
+          "layout": {
+            "enum": [
+              0,
+              1
+            ]
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "isMulti": true,
+        "layout": 1
+      }
+    },
+    {
+      "name": "Url",
+      "type": 12,
+      "attrSchema": {
+        "type": "null"
+      },
+      "defaultAttr": null
+    },
+    {
+      "name": "Tel",
+      "type": 13,
+      "attrSchema": {
+        "type": "null"
+      },
+      "defaultAttr": null
+    },
+    {
+      "name": "Email",
+      "type": 14,
+      "attrSchema": {
+        "type": "null"
+      },
+      "defaultAttr": null
+    },
+    {
+      "name": "AutoNumber",
+      "type": 15,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "nextId": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "viewIdx": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "ruleList": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "rule": {
+                  "enum": [
+                    "string",
+                    "autoNumber",
+                    "createTime"
+                  ]
+                },
+                "text": {
+                  "type": "string"
+                },
+                "format": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 13
+                },
+                "digit": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "rule"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "nextId",
+          "viewIdx",
+          "ruleList"
+        ],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "nextId": 0,
+        "viewIdx": 0,
+        "ruleList": [
+          {
+            "rule": "autoNumber",
+            "text": "",
+            "format": null,
+            "digit": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "Formula",
+      "type": 16,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string"
+          },
+          "datasheetId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "formatting": {
+            "type": "object",
+            "properties": {
+              "precision": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10
+              },
+              "dateFormat": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 13
+              },
+              "timeFormat": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ]
+              },
+              "showTime": {
+                "type": "boolean"
+              },
+              "unit": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "expression",
+          "datasheetId"
+        ],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "expression": "",
+        "datasheetId": "",
+        "formatting": {
+          "precision": 1,
+          "dateFormat": 0,
+          "timeFormat": 0,
+          "showTime": false
+        }
+      }
+    },
+    {
+      "name": "Member",
+      "type": 17,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "notify": {
+            "type": "boolean"
+          },
+          "isMulti": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "isMulti"
+        ],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "isMulti": false,
+        "notify": false
+      }
+    },
+    {
+      "name": "Dept",
+      "type": 18,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "isMulti": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "isMulti"
+        ],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "isMulti": false
+      }
+    },
+    {
+      "name": "CreatedMember",
+      "type": 19,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "notify": {
+            "type": "boolean"
+          },
+          "isMulti": {
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "isMulti": false,
+        "notify": false
+      }
+    },
+    {
+      "name": "ModifiedMember",
+      "type": 20,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "notify": {
+            "type": "boolean"
+          },
+          "isMulti": {
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "isMulti": false,
+        "notify": false
+      }
+    },
+    {
+      "name": "CreatedTime",
+      "type": 21,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "dateFormat": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 13
+          },
+          "timeFormat": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ]
+          },
+          "showTime": {
+            "type": "boolean"
+          },
+          "autoFill": {
+            "type": "boolean"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "showTimeZone": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "dateFormat",
+          "timeFormat",
+          "showTime",
+          "autoFill"
+        ],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "dateFormat": 0,
+        "timeFormat": 0,
+        "showTime": false,
+        "autoFill": true
+      }
+    },
+    {
+      "name": "ModifiedTime",
+      "type": 22,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "dateFormat": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 13
+          },
+          "timeFormat": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ]
+          },
+          "showTime": {
+            "type": "boolean"
+          },
+          "autoFill": {
+            "type": "boolean"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "showTimeZone": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "dateFormat",
+          "timeFormat",
+          "showTime",
+          "autoFill"
+        ],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "dateFormat": 0,
+        "timeFormat": 0,
+        "showTime": false,
+        "autoFill": true
+      }
+    },
+    {
+      "name": "Link",
+      "type": 23,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "datasheetId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "linkDatasheetId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "multipleRecord": {
+            "type": "boolean"
+          },
+          "customField": {
+            "type": "boolean"
+          },
+          "customFieldIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]+$"
+            },
+            "uniqueItems": true
+          },
+          "requiredFieldIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]+$"
+            },
+            "uniqueItems": true
+          },
+          "projectId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "canAddRecord": {
+            "type": "boolean"
+          },
+          "linkType": {
+            "enum": [
+              1,
+              2,
+              3,
+              4,
+              null
+            ]
+          }
+        },
+        "required": [
+          "datasheetId",
+          "linkDatasheetId"
+        ],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "datasheetId": "",
+        "linkDatasheetId": "",
+        "multipleRecord": true,
+        "customField": false,
+        "customFieldIds": [],
+        "projectId": null,
+        "canAddRecord": true,
+        "linkType": 1
+      }
+    },
+    {
+      "name": "LookUp",
+      "type": 24,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "datasheetId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "linkDatasheetId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "lookUpTargetFieldId": {
+            "type": "string"
+          },
+          "rollUpType": {
+            "enum": [
+              "VALUE",
+              "ARRAYUNIQUE",
+              "VALUEALL",
+              "COUNTA",
+              "COUNTARU",
+              "SUM",
+              "AVERAGE",
+              "MAX",
+              "MIN"
+            ]
+          },
+          "formatting": {
+            "type": "object",
+            "properties": {
+              "precision": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10
+              },
+              "dateFormat": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 13
+              },
+              "timeFormat": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ]
+              },
+              "showTime": {
+                "type": "boolean"
+              },
+              "unit": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "filterInfo": {
+            "type": "object",
+            "properties": {
+              "conjunction": {
+                "type": "string",
+                "enum": [
+                  "and",
+                  "or"
+                ]
+              },
+              "conditions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            },
+            "required": [
+              "conjunction",
+              "conditions"
+            ],
+            "additionalProperties": false
+          },
+          "lookUpTargetType": {
+            "enum": [
+              "datasheet",
+              "workflow",
+              null
+            ]
+          },
+          "flowApplicationId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "linkStepId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "lookUpTargetStepFieldId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "datasheetId"
+        ],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "datasheetId": "",
+        "linkDatasheetId": "",
+        "lookUpTargetFieldId": "",
+        "projectId": null,
+        "flowApplicationId": null,
+        "rollUpType": "VALUE",
+        "formatting": {
+          "precision": 1
+        },
+        "filterInfo": {
+          "conjunction": "and",
+          "conditions": []
+        },
+        "lookUpTargetType": null,
+        "linkStepId": null,
+        "lookUpTargetStepFieldId": null
+      }
+    },
+    {
+      "name": "Workflow",
+      "type": 25,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "allowAny": {
+            "type": "boolean"
+          },
+          "applicationId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "appMode": {
+            "type": "integer"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "allowAny": true,
+        "applicationId": null,
+        "appMode": 0
+      }
+    },
+    {
+      "name": "Project",
+      "type": 26,
+      "attrSchema": {
+        "type": "object",
+        "properties": {
+          "isMulti": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "isMulti"
+        ],
+        "additionalProperties": false
+      },
+      "defaultAttr": {
+        "isMulti": false
+      }
+    }
+  ]
+}
