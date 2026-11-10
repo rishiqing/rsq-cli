@@ -1,0 +1,515 @@
+{
+  "version": 1,
+  "operations": [
+    {
+      "id": "rsq.fab66ba21291",
+      "service": "account",
+      "method": "GET",
+      "route": "/task/v1/search/searchAll",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "read",
+      "idempotency": "idempotent",
+      "response": "json",
+      "encoding": "json",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "keyword": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "type": {
+                "enum": [
+                  "todo",
+                  "corpus",
+                  "file",
+                  "archive",
+                  "recycleBin"
+                ]
+              },
+              "from": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9900
+              },
+              "size": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100
+              }
+            },
+            "required": [
+              "keyword"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "integer"
+          },
+          "from": {
+            "type": "integer"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "selfId": {
+                  "type": [
+                    "string",
+                    "integer",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "parentIds": {
+                  "type": [
+                    "object",
+                    "array",
+                    "null"
+                  ]
+                },
+                "isNotDisplay": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "corpusType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "selfId",
+                "type"
+              ],
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "size",
+          "from",
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "command": "search transport query",
+      "description": "当前主框架跨业务搜索，按权限索引查询并保留真实 from/size；无 total。memberId 未在实现中使用，CLI 不暴露会被忽略的成员筛选；项目分类用安全的全类型查询再筛选。",
+      "review": "inferred"
+    },
+    {
+      "id": "rsq.6633754bc96c",
+      "service": "account",
+      "method": "GET",
+      "route": "/task/v1/search/preSearch",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "read",
+      "idempotency": "idempotent",
+      "response": "json",
+      "encoding": "json",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "keyword": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              }
+            },
+            "required": [
+              "keyword"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "todo": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "selfId": {
+                  "type": [
+                    "string",
+                    "integer",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "parentIds": {
+                  "type": [
+                    "object",
+                    "array",
+                    "null"
+                  ]
+                },
+                "isNotDisplay": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "corpusType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "selfId",
+                "type"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "kanban": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "selfId": {
+                  "type": [
+                    "string",
+                    "integer",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "parentIds": {
+                  "type": [
+                    "object",
+                    "array",
+                    "null"
+                  ]
+                },
+                "isNotDisplay": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "corpusType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "selfId",
+                "type"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "corpus": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "selfId": {
+                  "type": [
+                    "string",
+                    "integer",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "parentIds": {
+                  "type": [
+                    "object",
+                    "array",
+                    "null"
+                  ]
+                },
+                "isNotDisplay": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "corpusType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "selfId",
+                "type"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "file": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "selfId": {
+                  "type": [
+                    "string",
+                    "integer",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "parentIds": {
+                  "type": [
+                    "object",
+                    "array",
+                    "null"
+                  ]
+                },
+                "isNotDisplay": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "corpusType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "selfId",
+                "type"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "recycleBin": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "selfId": {
+                  "type": [
+                    "string",
+                    "integer",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "parentIds": {
+                  "type": [
+                    "object",
+                    "array",
+                    "null"
+                  ]
+                },
+                "isNotDisplay": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "corpusType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "selfId",
+                "type"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "archive": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "selfId": {
+                  "type": [
+                    "string",
+                    "integer",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "parentIds": {
+                  "type": [
+                    "object",
+                    "array",
+                    "null"
+                  ]
+                },
+                "isNotDisplay": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "corpusType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "selfId",
+                "type"
+              ],
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "todo",
+          "kanban",
+          "corpus",
+          "file",
+          "recycleBin",
+          "archive"
+        ],
+        "additionalProperties": false
+      },
+      "command": "search transport suggest",
+      "description": "当前主框架快速搜索：各类最多 4 条；项目分类的成员过滤存在后端缺陷，CLI 通过安全成员范围查询交叉核对后才显示项目候选，不能直接输出该原始响应。",
+      "review": "inferred"
+    }
+  ]
+}

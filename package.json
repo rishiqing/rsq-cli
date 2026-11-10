@@ -1,0 +1,60 @@
+{
+  "name": "@rishiqing/rsq-cli",
+  "version": "0.1.0-preview.6",
+  "description": "日事清业务命令行与 Agent 接口目录",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "rsq": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "contracts/operations.json",
+    "contracts/workflows.json",
+    "contracts/business.json",
+    "contracts/main-flows.json",
+    "contracts/datasheet-fields.json",
+    "contracts/arms-usage-http.json",
+    "skills",
+    "docs",
+    "README.md"
+  ],
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "contracts:check": "npm run build && node scripts/check-coverage.mjs",
+    "package:check": "node scripts/package-check.mjs",
+    "public:check": "node scripts/public-check.mjs",
+    "prepublishOnly": "npm test && npm run contracts:check && npm run public:check && npm run package:check",
+    "release:build": "npm run build && node scripts/build-release.mjs"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ali-oss": "6.23.0",
+    "big.js": "6.2.2",
+    "commander": "^14.0.0",
+    "fflate": "0.8.2",
+    "ot-json1": "1.0.2",
+    "rrule": "2.8.1",
+    "tough-cookie": "^6.0.0",
+    "xml2js": "0.6.2",
+    "zod": "4.1.9"
+  },
+  "devDependencies": {
+    "@types/ali-oss": "6.23.4",
+    "@types/big.js": "6.2.2",
+    "@types/node": "^22.0.0",
+    "@types/xml2js": "0.4.14",
+    "randexp": "^0.5.3",
+    "typescript": "~5.9.0"
+  },
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rishiqing/rsq-cli.git"
+  },
+  "homepage": "https://github.com/rishiqing/rsq-cli"
+}
