@@ -122,7 +122,8 @@ export async function upgradeRelease(options: UpgradeOptions, services: Services
   if (options.check) return { status: comparison > 0 ? 'update_available' : 'up_to_date', ...plan, updateAvailable: comparison > 0 }
   if (!options.rollback && !options.force && (comparison === 0 || comparison < 0 && !options.version)) return { status: 'up_to_date', ...plan }
   root ??= await managedRoot(services.root)
-  if (!options.yes && !await services.confirm?.(plan)) throw new RsqError('CONFIRMATION_REQUIRED', '升级或回滚需要确认；非交互调用请使用 --yes。', 2)
+  const requiresConfirmation = options.rollback || options.version !== undefined || options.force
+  if (requiresConfirmation && !options.yes && !await services.confirm?.(plan)) throw new RsqError('CONFIRMATION_REQUIRED', '指定版本、重新安装或回滚需要确认；非交互调用请使用 --yes。', 2)
   const lock = join(root, '.update-lock')
   try { await mkdir(lock) } catch { fail('UPDATE_IN_PROGRESS', '另一个安装或升级正在运行；请在其完成后重试。') }
   let temporary: string | undefined

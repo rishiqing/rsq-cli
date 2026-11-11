@@ -104,9 +104,10 @@ Schema 返回当前安装的 Skill 路径。操作前获取资源上下文，执
 ## 更新
 
 ```sh
-rsq upgrade --check
-rsq upgrade --yes
+rsq upgrade
 ```
+
+有新版本时自动升级；没有更新时直接结束，无需确认或额外参数。
 
 查看版本或回滚到上次安装：
 

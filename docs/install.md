@@ -14,8 +14,5 @@ rsq login
 
 ```sh
 # 更新
-rsq upgrade --check
-rsq upgrade --list
-rsq upgrade --yes
-rsq upgrade --rollback --yes
+rsq upgrade
 ```

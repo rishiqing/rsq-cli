@@ -11,14 +11,14 @@ export const globalParameters = {
 type Option = { flags: string; description: string; parameter: string; schema: JsonObject; presentValue?: boolean }
 type Builtin = { command: string; description: string; effect: 'read' | 'write'; localOnly: boolean; requiresSession: boolean; options: Option[]; limitations: string[]; examples: string[] }
 const definitions: Builtin[] = [
-  { command: 'upgrade', description: '从 GitHub Releases 检查、安装更新或回滚', effect: 'write', localOnly: false, requiresSession: false, options: [
+  { command: 'upgrade', description: '有新版本自动升级，无更新直接结束', effect: 'write', localOnly: false, requiresSession: false, options: [
     { flags: '--check', description: '只检查更新', parameter: 'check', schema: { type: 'boolean', default: false }, presentValue: true },
     { flags: '--list', description: '列出已发布版本', parameter: 'list', schema: { type: 'boolean', default: false }, presentValue: true },
     { flags: '--version <version>', description: '选择指定 Release 版本', parameter: 'version', schema: { type: 'string' } },
     { flags: '--rollback', description: '回滚到上一次安装版本', parameter: 'rollback', schema: { type: 'boolean', default: false }, presentValue: true },
     { flags: '--force', description: '重新安装所选版本', parameter: 'force', schema: { type: 'boolean', default: false }, presentValue: true },
-    { flags: '-y, --yes', description: '确认升级或回滚', parameter: 'yes', schema: { type: 'boolean', default: false }, presentValue: true },
-  ], limitations: ['从 rishiqing/rsq-cli 的 GitHub Release 下载，不使用 npm；不发送日事清凭证。', '检查和列版本不改变本地安装；升级、指定版本及回滚需要确认，脚本带 --yes。', '先下载、校验 SHA256 并核对版本，再原子切换；保留上一次版本用于回滚。会话保存在独立目录。', '仅安装脚本管理的安装支持原地更新。随包 Skill 与 CLI 一起切换；通过 schema 返回的 agentSkill 查找当前 Skill。'], examples: ['rsq upgrade --check', 'rsq upgrade --list', 'rsq upgrade --yes', 'rsq upgrade --version 0.1.0-preview.1 --yes', 'rsq upgrade --rollback --yes'] },
+    { flags: '-y, --yes', description: '跳过指定版本、重新安装或回滚的确认', parameter: 'yes', schema: { type: 'boolean', default: false }, presentValue: true },
+  ], limitations: ['从 rishiqing/rsq-cli 的 GitHub Release 下载，不使用 npm；不发送日事清凭证。', '直接执行 upgrade 即自动升级到新版本，不需确认；无更新时成功结束，不下载安装包，也不改动安装。--check 只检查，--list 只列版本。', '指定版本、重新安装或回滚仍需确认，非交互调用带 --yes；普通升级兼容 --yes。', '先下载、校验 SHA256 并核对版本，再原子切换；保留上一次版本用于回滚。会话保存在独立目录。', '仅安装脚本管理的安装支持原地更新。随包 Skill 与 CLI 一起切换；通过 schema 返回的 agentSkill 查找当前 Skill。'], examples: ['rsq upgrade', 'rsq upgrade --check', 'rsq upgrade --list', 'rsq upgrade --version 0.1.0-preview.1 --yes', 'rsq upgrade --rollback --yes'] },
   { command: 'login', description: '使用企业微信或日事清账号密码登录', effect: 'write', localOnly: false, requiresSession: false, options: [
     { flags: '--method <method>', description: 'wecom 或 password；非交互调用必须指定', parameter: 'method', schema: { enum: ['wecom', 'password'] } },
     { flags: '--no-browser', description: '显示企微登录链接，不尝试打开浏览器', parameter: 'browser', schema: { type: 'boolean', default: true }, presentValue: false },

@@ -222,4 +222,4 @@ Task23 字段用 `workflow instance task inspect|create|create-batch|change|reor
 
 执行台的 `--filters` 仅影响本次 workspace/groups/items/count 查询，不保存为视图偏好；使用发现到的 key、operator value 或唯一名称，例如文本条件需传 operators。每次分页保留相同条件；`[]` 表示本次不筛选，省略则使用已保存筛选。新任务可能等索引更新后才出现在工作区，先按 taskId 核对详情并重试幂等读取，不能重放创建。指定任务类型分组的普通创建暂不支持，先使用 `task template inspect` / `task template apply` 发现和应用类型字段。
 
-安装与更新从 GitHub Releases 获取，不使用 npm。`rsq upgrade --check` 只检查，`rsq upgrade --list` 列版本；安装更新用 `rsq upgrade --yes`，回滚用 `rsq upgrade --rollback --yes`。升级会校验 SHA256 并切换 CLI 与随包 Skill；Schema 的 `agentSkill` 返回当前 Skill 路径。
+安装与更新从 GitHub Releases 获取。直接执行 `rsq upgrade`，有新版本自动升级，没有更新则成功结束，不修改安装，也不需要交互或 `--yes`。`--check` 只检查，`--list` 列版本；指定版本、强制重装和回滚仍需确认，非交互使用 `--yes`，例如 `rsq upgrade --rollback --yes`。升级会校验 SHA256 并切换 CLI 与随包 Skill；Schema 的 `agentSkill` 返回当前 Skill 路径。

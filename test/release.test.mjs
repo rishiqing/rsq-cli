@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtemp, mkdir, writeFile, readFile, rm, chmod, symlink } from 'node:fs/promises'
+import { mkdtemp, mkdir, writeFile, readFile, readdir, rm, chmod, symlink } from 'node:fs/promises'
 import { execFileSync, spawnSync } from 'node:child_process'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -59,18 +59,36 @@ test('checking and listing releases need neither a managed installation nor a lo
   assert.equal(listed.versions[0].version, first)
   await assert.rejects(upgradeRelease({ list: true, rollback: true }), { code: 'INVALID_INPUT' })
 })
-test('upgrades require confirmation and never download or switch after refusal', { skip: process.platform === 'win32' }, async () => fixture(async f => {
-  await assert.rejects(upgradeRelease({}, { root: f.root, currentVersion: first, fetch: f.transport }), { code: 'CONFIRMATION_REQUIRED' })
+test('explicit version selection and forced reinstalls still require confirmation before downloading or switching', { skip: process.platform === 'win32' }, async () => fixture(async f => {
+  await assert.rejects(upgradeRelease({ version: second }, { root: f.root, currentVersion: first, fetch: f.transport }), { code: 'CONFIRMATION_REQUIRED' })
+  assert.equal(f.calls.length, 0)
+  await assert.rejects(upgradeRelease({ force: true }, { root: f.root, currentVersion: first, fetch: f.transport }), { code: 'CONFIRMATION_REQUIRED' })
   assert.equal(f.calls.length, 1); assert.equal((await readFile(join(f.root, 'current'), 'utf8')).trim(), f.current)
 }))
-test('verified installation switches atomically and rollback restores the previous CLI and Skill without network', { skip: process.platform === 'win32' }, async () => fixture(async f => {
+test('no newer release is a successful no-op without confirmation, downloads, lock acquisition or installation writes', { skip: process.platform === 'win32' }, async () => fixture(async f => {
+  await mkdir(join(f.root, '.update-lock'))
+  const before = await readFile(join(f.root, 'current'), 'utf8'), entries = await readdir(f.root)
+  for (const version of [first, '0.0.9']) {
+    const calls = []
+    const result = await upgradeRelease({}, { root: f.root, currentVersion: first, confirm: () => assert.fail('ordinary upgrade must not prompt'), fetch: async url => {
+      calls.push(url); assert.equal(url, latestManifest); return new Response(JSON.stringify({ version }))
+    } })
+    assert.equal(result.status, 'up_to_date')
+    assert.deepEqual(calls, [latestManifest])
+    assert.equal(await readFile(join(f.root, 'current'), 'utf8'), before)
+    assert.deepEqual(await readdir(f.root), entries)
+  }
+}))
+test('a bare upgrade installs without confirmation and rollback restores the previous CLI and Skill without network', { skip: process.platform === 'win32' }, async () => fixture(async f => {
   const credentials = join(f.temporary, 'credentials'); await writeFile(credentials, 'credential-sentinel')
-  const out = await upgradeRelease({ yes: true }, { root: f.root, currentVersion: first, fetch: f.transport })
+  const out = await upgradeRelease({}, { root: f.root, currentVersion: first, fetch: f.transport, confirm: () => assert.fail('ordinary upgrade must not prompt') })
   assert.equal(out.status, 'upgraded'); assert.equal(out.targetVersion, second)
   assert.equal((await readFile(join(f.root, 'previous'), 'utf8')).trim(), f.current)
   assert.match(out.skillPath, /package[/\\]skills[/\\]rsq-cli[/\\]SKILL.md$/)
   const selected = (await readFile(join(f.root, 'current'), 'utf8')).trim(); assert.notEqual(selected, f.current)
   assert.equal(f.calls.filter(url => url.endsWith('/' + f.asset)).length, 1)
+  await assert.rejects(upgradeRelease({ rollback: true }, { root: f.root, currentVersion: second, fetch: () => assert.fail('rollback must be offline') }), { code: 'CONFIRMATION_REQUIRED' })
+  assert.equal((await readFile(join(f.root, 'current'), 'utf8')).trim(), selected)
   const rolled = await upgradeRelease({ rollback: true, yes: true }, { root: f.root, currentVersion: second, fetch: () => assert.fail('rollback must be offline') })
   assert.equal(rolled.status, 'rolled_back'); assert.equal(rolled.targetVersion, first)
   assert.equal((await readFile(join(f.root, 'current'), 'utf8')).trim(), f.current)
