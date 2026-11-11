@@ -81,7 +81,7 @@ export async function runOrganizationLifecycle(ctx: Context, flow: Workflow, inp
     const userFrom = asObject(who.oauth).userFrom
     // The current company UI only offers deletion in the native Rishiqing
     // application, and hides it for ISV identities even with the creator role.
-    const native = session.method === 'password' && !['qywx', 'dingtalk', 'lark', 'wps', 'wps-isv'].includes(String(userFrom)) && state.mainApp === 'rsq'
+    const native = session.method === 'password' && !['qywx', 'dingtalk', 'lark', 'wps', 'wps-isv', 'wp'].includes(String(userFrom)) && state.mainApp === 'rsq'
     return { userId, teamId, name: companyName, creatorId, creator, native, state, members, organizations }
   }
   try {

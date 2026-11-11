@@ -18,14 +18,14 @@ test('all built-in identity commands are discoverable offline and their options 
     assert.ok(!Object.hasOwn(schema.parameters, 'password')); assert.ok(!Object.hasOwn(schema.parameters, 'environment'))
   }
   const auth = JSON.parse(run(['schema', 'auth']).stdout); assert.ok(auth.builtins.some(builtin => builtin.command === 'auth status'))
-  const byId = JSON.parse(run(['schema', 'builtin.login']).stdout); assert.equal(byId.command, 'login'); assert.deepEqual(byId.parameters.method.enum, ['password', 'wecom', 'dingtalk']); assert.equal(byId.parameters.browser.presentValue, false)
+  const byId = JSON.parse(run(['schema', 'builtin.login']).stdout); assert.equal(byId.command, 'login'); assert.deepEqual(byId.parameters.method.enum, ['password', 'wecom', 'dingtalk', 'feishu', 'wps']); assert.equal(byId.parameters.browser.presentValue, false)
   assert.deepEqual(byId.transport.dingtalk, ['POST /backauth/cli-auth/device', 'POST /backauth/cli-auth/exchange', 'GET /task/login/authAjax'])
   assert.deepEqual(byId.transport.wecom, ['POST /qywxbackauth/cli-auth/device', 'POST /qywxbackauth/cli-auth/exchange', 'GET /task/login/authAjax'])
 })
 test('built-in identity discovery matches actual local session behavior and early noninteractive input failures', () => {
   const status = JSON.parse(run(['auth', 'status', '--profile', 'fresh']).stdout); assert.equal(status.state, 'missing'); assert.equal(status.profile, 'fresh')
   const logout = JSON.parse(run(['logout', '--profile', 'fresh']).stdout); assert.equal(logout.state, 'missing')
-  for (const args of [[], ['--method', 'password'], ['--method', 'password', '--username', 'fixture'], ['--method', 'wecom', '--username', 'fixture'], ['--method', 'dingtalk', '--username', 'fixture'], ['--method', 'dingtalk', '--password-stdin'], ['--method', 'password', '--no-browser']]) {
+  for (const args of [[], ['--method', 'password'], ['--method', 'password', '--username', 'fixture'], ['--method', 'wecom', '--username', 'fixture'], ['--method', 'feishu', '--username', 'fixture'], ['--method', 'wps', '--password-stdin'], ['--method', 'dingtalk', '--username', 'fixture'], ['--method', 'dingtalk', '--password-stdin'], ['--method', 'password', '--no-browser']]) {
     const output = run(['login', ...args], '')
     assert.equal(output.status, 2); assert.equal(output.stdout, ''); assert.ok(['INVALID_INPUT', 'INVALID_LOGIN_METHOD'].includes(JSON.parse(output.stderr).error.code))
   }

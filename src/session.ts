@@ -1,3 +1,4 @@
+import { loginMethods } from './core.js'
 import { constants } from 'node:fs'
 import { mkdir, open, lstat, rename, rm } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
@@ -27,7 +28,7 @@ async function assertDirectory(file: string, root: string) {
 }
 function parseSession(value: unknown): Session {
   const s = value as Session
-  if (s?.version !== 1 || (s.method !== 'password' && s.method !== 'wecom' && s.method !== 'dingtalk')
+  if (s?.version !== 1 || !loginMethods.includes(s.method)
     || typeof s.identity?.userId !== 'string' || !s.identity.userId || typeof s.identity.username !== 'string' || !s.identity.username
     || (s.identity.teamId !== undefined && typeof s.identity.teamId !== 'string') || typeof s.accessToken !== 'string'
     || !s.accessToken || !Number.isFinite(s.expiresAt)) {

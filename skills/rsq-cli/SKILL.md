@@ -5,7 +5,7 @@ description: 使用 rsq CLI 查询或修改日事清流程、绩效、OKR、行�
 
 先通过 CLI 自己发现接口，不从接口名称猜参数，不自行拼接 URL。
 
-扫码登录可用 `rsq login --method wecom` 或 `rsq login --method dingtalk`；远程终端加 `--no-browser`，由用户在浏览器打开显示的链接完成确认。登录后用 `rsq whoami` 核对实际账号和公司。平台专用命令以 Schema 的 methods 为准，不因新增登录方式而扩大权限。
+扫码登录可用 `rsq login --method wecom` 、`rsq login --method dingtalk`、`rsq login --method feishu` 或 `rsq login --method wps`（WPS 企业版）；远程终端加 `--no-browser`，由用户在浏览器打开显示的链接完成确认。登录后用 `rsq whoami` 核对实际账号和公司。平台专用命令以 Schema 的 methods 为准，不因新增登录方式而扩大权限。
 
 1. 命令默认连接日事清正式服务，无需指定环境。运行 `rsq auth status --profile <name>` 查看本地身份，再运行 `rsq whoami --profile <name>` 向服务端核对账号与组织。明确目标组织后才执行业务操作；权限来自服务器，不尝试绕过拒绝。
 2. 先用 `rsq coverage --core` 查看本阶段冻结的模块主流程，再用 `rsq coverage <domain> --core` 找业务目标、相关命令、通过记录和阻塞。普通项目与项目模板、流程配置与执行分别选择；已有代表性主路径通过不代表全部字段组合均验证。`blocked` 不算业务成功，`review-required` 只复核实际变化影响的部分，不重跑无关模块。需要查细分事项时使用 `rsq coverage <domain>`。再运行 `rsq schema` 找模块、`rsq schema task` 找操作、`rsq schema "task get"` 查看叶子契约。读取 `executable`、`review`、`methods`、`effect`、参数、返回结构、示例和 `idempotency`。未核对的操作仅支持本地 dry-run。已核对但 `directExecution: false` 的传输操作必须通过 `contextCommands` 列出的业务命令执行，由 CLI 获取上下文和检查权限。
@@ -151,7 +151,7 @@ OKR 规划与执行共用目标资源，不存在 CLI 自行定义的草稿状�
 - `APPROVAL_REQUIRED`：删除目标进入或保留审批状态；用返回的目标 ID 查询 `approvalStatus`，不要声称已删除或重复提交删除。
 - `LIMIT_EXCEEDED`：服务端返回套餐或数量上限；报告限制，不删除已有业务、改变权益或反复重试。
 - `COMPANY_EXPIRED`、`COMPANY_OVER_CAPACITY`、`FEATURE_DISABLED`、`FEATURE_UPGRADE_REQUIRED`、`FEATURE_FORBIDDEN`：按当前公司或应用报告限制，可用 `organization access inspect` 诊断；不通过底层 HTTP 命令绕过。`ENTITLEMENT_UNAVAILABLE` 表示无法确认有效权益，停止业务请求。
-- `WECOM_LOGIN_UNAVAILABLE`：企微 CLI 登录服务当前不可用。稍后在同一 profile 发起新登录，不重复使用旧链接，也可让用户选择账号密码登录。
+- `WECOM_LOGIN_UNAVAILABLE` / `DINGTALK_LOGIN_UNAVAILABLE` / `FEISHU_LOGIN_UNAVAILABLE` / `WPS_LOGIN_UNAVAILABLE`：对应平台 CLI 登录服务当前不可用。稍后在同一 profile 发起新登录，不重复使用旧链接，也可让用户选择账号密码登录。
 - `CONTRACT_UNREVIEWED`：契约尚未核对，报告限制；不要用 curl 或其他命令绕过。
 - `BUSINESS_CONTEXT_REQUIRED`：使用错误详情或 Schema 的 `contextCommands` 业务命令，让 CLI 获取资源上下文、检查权限和读回；不要改用底层 HTTP 绕过。
 

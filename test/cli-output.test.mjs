@@ -56,11 +56,11 @@ test('unavailable WeCom login names the failed service and offers password login
   }
 })
 
-test('login menu offers password, WeCom and DingTalk in order and EOF cancels with a failing exit code', () => {
+test('login menu offers all five login methods in order and EOF cancels with a failing exit code', () => {
   const result = run(['login'], true)
   assert.equal(result.status, 130)
   assert.equal(result.stdout, '')
-  assert.match(result.stderr, /1\. 日事清账号密码[\s\S]*2\. 企业微信扫码[\s\S]*3\. 钉钉扫码/u)
+  assert.match(result.stderr, /1\. 日事清账号密码[\s\S]*2\. 企业微信扫码[\s\S]*3\. 钉钉扫码[\s\S]*4\. 飞书扫码[\s\S]*5\. WPS 企业版扫码/u)
   assert.match(result.stderr, /CANCELLED/u)
 })
 
@@ -139,3 +139,18 @@ test('upgrade failures point to network recovery rather than business Schema and
     assert.ok(!renderCliDiagnostic(diagnostic, true).includes('rsq schema'))
   }
 })
+
+for (const [method, name, code] of [['feishu', '飞书', 'FEISHU_LOGIN_UNAVAILABLE'], ['wps', 'WPS', 'WPS_LOGIN_UNAVAILABLE']]) {
+  test(method + ' login has human and machine recovery without persisting a failed session', () => {
+    for (const json of [false, true]) {
+      const result = run([...(json ? ['--json'] : []), 'login', '--method', method, '--no-browser', '--profile', method], true)
+      assert.equal(result.status, 5); assert.equal(result.stdout, '')
+      if (json) {
+        const { error } = JSON.parse(result.stderr)
+        assert.equal(error.code, code)
+        assert.ok(error.actions.includes('rsq login --profile ' + method + ' --method ' + method))
+      } else { assert.ok(result.stderr.includes(name)); assert.ok(result.stderr.includes('下一步')) }
+      assert.equal(existsSync(join(directory, 'rsq-cli/sessions/production/' + method + '.json')), false)
+    }
+  })
+}

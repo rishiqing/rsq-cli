@@ -1,9 +1,10 @@
 #!/usr/bin/env node
+import { browserLogins, loginMethods, type LoginMethod } from './core.js'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { createInterface } from 'node:readline/promises'
 import { Command, CommanderError, Option } from 'commander'
-import { loginPassword, loginWecom, loginDingtalk, openBrowser, whoami } from './auth.js'
+import { loginPassword, loginBrowser, openBrowser, whoami } from './auth.js'
 import { asObject, context, readJson, readStdin, RsqError, type JsonObject } from './core.js'
 import { assignField, catalog, flagValue, operationOutput, type Operation } from './operations.js'
 import { loadSession, removeSession, requireSession, saveSession, status } from './session.js'
@@ -121,16 +122,18 @@ configureBuiltin(app.command('login'), 'login')
     const ctx = selectedContext()
     let method = options.method
     if (!method && process.stdin.isTTY) {
-      message('登录日事清\n  1. 日事清账号密码\n  2. 企业微信扫码\n  3. 钉钉扫码')
+      message('登录日事清\n  1. 日事清账号密码\n  2. 企业微信扫码\n  3. 钉钉扫码\n  4. 飞书扫码\n  5. WPS 企业版扫码')
       while (!method) {
-        const choice = await ask('选择登录方式 [1/2/3]：')
+        const choice = await ask('选择登录方式 [1/2/3/4/5]：')
         if (choice === '1' || choice === 'password') method = 'password'
         else if (choice === '2' || choice === 'wecom') method = 'wecom'
         else if (choice === '3' || choice === 'dingtalk') method = 'dingtalk'
-        else message('请输入 1、2 或 3，按 Ctrl+C 取消。')
+        else if (choice === '4' || choice === 'feishu') method = 'feishu'
+        else if (choice === '5' || choice === 'wps') method = 'wps'
+        else message('请输入 1 到 5，按 Ctrl+C 取消。')
       }
     }
-    if (method !== 'wecom' && method !== 'password' && method !== 'dingtalk') throw new RsqError('INVALID_LOGIN_METHOD', '请选择 --method password、wecom 或 dingtalk。', 2)
+    if (!loginMethods.includes(method as LoginMethod)) throw new RsqError('INVALID_LOGIN_METHOD', '请选择 --method password、wecom、dingtalk、feishu 或 wps。', 2)
     if (method !== 'password' && (options.username || options.passwordStdin)) throw new RsqError('INVALID_INPUT', '扫码登录不接受账号密码参数。', 2)
     if (method === 'password' && !options.browser) throw new RsqError('INVALID_INPUT', '--no-browser 仅适用于扫码登录。', 2)
     if (method === 'password' && (!process.stdin.isTTY && (!options.username || !options.passwordStdin))) {
@@ -144,10 +147,10 @@ configureBuiltin(app.command('login'), 'login')
     process.once('SIGINT', onInterrupt)
     try {
       const session = method !== 'password'
-        ? await (method === 'wecom' ? loginWecom : loginDingtalk)(ctx, {
+        ? await loginBrowser(ctx, method as Exclude<LoginMethod, 'password'>, {
           signal: stop.signal,
           notify: url => {
-            message('请在浏览器用' + (method === 'wecom' ? '企业微信' : '钉钉') + '扫码并确认登录：\n' + url + '\n\n若浏览器未打开，可复制以上链接。', { verificationUri: url })
+            message('请在浏览器用' + browserLogins[method as Exclude<LoginMethod, 'password'>].name + '扫码并确认登录：\n' + url + '\n\n若浏览器未打开，可复制以上链接。', { verificationUri: url })
             if (options.browser) openBrowser(url)
           },
         })

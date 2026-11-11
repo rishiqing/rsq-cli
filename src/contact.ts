@@ -53,7 +53,7 @@ export function prepareContact(kind: string, input: JsonObject, results: JsonObj
   const user = identity(results, supplied, input), permissions = asObject(results.authorities)
   const permission = action === 'departments-set' ? 'editStaffInfo' : action.startsWith('department-') ? 'editDept' : action.startsWith('group-member-') ? 'editStaffGroupMember' : 'editStaffGroup'
   if (permissions[permission] !== true) deny('当前用户没有通讯录操作所需的公司权限：' + permission)
-  const oauth = asObject(user.oauth), origin = String(oauth.userFrom ?? ''), isIsv = /^(qywx|dingtalk|lark|wps)/.test(origin), canModify = asObject(oauth.isvOuterData).canModifyDepartment === true
+  const oauth = asObject(user.oauth), origin = String(oauth.userFrom ?? ''), isIsv = /^(qywx|dingtalk|lark|wps|wp$)/.test(origin), canModify = asObject(oauth.isvOuterData).canModifyDepartment === true
   const nodes = flatten(results.tree), groups = results.groups ? list(results.groups) : []
   const prepared: JsonObject = { action }; results.prepared = prepared
   if (action.startsWith('department-') || action === 'departments-set') {

@@ -1,3 +1,4 @@
+import { browserLogins, type BrowserLoginMethod } from './core.js'
 import { randomBytes } from 'node:crypto'
 import { spawn } from 'node:child_process'
 import { setTimeout as delay } from 'node:timers/promises'
@@ -114,11 +115,11 @@ export function loginWecom(ctx: Context, options: DeviceOptions): Promise<Sessio
 export function loginDingtalk(ctx: Context, options: DeviceOptions): Promise<Session> {
   return loginBrowser(ctx, 'dingtalk', options)
 }
-async function loginBrowser(ctx: Context, method: 'wecom' | 'dingtalk', options: DeviceOptions): Promise<Session> {
+export function loginFeishu(ctx: Context, options: DeviceOptions): Promise<Session> { return loginBrowser(ctx, 'feishu', options) }
+export function loginWps(ctx: Context, options: DeviceOptions): Promise<Session> { return loginBrowser(ctx, 'wps', options) }
+export async function loginBrowser(ctx: Context, method: BrowserLoginMethod, options: DeviceOptions): Promise<Session> {
   const base = origin(ctx.environment, method)
-  const name = method === 'wecom' ? '企业微信' : '钉钉'
-  const root = method === 'wecom' ? '/qywxbackauth/cli-auth' : '/backauth/cli-auth'
-  const unavailable = method === 'wecom' ? 'WECOM_LOGIN_UNAVAILABLE' : 'DINGTALK_LOGIN_UNAVAILABLE'
+  const { name, root, unavailable, userFrom } = browserLogins[method]
   const transport = options.transport ?? request
   const verifier = randomBytes(32).toString('base64url')
   const post = (action: string, body: object) => send(transport, new URL(root + '/' + action, base), {
@@ -166,7 +167,7 @@ async function loginBrowser(ctx: Context, method: 'wecom' | 'dingtalk', options:
     if (result.status !== 'authorized' || !token) throw new RsqError('INVALID_DEVICE_RESPONSE', name + '登录服务未返回会话。', 5)
     const jar = new CookieJar()
     const user = await verify(base, transport, jar, token, options.signal)
-    if (!(method === 'wecom' ? user.identity.userFrom?.startsWith('qywx') : user.identity.userFrom === 'dingtalk')) throw new RsqError('INVALID_IDENTITY', '该会话不属于' + name + '账号。', 3)
+    if (!userFrom.test(user.identity.userFrom ?? '')) throw new RsqError('INVALID_IDENTITY', '该会话不属于' + name + '账号。', 3)
     return makeSession(method, user.identity, token, jar)
   }
   throw new RsqError('LOGIN_EXPIRED', name + '登录链接已过期，请重新执行 rsq login。', 3)
