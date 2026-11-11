@@ -117,6 +117,56 @@ test('question replacement retains other answers, supports empty clearing and re
   assert.equal(writes, 1)
 })
 
+test('day, week and month questions serialize rich content exactly once and independently read it back', async () => {
+  const content = { ops: [{ insert: '本期成果', attributes: { bold: true } }, { insert: '\n', attributes: { header: 2 } }, { insert: '第二段。\n' }] }
+  for (const type of ['day', 'week', 'month']) {
+    const period = replayPeriod(type, '2026-11-07'), collect = { ...collection(), type }
+    const value = { ...report(), type, ...period }
+    let writes = 0, reads = 0, expectedContent = content
+    const transport = async (url, init) => {
+      if (url.pathname.endsWith('/collect')) return json(collect)
+      if (init.method === 'PUT') {
+        const body = JSON.parse(init.body); writes++
+        assert.deepEqual(body, { replayCollectId: '7001', ...period, replayCollectTemplateComponentId: '8101', answer: JSON.stringify(expectedContent) })
+        value.componentList[0].questionAnswer.answer = body.answer
+        return json(value)
+      }
+      reads++; return json(value)
+    }
+    const input = { collectionId: '7001', date: '2026-11-07', componentId: '8101', content }
+    const result = await run('replay report question set', input, transport)
+    assert.deepEqual(JSON.parse(result.result.componentList[0].questionAnswer.answer), content)
+    assert.equal(result.result.componentList[1].questionAnswer.answer, 'unchanged')
+    assert.equal(writes, 1); assert.equal(reads, 2)
+    await run('replay report question set', input, transport)
+    assert.equal(writes, 1)
+    expectedContent = { ops: [] }
+    await run('replay report question set', { ...input, content: { ops: [] } }, transport)
+    assert.equal(value.componentList[0].questionAnswer.answer, '{"ops":[]}')
+  }
+})
+
+test('invalid or ambiguous question content is rejected offline before context reads or writes', async () => {
+  let calls = 0
+  const transport = async () => { calls++; throw Error('invalid content reached the network') }
+  const base = { collectionId: '7001', date: '2026-11-07', componentId: '8101' }
+  for (const patch of [{}, { text: 'text', content: { ops: [] } }, { content: { content: 'wrong shape' } }, { content: 'serialized' }, { content: [{ insert: 'array' }] }, { content: { ops: [{ retain: 1 }] } }, { content: { ops: [{ insert: { a: 1, b: 2 } }] } }, { content: JSON.parse('{"ops":[{"insert":"x","attributes":{"constructor":{}}}]}') }]) {
+    for (const dryRun of [false, true]) await assert.rejects(run('replay report question set', { ...base, ...patch }, transport, false, dryRun), { code: 'INVALID_INPUT' })
+  }
+  assert.equal(calls, 0)
+})
+
+test('successful write receipts cannot hide missing question content in the independent readback', async () => {
+  let writes = 0
+  const transport = async (url, init) => {
+    if (url.pathname.endsWith('/collect')) return json(collection())
+    if (init.method === 'PUT') { writes++; return json({ ...report(), componentList: [{ ...report().componentList[0], questionAnswer: { answer: JSON.parse(init.body).answer } }] }) }
+    return json(report())
+  }
+  await assert.rejects(run('replay report question set', { collectionId: '7001', date: '2026-11-07', componentId: '8101', content: { ops: [{ insert: 'new body\n' }] } }, transport), { code: 'BUSINESS_ASSERTION_FAILED' })
+  assert.equal(writes, 1)
+})
+
 test('approval confirms new audit record without claiming overall terminal state for multiple auditors', async () => {
   const value = { ...report(), status: 'committed', editControl: { edit: false } }, records = []
   let writes = 0

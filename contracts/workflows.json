@@ -138110,7 +138110,7 @@
     {
       "id": "closure.replay.report.question.set",
       "command": "replay report question set",
-      "description": "为已有草稿的问题组件保存纯文本或清空答案；保留其他问题并独立读回",
+      "description": "为已有草稿的问题组件保存纯文本、富文本或清空答案；保留其他问题并独立读回。text 与 content 二选一。",
       "effect": "write",
       "methods": [
         "password",
@@ -138139,16 +138139,66 @@
           },
           "text": {
             "type": "string",
-            "maxLength": 2097152
+            "maxLength": 2097152,
+            "description": "纯文本，由 CLI 转为编辑器正文；空字符串清空答案。与 content 二选一。"
+          },
+          "content": {
+            "type": "object",
+            "description": "完整编辑器 Delta 正文对象（不需要 JSON.stringify），支持 insert 文本/嵌入和 attributes 格式；与 text 二选一。",
+            "properties": {
+              "ops": {
+                "type": "array",
+                "maxItems": 20000,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "insert": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "minProperties": 1,
+                          "maxProperties": 1
+                        }
+                      ]
+                    },
+                    "attributes": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "insert"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "ops"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
           "collectionId",
           "date",
-          "componentId",
-          "text"
+          "componentId"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "required": [
+              "text"
+            ]
+          },
+          {
+            "required": [
+              "content"
+            ]
+          }
+        ]
       },
       "parameters": [
         {
@@ -138182,7 +138232,50 @@
           "option": "text",
           "schema": {
             "type": "string",
-            "maxLength": 2097152
+            "maxLength": 2097152,
+            "description": "纯文本，由 CLI 转为编辑器正文；空字符串清空答案。与 content 二选一。"
+          }
+        },
+        {
+          "name": "content",
+          "option": "content",
+          "schema": {
+            "type": "object",
+            "description": "完整编辑器 Delta 正文对象（不需要 JSON.stringify），支持 insert 文本/嵌入和 attributes 格式；与 text 二选一。",
+            "properties": {
+              "ops": {
+                "type": "array",
+                "maxItems": 20000,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "insert": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "minProperties": 1,
+                          "maxProperties": 1
+                        }
+                      ]
+                    },
+                    "attributes": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "insert"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "ops"
+            ],
+            "additionalProperties": false
           }
         }
       ],
@@ -138231,13 +138324,15 @@
         "$result": "/verified"
       },
       "examples": [
-        "rsq schema \"replay report question set\""
+        "rsq replay report question set --collection-id 7001 --date 2026-11-01 --component-id 8101 --text \"完成计划\" --dry-run",
+        "rsq replay report question set --input replay-answer.json --dry-run"
       ],
       "relatedCommands": [
         "replay template list",
         "replay template context",
         "replay collection context",
         "replay report context",
+        "replay report create",
         "rsq coverage replay"
       ],
       "sideEffects": "复盘详情 GET 可能初始化个人/问题配置。模板 PUT 是完整替换，CLI 保留未改组件；模板修改和提交/审核需 --yes。写结果未知不自动重放。主题复盘使用 OKR 独立上下文；智能白名单和当前应用 AI 复盘权限同时开启时，提交须先单独评分，查看后提供同一内容的 receipt。评分会使用 AI 额度并保留评分记录。"

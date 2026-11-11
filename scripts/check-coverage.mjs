@@ -23,6 +23,7 @@ import { validateOkrAlignmentWorkflow } from '../dist/okr-alignment.js'
 import { readFileSync } from 'node:fs'
 import { pathToFileURL } from 'node:url'
 import Ajv from 'ajv'
+import { isSerializedEditorDelta } from '../dist/editor-delta.js'
 import { validateMinderWorkflow } from '../dist/minder.js'
 import { validateDocWorkflow } from '../dist/doc-context.js'
 import { validateCloudFileWorkflow } from '../dist/cloud-file.js'
@@ -665,6 +666,7 @@ export function auditWorkflows(definition, catalog, businessScope) {
 
 export function auditContracts(catalog, definition) {
   const issues = [], ids = new Set(), commands = new Set(), ajv = new Ajv({ strict: false })
+  ajv.addFormat('quill-delta-json', { type: 'string', validate: isSerializedEditorDelta })
   for (const op of catalog.operations) {
     if (!op.id || ids.has(op.id) || !op.command || commands.has(op.command)) issues.push('duplicate operation identity: ' + op.id)
     ids.add(op.id); commands.add(op.command)

@@ -302093,7 +302093,9 @@
                 "description": "64 位整数可用十进制字符串，避免精度丢失"
               },
               "answer": {
-                "type": "string"
+                "type": "string",
+                "format": "quill-delta-json",
+                "description": "序列化一次的完整编辑器正文 {\"ops\":[{\"insert\":\"正文\\n\"}]}；不能传普通文本、HTML、任意 JSON 或 retain/delete 增量。日常填写优先使用 replay report question set 的 text/content。"
               }
             },
             "additionalProperties": false,
@@ -302115,7 +302117,7 @@
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"body\":{}}' | rsq replay component question update --input - --dry-run"
+        "rsq replay component question update --replay-collect-id 7001 --year 2026 --month 11 --day 1 --replay-collect-template-component-id 8101 --answer '{\"ops\":[{\"insert\":\"完成计划\\n\"}]}' --dry-run"
       ],
       "fields": [
         {
@@ -302181,7 +302183,9 @@
           "in": "body",
           "name": "answer",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "format": "quill-delta-json",
+            "description": "序列化一次的完整编辑器正文 {\"ops\":[{\"insert\":\"正文\\n\"}]}；不能传普通文本、HTML、任意 JSON 或 retain/delete 增量。日常填写优先使用 replay report question set 的 text/content。"
           }
         }
       ]

@@ -1,3 +1,5 @@
+import { docDelta } from './editor-delta.js'
+export { docDelta } from './editor-delta.js'
 import { docSharingActions, runDocSharing, type DocSharingAction } from './doc-sharing.js'
 import { docPublicationActions, runDocPublication, type DocPublicationAction } from './doc-publication.js'
 import { createHash } from 'node:crypto'
@@ -23,26 +25,6 @@ const list = (value: unknown): JsonObject[] => Array.isArray(value) && value.len
 const permission = (row: JsonObject,key: string) => { if (asObject(row.editControl)[key] !== true) throw new RsqError('RESOURCE_FORBIDDEN','当前资源权限不允许此操作。',4,{ permission: key }) }
 const textName = (value: unknown) => typeof value === 'string' && value.trim() && value.length <= 200 && !/[\x00-\x1f\x7f]/.test(value) ? value : invalid('名称须为 1–200 个非空字符，不能包含控制字符。')
 
-/** A complete Quill snapshot, not an OT mutation. Extension values remain
- * ordinary JSON and are never executed or fetched by the CLI. */
-export function docDelta(value: unknown): JsonObject {
-  if (typeof value === 'string') return { ops: value ? [{ insert: value.endsWith('\n') ? value : value+'\n' }] : [] }
-  const row = Array.isArray(value) ? { ops: value } : asObject(value)
-  if (Object.keys(row).length !== 1 || !Array.isArray(row.ops) || row.ops.length > 20000) invalid('正文必须是文本或完整的 {ops:[{insert,attributes?}]} 快照。')
-  for (const raw of row.ops as unknown[]) {
-    const op = asObject(raw)
-    if (!Object.hasOwn(op,'insert') || Object.keys(op).some(key => !['insert','attributes'].includes(key)) || typeof op.insert !== 'string' && (!op.insert || Array.isArray(op.insert) || typeof op.insert !== 'object' || Object.keys(op.insert).length !== 1) || op.attributes != null && (!op.attributes || Array.isArray(op.attributes) || typeof op.attributes !== 'object')) invalid('完整正文仅接受 insert 和可选 attributes；不能把 retain/delete 增量当作快照。')
-  }
-  const stack: unknown[] = [row];let nodes = 0
-  while (stack.length) {
-    const node = stack.pop()
-    if (++nodes > 100000) invalid('正文结构过大。')
-    if (node && typeof node === 'object') for (const [key,child] of Object.entries(node)) { if (['__proto__','constructor','prototype'].includes(key) || ['undefined','function','bigint','symbol'].includes(typeof child)) invalid('正文扩展必须是普通 JSON。');stack.push(child) }
-    if (typeof node === 'number' && !Number.isFinite(node)) invalid('正文不能包含非有限数字。')
-  }
-  if (Buffer.byteLength(JSON.stringify(row)) > 4*1024*1024) invalid('文档正文最多 4 MiB。')
-  return row
-}
 function receivedDelta(value: unknown) {
   const raw = asObject(value).templateDelta
   if (typeof raw !== 'string') failed('正文 HTTP 响应缺少 templateDelta。')

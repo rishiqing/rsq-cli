@@ -7,6 +7,7 @@ import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { asObject, businessError, origin, parseJson, request, responseError, responseJson, RsqError, send, type Context, type JsonObject, type LoginMethod, type Transport } from './core.js'
 import { cookieJar, sessionOrigin, type Session } from './session.js'
+import { isSerializedEditorDelta } from './editor-delta.js'
 
 export type Schema = {
   type?: string | string[]; description?: string; properties?: Record<string, Schema>; required?: string[]
@@ -37,6 +38,7 @@ export function operationOutput(op: Operation, result: unknown): unknown {
   return Object.fromEntries(op.outputFields.filter(key => Object.hasOwn(value, key)).map(key => [key, value[key]]))
 }
 const ajv = new Ajv.default({ allErrors: true, strict: false, ownProperties: true })
+ajv.addFormat('quill-delta-json', { type: 'string', validate: isSerializedEditorDelta })
 const forbiddenHeaders = /^(?:token|logintoken|cookie|authorization|username|host|connection|content-length|transfer-encoding|proxy-.*|origin|referer|forwarded|x-forwarded-.*)$/i
 const blockedKeys = new Set(['__proto__', 'prototype', 'constructor'])
 
@@ -85,7 +87,10 @@ function normalize(op: Operation, input: unknown): JsonObject {
   const validate = ajv.compile(op.inputSchema as AnySchema)
   if (!validate(merged)) {
     const issues = validate.errors?.slice(0, 12).map(err => ({ path: err.instancePath, keyword: err.keyword, message: err.message, ...err.params }))
-    throw new RsqError('INVALID_INPUT', '请求参数与命令 Schema 不符。', 2, { issues })
+    const message = validate.errors?.some(err => err.keyword === 'format' && err.params.format === 'quill-delta-json')
+      ? '正文必须是序列化一次的完整编辑器 Delta（{ops:[{insert,attributes?}]}）。纯文本请使用 replay report question set --text；富文本使用该命令的 --content。'
+      : '请求参数与命令 Schema 不符。'
+    throw new RsqError('INVALID_INPUT', message, 2, { issues })
   }
   return merged
 }

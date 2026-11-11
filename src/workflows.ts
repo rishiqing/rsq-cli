@@ -54,7 +54,7 @@ import { runOkrAlignment, validateOkrAlignmentWorkflow, type OkrAlignmentAction 
 import { prepareOkrCycle, verifyOkrCycle, describeOkrCycles } from './okr-cycles.js'
 import { prepareDeliverable, verifyDeliverable, describeDeliverable } from './deliverable.js'
 import { prepareFileLibrary, verifyFileLibrary } from './file-library.js'
-import { prepareReplay, verifyReplay, describeReplayTemplate, describeReplayScore, describeReplayFeatures } from './replay.js'
+import { prepareReplay, verifyReplay, describeReplayTemplate, describeReplayScore, describeReplayFeatures, replayQuestionDelta } from './replay.js'
 import { inspectUpload, uploadToStorage, type UploadTransfer, type LocalUpload } from './storage.js'
 import { runOrganization, validateOrganizationWorkflow, type OrganizationAction, type OrganizationStore } from './organization.js'
 import { prepareApplication, verifyApplication, describeApplicationAccess } from './application-context.js'
@@ -201,6 +201,7 @@ async function executeWorkflowSteps(ctx: Context, flow: Workflow, input: JsonObj
   if (flow.executor === 'project-schedule') validateProjectScheduleWorkflow(flow)
   if (flow.executor === 'task-audit') validateTaskAuditWorkflow(flow)
   if (flow.executor === 'replay-topic') { validateReplayTopicWorkflow(flow); validateReplayTopicInput(input) }
+  if (flow.steps.some(step => step.prepare === 'replay-question-set')) replayQuestionDelta(input)
   if (flow.executor === 'okr-alignment') validateOkrAlignmentWorkflow(flow)
   if (flow.executor === 'okr-actions') validateOkrActionWorkflow(flow)
   for (let index = 0; index < flow.steps.length; index++) if (flow.steps[index].expectAbsent) {

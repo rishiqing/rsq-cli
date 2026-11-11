@@ -4,6 +4,7 @@ import { asObject, RsqError, type JsonObject } from './core.js'
 import type { Session } from './session.js'
 import { fingerprint } from './fingerprint.js'
 import { replayTemplateComponent, replayComponentFieldTypes } from './replay-template-fields.js'
+import { docDelta } from './editor-delta.js'
 
 const fail = (message: string, code = 'CONTEXT_CONFLICT'): never => { throw new RsqError(code, message, code === 'INVALID_INPUT' ? 2 : code === 'PERMISSION_DENIED' ? 4 : 5) }
 const id = (value: unknown): string => {
@@ -20,6 +21,16 @@ const componentKeys = ['id', 'name', 'type', 'isRequired', 'answer', 'placeholde
 export function replayTextDelta(value: string) {
   const normalized = value.replace(/\r\n?/g, '\n')
   return JSON.stringify({ ops: [{ insert: normalized.endsWith('\n') ? normalized : normalized + '\n' }] })
+}
+export function replayQuestionDelta(input: JsonObject) {
+  const hasText = Object.hasOwn(input, 'text'), hasContent = Object.hasOwn(input, 'content')
+  if (hasText === hasContent) fail('text 和 content 必须且只能提供一个；清空正文请使用 text: ""。', 'INVALID_INPUT')
+  if (hasText) {
+    if (typeof input.text !== 'string') fail('text 必须是字符串。', 'INVALID_INPUT')
+    return replayTextDelta(input.text as string)
+  }
+  if (!input.content || typeof input.content !== 'object' || Array.isArray(input.content)) fail('content 必须是完整的 {ops:[{insert,attributes?}]} 编辑器正文对象。', 'INVALID_INPUT')
+  return JSON.stringify(docDelta(input.content))
 }
 // The server uses Monday/one-day week numbering, not ISO Monday/four-day weeks.
 // UTC arithmetic here treats the supplied date as a calendar date in GMT+8; it
@@ -191,7 +202,7 @@ export function prepareReplay(kind: string, input: JsonObject, results: JsonObje
     editable(current, session)
     const component = rows(current.componentList).find(component => sameId(component.replayCollectTemplateComponentId, input.componentId)) ?? fail('目标模板组件不属于此复盘的问题组件。', 'INVALID_INPUT')
     if (component.type !== 'question') fail('目标模板组件不属于此复盘的问题组件。', 'INVALID_INPUT')
-    const answer = replayTextDelta(text(input.text))
+    const answer = replayQuestionDelta(input)
     expect(results, { question: { componentId: id(input.componentId), answer }, reportId: id(current.id), unchangedQuestions: rows(current.componentList).filter(c => c.type === 'question' && c !== component).map(c => ({ componentId: id(c.replayCollectTemplateComponentId), answer: asObject(c.questionAnswer).answer })) })
     if (asObject(component.questionAnswer).answer === answer) return null
     return { body: { replayCollectId: id(collect.id), ...replayPeriod(collect.type, input.date), replayCollectTemplateComponentId: id(input.componentId), answer } }

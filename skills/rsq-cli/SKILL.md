@@ -90,6 +90,8 @@ description: 使用 rsq CLI 查询或修改日事清流程、绩效、OKR、行�
 
 日/周/月复盘先 `replay collection context`、`replay report context`；`date` 是 GMT+8 的日历日期，CLI 从集类型计算周期，不能猜 ISO 周。虚拟复盘的 `id` 为空，先 `replay report create` 取得真实 ID。填写使用 context 给出的 `replayCollectTemplateComponentId`，不是实例组件 ID；`question set` 的 `text: ""` 明确清空。模板使用 `replay template` 补丁命令保留其他组件；底层 PUT 是完整替换，不要只提交改过的组件。
 
+填写正文用 `replay report question set`：纯文本传 `text`，富文本传 `content: {"ops":[{"insert":"正文\n","attributes":{"bold":true}}]}`，两者只能选一个。CLI 自动编码并独立读回；不要将 HTML、普通文本、任意 JSON 或 retain/delete 增量传给底层 `answer`。专题新建的 `content` 支持纯文本或完整 Delta；已有专题的元信息 `update` 不保存正文，`body get` 可核对实际正文。
+
 先用 `replay permissions` 核对是否需要 AI 评分：组织白名单和当前应用 AI 权限须同时开启。独立 OKR 使用 `--application okr`，评分和提交保持同一应用。若提交要求评分，执行 `replay report score evaluate --replay-id <id> --yes`，阅读评分和建议，再把其 `receipt` 作为 `replay report submit` 的 `scoreReceipt` 输入并确认。评分使用额度并留下服务端评分记录，不能在超时后直接重发；答案改变后原 receipt 不再适用。多人审核中 `approve` 成功仍可能返回 `committed`，表示其他审核阶段未完成，以读回状态及新操作记录为准。
 
 专题复盘使用 `replay topic list/context`，与日/周/月复盘分开。CLI 会遍历当前身份的完整有界可见目录，再读取详情；不能凭详情接口接受 ID 就推断有权访问。`update` 将基本信息、参与人和本人通知偏好分组写入并逐组读回，非原子事务；失败按 `completedSteps/resources` 核对已完成组，不重放。下一步行动是实际任务，先用 `next-action fields list` 发现任务级权限、必填字段和动态选项，再用 `fields set` 填写；日期用 `dates set`，省略保留，null 清空，完成前必须满足必填字段。`next-action remove` 会删除实际任务。关联 OKR 使用实际关系 ID、源目标/KR ID 和实例字段 ID，评分、进度、信心及说明可能同步源 OKR；这些写入均需 `--yes`，不要用周期复盘命令或浏览器内部编号替代。
