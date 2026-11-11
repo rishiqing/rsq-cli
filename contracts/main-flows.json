@@ -17,7 +17,8 @@
     ],
     "identities": [
       "password",
-      "wecom"
+      "wecom",
+      "dingtalk"
     ],
     "deferred": []
   },
@@ -30,8 +31,8 @@
   "evidenceMeaning": "状态表示代表性主流程的已有验证记录，不代表所有细分分支均已验证。",
   "summary": {
     "modules": 35,
-    "verified": 34,
-    "pending": 0,
+    "verified": 33,
+    "pending": 1,
     "blocked": 1,
     "reviewRequired": 0
   },
@@ -81,12 +82,31 @@
             "method": "user-confirmed",
             "scope": "企业微信浏览器扫码登录主流程"
           }
+        },
+        {
+          "id": "dingtalk-login",
+          "name": "钉钉扫码登录",
+          "commands": [
+            "login",
+            "auth status",
+            "whoami",
+            "logout"
+          ],
+          "status": "pending",
+          "verification": {
+            "implementation": "verified",
+            "method": "isolated-redis-browser-flow-and-cli-transport-tests",
+            "scope": "浏览器授权、会话签发、身份与服务隔离；真实扫码由用户验证"
+          },
+          "remaining": [
+            "钉钉真实扫码后核对 whoami 与业务读取"
+          ]
         }
       ],
       "later": [
         "账号绑定、头像和安全设置的全部分支。"
       ],
-      "status": "verified"
+      "status": "pending"
     },
     {
       "id": "task",
