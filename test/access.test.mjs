@@ -101,13 +101,13 @@ test('order state is fresh per command and never reused across profile, team or 
   for (let i = 0; i < 2; i++) await assert.rejects(executeWorkflow(ctx, flow('okr setup'), { teamId: '201' }, session, { transport: expired.transport }), error => error.code === 'COMPANY_EXPIRED')
   assert.equal(expired.calls.length, 4)
 })
-test('password and WeCom identities check their own service; null companies remain personal context', async () => {
-  for (const method of ['password', 'wecom']) {
+test('password, WeCom and DingTalk identities check their own service; null companies remain personal context', async () => {
+  for (const method of ['password', 'wecom', 'dingtalk']) {
     for (const identity of [{ userId: '101', username: 'fixture' }, session.identity]) {
       const supplied = { ...session, method, identity }, calls = []
       const transport = async (url, init) => {
         calls.push(url.pathname)
-        assert.equal(url.origin, origin('production', method === 'wecom' ? 'wecom' : 'site'))
+        assert.equal(url.origin, origin('production', method === 'password' ? 'site' : method))
         assert.equal(new Headers(init.headers).get('token'), supplied.accessToken)
         const payload = url.pathname === '/task/login/authAjax' ? { success: true, id: '101', username: 'fixture', token: supplied.accessToken, team: identity.teamId ? { id: identity.teamId, name: 'Fixture' } : null }
           : { ...state, deadLine: '2000-01-01 00:00:00' }

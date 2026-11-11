@@ -34,7 +34,8 @@ export function cliDiagnostic(value: unknown, profile = 'default', command = '')
   const error = value instanceof RsqError ? value : new RsqError('UNEXPECTED_ERROR', '命令未能完成。')
   const recovery: Record<string, { message?: string; hint: string; actions: string[] }> = {
     WECOM_LOGIN_UNAVAILABLE: { message: '企业微信 CLI 登录服务当前不可用，本次登录未完成。', hint: '请稍后重新发起企业微信登录，使用新生成的链接；也可改用日事清账号密码登录。', actions: [login + ' --method wecom', login + ' --method password', login + ' --help'] },
-    INVALID_LOGIN_METHOD: { hint: '交互登录运行 rsq login；脚本调用需显式指定 --method password 或 --method wecom。', actions: [login, login + ' --help'] },
+    DINGTALK_LOGIN_UNAVAILABLE: { message: '钉钉 CLI 登录服务当前不可用，本次登录未完成。', hint: '请稍后重新发起钉钉登录，使用新生成的链接；也可改用日事清账号密码登录。', actions: [login + ' --method dingtalk', login + ' --method password', login + ' --help'] },
+    INVALID_LOGIN_METHOD: { hint: '交互登录运行 rsq login；脚本调用需显式指定 --method password、wecom 或 dingtalk。', actions: [login, login + ' --help'] },
     LOGIN_FAILED: { hint: '请核对日事清账号密码；终端中密码为隐藏输入，脚本通过 --password-stdin 提供。', actions: [login + ' --method password'] },
     AUTH_REQUIRED: { hint: '请先登录当前 profile，再重新核对身份；写操作失败后先查结果，不直接重复提交。', actions: [login, 'rsq whoami' + profileOption] },
     LOGIN_EXPIRED: { hint: '本次浏览器登录已过期，请重新发起登录。', actions: [login] },

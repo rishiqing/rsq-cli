@@ -27,7 +27,7 @@ async function assertDirectory(file: string, root: string) {
 }
 function parseSession(value: unknown): Session {
   const s = value as Session
-  if (s?.version !== 1 || (s.method !== 'password' && s.method !== 'wecom')
+  if (s?.version !== 1 || (s.method !== 'password' && s.method !== 'wecom' && s.method !== 'dingtalk')
     || typeof s.identity?.userId !== 'string' || !s.identity.userId || typeof s.identity.username !== 'string' || !s.identity.username
     || (s.identity.teamId !== undefined && typeof s.identity.teamId !== 'string') || typeof s.accessToken !== 'string'
     || !s.accessToken || !Number.isFinite(s.expiresAt)) {
@@ -77,7 +77,7 @@ export function requireSession(session: Session | null): Session {
   return session
 }
 export function sessionOrigin(ctx: Context, method: LoginMethod): string {
-  return origin(ctx.environment, method === 'wecom' ? 'wecom' : 'site')
+  return origin(ctx.environment, method === 'password' ? 'site' : method)
 }
 export function cookieJar(session: Session): CookieJar {
   return session.cookies ? CookieJar.deserializeSync(session.cookies) : new CookieJar()

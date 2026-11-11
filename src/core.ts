@@ -10,7 +10,7 @@ export class RsqError extends Error {
 }
 
 export type Identity = { userId: string; teamId?: string; username: string; displayName?: string; userFrom?: string }
-export type LoginMethod = 'password' | 'wecom'
+export type LoginMethod = 'password' | 'wecom' | 'dingtalk'
 export type Environment = 'production'
 export type Context = { environment: Environment; profile: string }
 export type JsonObject = Record<string, unknown>
@@ -18,9 +18,9 @@ export type Transport = (url: URL, init?: RequestInit) => Promise<Response>
 export const request: Transport = (url, init) => fetch(url, { ...init, redirect: 'manual' })
 
 const origins = {
-  production: { site: 'https://www.rishiqing.com', wecom: 'https://qywx.rishiqing.com' },
+  production: { site: 'https://www.rishiqing.com', wecom: 'https://qywx.rishiqing.com', dingtalk: 'https://app2245.eapps.dingtalkcloud.com' },
 } as const
-export function origin(env: Environment, type: 'site' | 'wecom'): string { return origins[env][type] }
+export function origin(env: Environment, type: 'site' | 'wecom' | 'dingtalk'): string { return origins[env][type] }
 export function context(environment: string, profile: string): Context {
   if (environment !== 'production') throw new RsqError('INVALID_ENVIRONMENT', '客户 CLI 仅连接日事清正式服务。', 2)
   if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/.test(profile)) throw new RsqError('INVALID_PROFILE', '无效的 profile 名称。', 2)

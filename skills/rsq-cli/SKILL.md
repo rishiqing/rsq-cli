@@ -1,9 +1,11 @@
 ---
 name: rsq-cli
-description: 使用 rsq CLI 查询或修改日事清流程、绩效、OKR、行动、复盘、执行台、任务、项目、文档和通讯录，发现业务接口 Schema、检查身份、处理登录过期；适用于企业微信和日事清账号密码身份。
+description: 使用 rsq CLI 查询或修改日事清流程、绩效、OKR、行动、复盘、执行台、任务、项目、文档和通讯录，发现业务接口 Schema、检查身份、处理登录过期；适用于企业微信、钉钉和日事清账号密码身份。
 ---
 
 先通过 CLI 自己发现接口，不从接口名称猜参数，不自行拼接 URL。
+
+扫码登录可用 `rsq login --method wecom` 或 `rsq login --method dingtalk`；远程终端加 `--no-browser`，由用户在浏览器打开显示的链接完成确认。登录后用 `rsq whoami` 核对实际账号和公司。平台专用命令以 Schema 的 methods 为准，不因新增登录方式而扩大权限。
 
 1. 命令默认连接日事清正式服务，无需指定环境。运行 `rsq auth status --profile <name>` 查看本地身份，再运行 `rsq whoami --profile <name>` 向服务端核对账号与组织。明确目标组织后才执行业务操作；权限来自服务器，不尝试绕过拒绝。
 2. 先用 `rsq coverage --core` 查看本阶段冻结的模块主流程，再用 `rsq coverage <domain> --core` 找业务目标、相关命令、通过记录和阻塞。普通项目与项目模板、流程配置与执行分别选择；已有代表性主路径通过不代表全部字段组合均验证。`blocked` 不算业务成功，`review-required` 只复核实际变化影响的部分，不重跑无关模块。需要查细分事项时使用 `rsq coverage <domain>`。再运行 `rsq schema` 找模块、`rsq schema task` 找操作、`rsq schema "task get"` 查看叶子契约。读取 `executable`、`review`、`methods`、`effect`、参数、返回结构、示例和 `idempotency`。未核对的操作仅支持本地 dry-run。已核对但 `directExecution: false` 的传输操作必须通过 `contextCommands` 列出的业务命令执行，由 CLI 获取上下文和检查权限。

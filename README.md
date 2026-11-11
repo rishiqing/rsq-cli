@@ -38,6 +38,9 @@ rsq login
 # 企业微信登录：打开浏览器扫码
 rsq login --method wecom
 
+# 钉钉登录：打开浏览器扫码
+rsq login --method dingtalk
+
 # 日事清账号密码登录：在终端按提示输入
 rsq login --method password
 
@@ -53,7 +56,7 @@ rsq logout
 - [x] 日事清账号密码
 - [x] 企业微信
 - [ ] 飞书
-- [ ] 钉钉
+- [x] 钉钉
 - [ ] WPS
 
 使用多个账号时，通过 `--profile` 保存和选择会话。CLI 遵循当前账号的组织和资源权限。

@@ -6,7 +6,6 @@ import { asObject, digest, httpError, origin, request, responseJson, RsqError, s
 import { cookieJar, sessionOrigin, type Session } from './session.js'
 
 const AUTH_AJAX = '/task/login/authAjax'
-const DEVICE_ROOT = '/qywxbackauth/cli-auth'
 
 function text(value: unknown): string | undefined {
   if (typeof value === 'string' && value) return value
@@ -109,26 +108,35 @@ type DeviceOptions = {
   signal?: AbortSignal
   wait?: (ms: number, signal?: AbortSignal) => Promise<void>
 }
-export async function loginWecom(ctx: Context, options: DeviceOptions): Promise<Session> {
-  const base = origin(ctx.environment, 'wecom')
+export function loginWecom(ctx: Context, options: DeviceOptions): Promise<Session> {
+  return loginBrowser(ctx, 'wecom', options)
+}
+export function loginDingtalk(ctx: Context, options: DeviceOptions): Promise<Session> {
+  return loginBrowser(ctx, 'dingtalk', options)
+}
+async function loginBrowser(ctx: Context, method: 'wecom' | 'dingtalk', options: DeviceOptions): Promise<Session> {
+  const base = origin(ctx.environment, method)
+  const name = method === 'wecom' ? '企业微信' : '钉钉'
+  const root = method === 'wecom' ? '/qywxbackauth/cli-auth' : '/backauth/cli-auth'
+  const unavailable = method === 'wecom' ? 'WECOM_LOGIN_UNAVAILABLE' : 'DINGTALK_LOGIN_UNAVAILABLE'
   const transport = options.transport ?? request
   const verifier = randomBytes(32).toString('base64url')
-  const post = (action: string, body: object) => send(transport, new URL(DEVICE_ROOT + '/' + action, base), {
+  const post = (action: string, body: object) => send(transport, new URL(root + '/' + action, base), {
     method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(body),
   }, options.signal, 10000)
   const created = await post('device', { challenge: digest(verifier) })
-  if (created.status === 404 || created.status === 503) throw new RsqError('WECOM_LOGIN_UNAVAILABLE', '该环境尚未启用企业微信 CLI 登录。', 5)
+  if (created.status === 404 || created.status === 503) throw new RsqError(unavailable, name + ' CLI 登录服务暂不可用。', 5)
   if (!created.ok) throw httpError(created)
   const data = asObject(await responseJson(created))
   const deviceId = text(data.deviceId)
   let url: URL
-  try { url = new URL(String(data.verificationUri), base) } catch { throw new RsqError('INVALID_DEVICE_RESPONSE', '企业微信登录链接无效。', 5) }
-  const validUrl = url.pathname === DEVICE_ROOT + '/browser' && /^[A-Za-z0-9_-]{43}$/.test(url.searchParams.get('launch') ?? '') && [...url.searchParams].length === 1
+  try { url = new URL(String(data.verificationUri), base) } catch { throw new RsqError('INVALID_DEVICE_RESPONSE', name + '登录链接无效。', 5) }
+  const validUrl = url.pathname === root + '/browser' && /^[A-Za-z0-9_-]{43}$/.test(url.searchParams.get('launch') ?? '') && [...url.searchParams].length === 1
   if (!deviceId || !/^[A-Za-z0-9_-]{43}$/.test(deviceId)
     || url.origin !== base || url.username || url.password || url.hash || !validUrl
     || typeof data.expiresIn !== 'number' || data.expiresIn <= 0 || data.expiresIn > 600
     || typeof data.interval !== 'number' || data.interval < 1 || data.interval > 15) {
-    throw new RsqError('INVALID_DEVICE_RESPONSE', '企业微信登录服务返回了无效的登录信息。', 5)
+    throw new RsqError('INVALID_DEVICE_RESPONSE', name + '登录服务返回了无效的登录信息。', 5)
   }
   options.notify(url.href)
   const end = Date.now() + data.expiresIn * 1000
@@ -142,7 +150,7 @@ export async function loginWecom(ctx: Context, options: DeviceOptions): Promise<
     if (Date.now() >= end) break
     const response = await post('exchange', { deviceId, verifier })
     if (response.status === 404 || response.status === 503) {
-      throw new RsqError('WECOM_LOGIN_UNAVAILABLE', '企业微信 CLI 登录服务暂时不可用，请稍后重新发起登录并使用新链接。', 5, { httpStatus: response.status, stage: 'exchange' })
+      throw new RsqError(unavailable, name + ' CLI 登录服务暂时不可用，请稍后重新发起登录并使用新链接。', 5, { httpStatus: response.status, stage: 'exchange' })
     }
     if (response.status === 429) {
       const retryAfter = Number(response.headers.get('retry-after'))
@@ -152,14 +160,14 @@ export async function loginWecom(ctx: Context, options: DeviceOptions): Promise<
     if (response.status === 410) break
     const result = asObject(await responseJson(response))
     if (response.status === 202 && result.status === 'pending') continue
-    if (response.status === 403 && result.status === 'denied') throw new RsqError('LOGIN_DENIED', '企业微信登录未获授权，或此账号未开通日事清。', 3)
+    if (response.status === 403 && result.status === 'denied') throw new RsqError('LOGIN_DENIED', name + '登录未获授权，或此账号未开通日事清。', 3)
     if (!response.ok) throw httpError(response)
     const token = text(result.accessToken)
-    if (result.status !== 'authorized' || !token) throw new RsqError('INVALID_DEVICE_RESPONSE', '企业微信登录服务未返回会话。', 5)
+    if (result.status !== 'authorized' || !token) throw new RsqError('INVALID_DEVICE_RESPONSE', name + '登录服务未返回会话。', 5)
     const jar = new CookieJar()
     const user = await verify(base, transport, jar, token, options.signal)
-    if (!user.identity.userFrom?.startsWith('qywx')) throw new RsqError('INVALID_IDENTITY', '该会话不属于企业微信账号。', 3)
-    return makeSession('wecom', user.identity, token, jar)
+    if (!(method === 'wecom' ? user.identity.userFrom?.startsWith('qywx') : user.identity.userFrom === 'dingtalk')) throw new RsqError('INVALID_IDENTITY', '该会话不属于' + name + '账号。', 3)
+    return makeSession(method, user.identity, token, jar)
   }
-  throw new RsqError('LOGIN_EXPIRED', '企业微信登录链接已过期，请重新执行 rsq login。', 3)
+  throw new RsqError('LOGIN_EXPIRED', name + '登录链接已过期，请重新执行 rsq login。', 3)
 }
