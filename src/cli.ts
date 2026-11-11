@@ -107,7 +107,9 @@ async function passwordPrompt(): Promise<string> {
 configureBuiltin(app.command('upgrade'), 'upgrade').action(async (options: UpgradeOptions) => {
   const stop = new AbortController(), onInterrupt = () => stop.abort()
   process.once('SIGINT', onInterrupt)
-  try { await emit(await upgradeRelease(options, { signal: stop.signal, confirm: async plan => {
+  try { await emit(await upgradeRelease(options, { signal: stop.signal,
+    onRetry: info => message('更新请求暂时失败，' + info.delayMs / 1000 + ' 秒后重试（第 ' + info.attempt + '/' + info.maxAttempts + ' 次）。', info),
+    confirm: async plan => {
     if (!process.stdin.isTTY || !process.stderr.isTTY) return false
     message((plan.rollback ? '回滚' : '升级') + ' rsq：' + plan.currentVersion + ' → ' + plan.targetVersion)
     return ['y', 'yes'].includes((await ask('确认执行？[y/N]：')).trim().toLowerCase())

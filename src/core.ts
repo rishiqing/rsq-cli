@@ -2,6 +2,7 @@ import { readFile, stat } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
+import { networkFetch, networkFailure } from './network.js'
 
 export class RsqError extends Error {
   constructor(public code: string, message: string, public exit = 1, public details?: Record<string, unknown>) {
@@ -15,7 +16,7 @@ export type Environment = 'production'
 export type Context = { environment: Environment; profile: string }
 export type JsonObject = Record<string, unknown>
 export type Transport = (url: URL, init?: RequestInit) => Promise<Response>
-export const request: Transport = (url, init) => fetch(url, { ...init, redirect: 'manual' })
+export const request: Transport = (url, init) => networkFetch(url, { ...init, redirect: 'manual' })
 
 const origins = {
   production: { site: 'https://www.rishiqing.com', wecom: 'https://qywx.rishiqing.com', dingtalk: 'https://app2245.eapps.dingtalkcloud.com' },
@@ -63,10 +64,11 @@ export async function send(transport: Transport, url: URL, init: RequestInit = {
   const timeout = AbortSignal.timeout(timeoutMs)
   try {
     return await transport(url, { ...init, redirect: 'manual', signal: signal ? AbortSignal.any([signal, timeout]) : timeout })
-  } catch {
+  } catch (error) {
     if (signal?.aborted) throw new RsqError('CANCELLED', '操作已取消。', 130)
     if (timeout.aborted) throw new RsqError('TIMEOUT', '请求超时，请核对操作结果后再试。', 5)
-    throw new RsqError('NETWORK_ERROR', '无法连接日事清服务。', 5)
+    const { retryable: _retryable, ...failure } = networkFailure(error)
+    throw new RsqError(failure.reason === 'proxy_configuration' ? 'INVALID_PROXY_CONFIG' : 'NETWORK_ERROR', '无法连接日事清服务。', 5, failure)
   }
 }
 export async function responseJson(response: Response): Promise<unknown> {

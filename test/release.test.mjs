@@ -96,7 +96,7 @@ test('a bare upgrade installs without confirmation and rollback restores the pre
 }))
 test('checksum corruption, bad versions, unsafe tar links and network errors preserve the current installation', { skip: process.platform === 'win32' }, async () => fixture(async f => {
   await assert.rejects(upgradeRelease({ yes: true }, { root: f.root, currentVersion: first, fetch: async (url, init) => url.endsWith('/' + f.asset) ? new Response('corrupted') : f.transport(url, init) }), { code: 'CHECKSUM_MISMATCH' })
-  await assert.rejects(upgradeRelease({ yes: true }, { root: f.root, currentVersion: first, fetch: async () => { throw Error('unavailable') } }), { code: 'UPDATE_UNAVAILABLE' })
+  await assert.rejects(upgradeRelease({ yes: true }, { root: f.root, currentVersion: first, wait: async () => {}, fetch: async () => { throw Error('unavailable') } }), { code: 'UPDATE_UNAVAILABLE' })
   await symlink('../outside', join(f.directory, 'link'))
   execFileSync('tar', ['-czf', f.archive, '-C', f.directory, '.'])
   const bytes = await readFile(f.archive), sums = createHash('sha256').update(bytes).digest('hex') + '  ' + f.asset
@@ -126,4 +126,90 @@ test('cancelling a download releases the update lock and leaves the selected ver
   } }), { code: 'CANCELLED' })
   assert.equal((await readFile(join(f.root, 'current'), 'utf8')).trim(), f.current)
   await mkdir(join(f.root, '.update-lock'))
+}))
+
+test('transient metadata errors recover with bounded backoff and report retries', async () => {
+  const waits = [], retries = []
+  let attempts = 0
+  const result = await upgradeRelease({ check: true }, { currentVersion: first,
+    wait: async ms => { waits.push(ms) }, onRetry: info => retries.push(info),
+    fetch: async () => { if (++attempts < 3) throw new TypeError('fetch failed', { cause: Object.assign(new Error('private proxy details'), { code: 'ECONNRESET' }) }); return Response.json({ version: second }) },
+  })
+  assert.equal(result.status, 'update_available')
+  assert.equal(attempts, 3)
+  assert.deepEqual(waits, [1000, 2000])
+  assert.deepEqual(retries.map(row => [row.phase, row.attempt, row.maxAttempts]), [['version-check', 2, 3], ['version-check', 3, 3]])
+})
+
+test('HTTP retries respect a bounded Retry-After and permanent failures do not retry', async () => {
+  for (const status of [408, 429, 500, 502, 503, 504, 403, 404, 407]) {
+    let attempts = 0
+    const waits = [], retryable = [408, 429, 500, 502, 503, 504].includes(status)
+    await assert.rejects(upgradeRelease({ check: true }, { wait: async ms => { waits.push(ms) }, fetch: async () => {
+      attempts++; return new Response('not a successful response', { status, headers: { 'retry-after': '99999' } })
+    } }), error => {
+      assert.equal(error.code, 'UPDATE_UNAVAILABLE')
+      assert.equal(error.details.httpStatus, status)
+      assert.equal(error.details.host, 'raw.githubusercontent.com')
+      assert.equal(error.details.attempts, retryable ? 3 : 1)
+      return true
+    })
+    assert.equal(attempts, retryable ? 3 : 1)
+    assert.deepEqual(waits, [429, 503].includes(status) ? [30000, 30000] : retryable ? [1000, 2000] : [])
+  }
+})
+
+test('TLS and proxy authentication errors are classified without echoing credentials or retrying', async () => {
+  for (const [code, message, reason] of [['CERT_HAS_EXPIRED', 'secret certificate details', 'tls'], ['UND_ERR_ABORTED', 'Proxy response (407) !== 200 when HTTP Tunneling: secret-proxy-user', 'proxy_auth'], ['UND_ERR_ABORTED', 'Proxy response (403) !== 200 when HTTP Tunneling: secret-proxy-user', 'proxy_http']]) {
+    let attempts = 0
+    await assert.rejects(upgradeRelease({ check: true }, { wait: () => assert.fail('permanent error must not retry'), fetch: async () => {
+      attempts++; throw new TypeError('fetch failed', { cause: Object.assign(new Error(message), { code }) })
+    } }), error => {
+      assert.equal(error.code, 'UPDATE_UNAVAILABLE'); assert.equal(error.details.reason, reason)
+      assert.ok(!JSON.stringify(error).includes('secret'))
+      assert.ok(!error.message.includes('secret'))
+      return true
+    })
+    assert.equal(attempts, 1)
+  }
+})
+
+test('partial archive transfers restart from scratch and install only the complete verified archive', { skip: process.platform === 'win32' }, async () => fixture(async f => {
+  let attempts = 0
+  const out = await upgradeRelease({}, { root: f.root, currentVersion: first, wait: async () => {}, fetch: async (url, init) => {
+    if (url.endsWith('/' + f.asset) && ++attempts === 1) return new Response(new ReadableStream({
+      start(controller) { controller.enqueue(new TextEncoder().encode('incomplete archive')) },
+      pull(controller) { controller.error(Object.assign(new Error('closed'), { code: 'ECONNRESET' })) },
+    }))
+    return f.transport(url, init)
+  } })
+  assert.equal(out.status, 'upgraded'); assert.equal(attempts, 2)
+  assert.notEqual((await readFile(join(f.root, 'current'), 'utf8')).trim(), f.current)
+}))
+
+test('exhausted archive retries preserve the installation and release the lock', { skip: process.platform === 'win32' }, async () => fixture(async f => {
+  let attempts = 0
+  await assert.rejects(upgradeRelease({}, { root: f.root, currentVersion: first, wait: async () => {}, fetch: async (url, init) => {
+    if (url.endsWith('/' + f.asset)) { attempts++; throw Object.assign(new Error('connection refused'), { code: 'ECONNREFUSED' }) }
+    return f.transport(url, init)
+  } }), error => error.code === 'UPDATE_UNAVAILABLE' && error.details.phase === 'archive' && error.details.attempts === 3)
+  assert.equal(attempts, 3)
+  assert.equal((await readFile(join(f.root, 'current'), 'utf8')).trim(), f.current)
+  assert.ok(!(await readdir(f.root)).some(name => name.startsWith('.update')))
+}))
+
+test('cancelling the retry backoff stops immediately without issuing another request', async () => {
+  const stop = new AbortController()
+  let attempts = 0
+  const pending = upgradeRelease({ check: true }, { signal: stop.signal, onRetry: () => stop.abort(), fetch: async () => { attempts++; throw Error('temporary') } })
+  await assert.rejects(pending, { code: 'CANCELLED', exit: 130 })
+  assert.equal(attempts, 1)
+})
+
+test('invalid metadata and checksum mismatches are never retried', { skip: process.platform === 'win32' }, async () => fixture(async f => {
+  const wait = () => assert.fail('invalid data must not be retried')
+  let calls = 0
+  await assert.rejects(upgradeRelease({ check: true }, { wait, fetch: async () => { calls++; return new Response('invalid json') } }), SyntaxError)
+  assert.equal(calls, 1)
+  await assert.rejects(upgradeRelease({}, { root: f.root, currentVersion: first, wait, fetch: async (url, init) => url.endsWith('/' + f.asset) ? new Response('corrupted') : f.transport(url, init) }), { code: 'CHECKSUM_MISMATCH' })
 }))

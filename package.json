@@ -1,6 +1,6 @@
 {
   "name": "@rishiqing/rsq-cli",
-  "version": "0.1.0-preview.9",
+  "version": "0.1.0-preview.10",
   "description": "日事清业务命令行与 Agent 接口目录",
   "type": "module",
   "engines": {
@@ -40,6 +40,7 @@
     "ot-json1": "1.0.2",
     "rrule": "2.8.1",
     "tough-cookie": "^6.0.0",
+    "undici": "7.30.2",
     "xml2js": "0.6.2",
     "zod": "4.1.9"
   },

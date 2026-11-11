@@ -32,6 +32,13 @@ export function cliDiagnostic(value: unknown, profile = 'default', command = '')
     } }
   }
   const error = value instanceof RsqError ? value : new RsqError('UNEXPECTED_ERROR', '命令未能完成。')
+  const networkHint = error.details?.reason === 'proxy_configuration' ? '代理地址须为 http:// 或 https:// URL；检查 HTTP_PROXY、HTTPS_PROXY 或对应小写变量。'
+    : error.details?.reason === 'proxy_auth' ? '检查代理账号和密码，或联系代理管理员；不要把代理凭证发送到反馈中。'
+      : error.details?.reason === 'proxy_http' ? '检查代理的访问规则和服务状态，或联系代理管理员。'
+        : error.details?.reason === 'tls' ? '检查系统时间及代理证书；企业自签证书可通过 NODE_EXTRA_CA_CERTS 配置可信 CA。'
+          : error.details?.reason === 'dns' ? '检查域名解析和代理地址；代理变量支持 HTTP_PROXY、HTTPS_PROXY 及小写形式。'
+            : error.details?.reason === 'http' ? '检查 GitHub 访问权限或服务状态，稍后运行 rsq upgrade 重试。'
+              : '检查网络及代理服务；支持 HTTP_PROXY、HTTPS_PROXY 和小写形式，NO_PROXY/no_proxy 可指定直连主机。'
   const recovery: Record<string, { message?: string; hint: string; actions: string[] }> = {
     WECOM_LOGIN_UNAVAILABLE: { message: '企业微信 CLI 登录服务当前不可用，本次登录未完成。', hint: '请稍后重新发起企业微信登录，使用新生成的链接；也可改用日事清账号密码登录。', actions: [login + ' --method wecom', login + ' --method password', login + ' --help'] },
     DINGTALK_LOGIN_UNAVAILABLE: { message: '钉钉 CLI 登录服务当前不可用，本次登录未完成。', hint: '请稍后重新发起钉钉登录，使用新生成的链接；也可改用日事清账号密码登录。', actions: [login + ' --method dingtalk', login + ' --method password', login + ' --help'] },
@@ -45,8 +52,10 @@ export function cliDiagnostic(value: unknown, profile = 'default', command = '')
     FEATURE_UPGRADE_REQUIRED: { hint: '当前套餐不支持所需功能，请联系管理员确认。', actions: [access] },
     COMPANY_EXPIRED: { hint: '请联系管理员处理公司到期状态；确认前不要继续业务写入。', actions: [access] },
     COMPANY_OVER_CAPACITY: { hint: '请联系管理员处理超员状态；确认前不要继续业务写入。', actions: [access] },
+    UPDATE_UNAVAILABLE: { hint: networkHint, actions: ['rsq upgrade'] },
+    INVALID_PROXY_CONFIG: { message: '代理地址配置无效。', hint: networkHint, actions: [help] },
     CONFIRMATION_REQUIRED: { hint: '先用 --dry-run 核对影响，已获授权的非交互写入需加 --yes。', actions: [schema, help] },
-    NETWORK_ERROR: { hint: '检查连接；写操作可能已发出，先按资源 ID 读回结果，不直接重复提交。', actions: [schema] },
+    NETWORK_ERROR: { hint: networkHint + ' 写操作可能已发出，先按资源 ID 读回结果，不直接重复提交。', actions: [schema] },
     TIMEOUT: { hint: '请求可能已生效，先按资源 ID 读回结果，再决定下一步。', actions: [schema] },
     CANCELLED: { hint: '操作已停止；若已有写入步骤，请先核对返回的资源和结果。', actions: [schema] },
   }

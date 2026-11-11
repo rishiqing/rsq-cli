@@ -121,6 +121,8 @@ rsq upgrade --rollback --yes
 
 升级与回滚保留已有登录会话。版本更新和安装包见 [Releases](https://github.com/rishiqing/rsq-cli/releases)。
 
+使用代理时，支持 `HTTP_PROXY`、`HTTPS_PROXY` 及对应小写变量；`NO_PROXY` / `no_proxy` 指定直连主机。同名变量同时存在时，小写优先。升级遇到临时网络故障会自动重试，失败时保留当前安装。
+
 ## 开发
 
 需要 Node.js 22：

@@ -128,3 +128,14 @@ test('human errors retain partial-write recovery information', () => {
   assert.match(human, /unknown/u)
   assert.deepEqual(JSON.parse(renderCliDiagnostic(diagnostic, false)).error.details, details)
 })
+
+test('upgrade failures point to network recovery rather than business Schema and keep structured details', () => {
+  for (const [reason, expectedHint] of [['dns', /域名解析/u], ['tls', /NODE_EXTRA_CA_CERTS/u], ['proxy_configuration', /HTTPS_PROXY/u], ['proxy_auth', /代理账号/u], ['proxy_http', /代理的访问规则/u], ['connection', /NO_PROXY/u], ['http', /GitHub/u]]) {
+    const details = { phase: 'archive', host: 'github.com', attempts: 3, reason }
+    const diagnostic = cliDiagnostic(new RsqError('UPDATE_UNAVAILABLE', '当前安装未切换。', 5, details), 'default', 'upgrade')
+    assert.match(diagnostic.error.hint, expectedHint)
+    assert.deepEqual(diagnostic.error.actions, ['rsq upgrade'])
+    assert.deepEqual(JSON.parse(renderCliDiagnostic(diagnostic, false)).error.details, details)
+    assert.ok(!renderCliDiagnostic(diagnostic, true).includes('rsq schema'))
+  }
+})

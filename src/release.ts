@@ -4,7 +4,9 @@ import { chmod, lstat, mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'n
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { unzipSync } from 'fflate'
+import { setTimeout as delay } from 'node:timers/promises'
 import { RsqError } from './core.js'
+import { networkFetch, networkFailure } from './network.js'
 
 export const releaseRepository = 'rishiqing/rsq-cli'
 export const releaseDownload = 'https://github.com/' + releaseRepository + '/releases/download/'
@@ -12,7 +14,7 @@ export const latestManifest = 'https://raw.githubusercontent.com/' + releaseRepo
 export const installedVersion = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')).version as string
 export const agentSkillPath = fileURLToPath(new URL('../skills/rsq-cli/SKILL.md', import.meta.url))
 export type UpgradeOptions = { check?: boolean; list?: boolean; version?: string; rollback?: boolean; force?: boolean; yes?: boolean }
-type Services = { fetch?: typeof fetch; root?: string; currentVersion?: string; signal?: AbortSignal; confirm?: (plan: { currentVersion: string; targetVersion: string; rollback: boolean }) => Promise<boolean> }
+type Services = { fetch?: typeof fetch; root?: string; currentVersion?: string; signal?: AbortSignal; wait?: (ms: number, signal?: AbortSignal) => Promise<void>; onRetry?: (details: { phase: string; attempt: number; maxAttempts: number; delayMs: number }) => void; confirm?: (plan: { currentVersion: string; targetVersion: string; rollback: boolean }) => Promise<boolean> }
 function fail(code: string, message: string): never { throw new RsqError(code, message, 5) }
 export function releaseVersion(value: unknown) {
   const text = typeof value === 'string' ? value.replace(/^v/, '') : ''
@@ -40,18 +42,70 @@ export function compareVersions(a: string, b: string) {
   }
   return 0
 }
-async function download(url: string, transport: typeof fetch, limit: number, signal?: AbortSignal, accept = 'application/octet-stream') {
-  let response: Response
-  try { response = await transport(url, { headers: { accept }, signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(120000)]) : AbortSignal.timeout(120000) }) } catch { if (signal?.aborted) throw new RsqError('CANCELLED', '升级已取消，当前安装未切换。', 130); return fail('UPDATE_UNAVAILABLE', '无法连接 GitHub，请稍后重新检查更新。') }
-  if (!response.ok) fail('UPDATE_UNAVAILABLE', '无法获取 GitHub Release 文件（HTTP ' + response.status + '）。')
-  if (Number(response.headers.get('content-length')) > limit) fail('INVALID_RELEASE', '安装包超过允许大小。')
-  const reader = response.body?.getReader(), chunks: Uint8Array[] = []
-  if (!reader) fail('INVALID_RELEASE', 'Release 文件内容为空。')
-  let size = 0
-  try {
-    while (true) { const result = await reader.read(); if (result.done) break; size += result.value.length; if (size > limit) { await reader.cancel(); fail('INVALID_RELEASE', '安装包超过允许大小。') } chunks.push(result.value) }
-  } catch (error) { if (signal?.aborted) throw new RsqError('CANCELLED', '升级已取消，当前安装未切换。', 130); if (error instanceof RsqError) throw error; fail('UPDATE_UNAVAILABLE', 'Release 文件下载未完成，当前安装未切换。') }
-  return Buffer.concat(chunks)
+function cancelled(signal?: AbortSignal) {
+  if (signal?.aborted) throw new RsqError('CANCELLED', '升级已取消，当前安装未切换。', 130)
+}
+async function download(url: string, limit: number, phase: string, services: Services, accept = 'application/octet-stream') {
+  const transport = services.fetch ?? networkFetch, signal = services.signal, maxAttempts = 3
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    cancelled(signal)
+    const timeout = AbortSignal.timeout(120000)
+    let response: Response | undefined, reader: ReadableStreamDefaultReader<Uint8Array> | undefined
+    let failure: { reason: string; retryable: boolean; httpStatus?: number; variable?: string } | undefined
+    let retryAfter = 0
+    try {
+      response = await transport(url, { method: 'GET', headers: { accept }, signal: signal ? AbortSignal.any([signal, timeout]) : timeout })
+      if (!response.ok) {
+        const status = response.status
+        failure = { reason: status === 407 ? 'proxy_auth' : 'http', retryable: [408, 429, 500, 502, 503, 504].includes(status), httpStatus: status }
+        const value = response.headers.get('retry-after')
+        if (value && [429, 503].includes(status)) {
+          const ms = /^\d+$/.test(value) ? Number(value) * 1000 : Date.parse(value) - Date.now()
+          if (Number.isFinite(ms)) retryAfter = Math.max(0, Math.min(30000, ms))
+        }
+      } else {
+        if (Number(response.headers.get('content-length')) > limit) fail('INVALID_RELEASE', '安装包超过允许大小。')
+        reader = response.body?.getReader()
+        if (!reader) fail('INVALID_RELEASE', 'Release 文件内容为空。')
+        const chunks: Uint8Array[] = []
+        let size = 0
+        while (true) {
+          const result = await reader.read()
+          if (result.done) break
+          size += result.value.length
+          if (size > limit) fail('INVALID_RELEASE', '安装包超过允许大小。')
+          chunks.push(result.value)
+        }
+        cancelled(signal)
+        return Buffer.concat(chunks)
+      }
+    } catch (error) {
+      cancelled(signal)
+      if (error instanceof RsqError) throw error
+      failure = timeout.aborted ? { reason: 'timeout', retryable: true } : networkFailure(error)
+    } finally {
+      // Never reuse a partially downloaded archive or leave a failed body open.
+      if (reader) { await reader.cancel().catch(() => {}); reader.releaseLock() }
+      else await response?.body?.cancel().catch(() => {})
+    }
+    cancelled(signal)
+    if (!failure!.retryable || attempt === maxAttempts) {
+      const reason = failure!.reason
+      const message = reason === 'proxy_configuration' ? '代理地址配置无效，请检查代理环境变量。'
+        : reason === 'proxy_auth' ? '代理要求身份验证，请检查代理凭证。'
+          : reason === 'proxy_http' ? '代理拒绝了 GitHub 连接（HTTP ' + failure!.httpStatus + '）。'
+            : reason === 'tls' ? 'GitHub 连接的 TLS 证书校验失败。'
+              : reason === 'dns' ? '无法解析 GitHub 或代理服务器地址。'
+                : reason === 'timeout' ? '连接 GitHub 或下载更新超时。'
+                  : reason === 'http' ? '无法获取 GitHub 更新文件（HTTP ' + failure!.httpStatus + '）。'
+                    : '无法连接 GitHub 或下载更新，请检查网络和代理。'
+      throw new RsqError('UPDATE_UNAVAILABLE', message + ' 当前安装未切换。', 5, { phase, host: new URL(url).hostname, attempts: attempt, ...failure })
+    }
+    const delayMs = Math.max(1000 * 2 ** (attempt - 1), retryAfter)
+    services.onRetry?.({ phase, attempt: attempt + 1, maxAttempts, delayMs })
+    try { await (services.wait ?? ((ms, stop) => delay(ms, undefined, { signal: stop })))(delayMs, signal) } catch (error) { cancelled(signal); throw error }
+  }
+  throw new Error('Unreachable download state')
 }
 export function verifyReleaseChecksum(bytes: Uint8Array, sums: string, filename: string) {
   const rows = sums.split(/\r?\n/).map(line => /^([a-f0-9]{64})\s+\*?([^\r\n]+)$/i.exec(line)).filter(row => row && row[2] === filename)
@@ -104,9 +158,9 @@ async function managedRoot(supplied?: string) {
 }
 export async function upgradeRelease(options: UpgradeOptions, services: Services = {}) {
   if (options.list && (options.check || options.version || options.rollback || options.force) || options.rollback && (options.check || options.version || options.force)) throw new RsqError('INVALID_INPUT', '升级选项不能组合使用。', 2)
-  const transport = services.fetch ?? fetch, currentVersion = services.currentVersion ?? installedVersion
+  const currentVersion = services.currentVersion ?? installedVersion
   if (options.list) {
-    const data = JSON.parse((await download('https://api.github.com/repos/' + releaseRepository + '/releases?per_page=100', transport, 8 * 1024 * 1024, services.signal, 'application/vnd.github+json')).toString()) as { tag_name: string; draft: boolean; prerelease: boolean; html_url: string; published_at: string }[]
+    const data = JSON.parse((await download('https://api.github.com/repos/' + releaseRepository + '/releases?per_page=100', 8 * 1024 * 1024, 'release-list', services, 'application/vnd.github+json')).toString()) as { tag_name: string; draft: boolean; prerelease: boolean; html_url: string; published_at: string }[]
     return { status: 'versions', currentVersion, versions: data.filter(row => !row.draft).map(row => ({ version: releaseVersion(row.tag_name), prerelease: row.prerelease, url: row.html_url, publishedAt: row.published_at })) }
   }
   let root: string | undefined, targetVersion: string, previous: string | undefined
@@ -115,7 +169,7 @@ export async function upgradeRelease(options: UpgradeOptions, services: Services
     if (!previous) fail('NO_ROLLBACK', '没有可回滚的安装版本。')
     targetVersion = await verifyInstalled(join(root, 'versions', previous))
   } else {
-    const data = options.version ? { version: options.version } : JSON.parse((await download(latestManifest, transport, 65536, services.signal)).toString())
+    const data = options.version ? { version: options.version } : JSON.parse((await download(latestManifest, 65536, 'version-check', services)).toString())
     targetVersion = releaseVersion(data.version)
   }
   const plan = { currentVersion, targetVersion, rollback: !!options.rollback }, comparison = compareVersions(targetVersion, currentVersion)
@@ -133,8 +187,8 @@ export async function upgradeRelease(options: UpgradeOptions, services: Services
     let selected = previous
     if (!options.rollback) {
       const asset = releaseAsset(targetVersion), base = releaseDownload + 'v' + targetVersion + '/'
-      const sums = (await download(base + 'SHA256SUMS', transport, 128 * 1024, services.signal)).toString()
-      const bytes = await download(base + asset, transport, 250 * 1024 * 1024, services.signal)
+      const sums = (await download(base + 'SHA256SUMS', 128 * 1024, 'checksums', services)).toString()
+      const bytes = await download(base + asset, 250 * 1024 * 1024, 'archive', services)
       verifyReleaseChecksum(bytes, sums, asset)
       temporary = await mkdtemp(join(root, '.update-'))
       const staging = join(temporary, 'release')
