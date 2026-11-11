@@ -35,14 +35,14 @@ rsq login
 按提示选择登录方式，也可以直接指定：
 
 ```sh
+# 日事清账号密码登录：在终端按提示输入
+rsq login --method password
+
 # 企业微信登录：打开浏览器扫码
 rsq login --method wecom
 
 # 钉钉登录：打开浏览器扫码
 rsq login --method dingtalk
-
-# 日事清账号密码登录：在终端按提示输入
-rsq login --method password
 
 # 查看当前账号和公司
 rsq whoami

@@ -119,16 +119,16 @@ configureBuiltin(app.command('login'), 'login')
     const ctx = selectedContext()
     let method = options.method
     if (!method && process.stdin.isTTY) {
-      message('登录日事清\n  1. 企业微信扫码\n  2. 日事清账号密码\n  3. 钉钉扫码')
+      message('登录日事清\n  1. 日事清账号密码\n  2. 企业微信扫码\n  3. 钉钉扫码')
       while (!method) {
         const choice = await ask('选择登录方式 [1/2/3]：')
-        if (choice === '1' || choice === 'wecom') method = 'wecom'
-        else if (choice === '2' || choice === 'password') method = 'password'
+        if (choice === '1' || choice === 'password') method = 'password'
+        else if (choice === '2' || choice === 'wecom') method = 'wecom'
         else if (choice === '3' || choice === 'dingtalk') method = 'dingtalk'
         else message('请输入 1、2 或 3，按 Ctrl+C 取消。')
       }
     }
-    if (method !== 'wecom' && method !== 'password' && method !== 'dingtalk') throw new RsqError('INVALID_LOGIN_METHOD', '请选择 --method wecom、password 或 dingtalk。', 2)
+    if (method !== 'wecom' && method !== 'password' && method !== 'dingtalk') throw new RsqError('INVALID_LOGIN_METHOD', '请选择 --method password、wecom 或 dingtalk。', 2)
     if (method !== 'password' && (options.username || options.passwordStdin)) throw new RsqError('INVALID_INPUT', '扫码登录不接受账号密码参数。', 2)
     if (method === 'password' && !options.browser) throw new RsqError('INVALID_INPUT', '--no-browser 仅适用于扫码登录。', 2)
     if (method === 'password' && (!process.stdin.isTTY && (!options.username || !options.passwordStdin))) {

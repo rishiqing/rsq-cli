@@ -18,7 +18,7 @@ test('all built-in identity commands are discoverable offline and their options 
     assert.ok(!Object.hasOwn(schema.parameters, 'password')); assert.ok(!Object.hasOwn(schema.parameters, 'environment'))
   }
   const auth = JSON.parse(run(['schema', 'auth']).stdout); assert.ok(auth.builtins.some(builtin => builtin.command === 'auth status'))
-  const byId = JSON.parse(run(['schema', 'builtin.login']).stdout); assert.equal(byId.command, 'login'); assert.deepEqual(byId.parameters.method.enum, ['wecom', 'password', 'dingtalk']); assert.equal(byId.parameters.browser.presentValue, false)
+  const byId = JSON.parse(run(['schema', 'builtin.login']).stdout); assert.equal(byId.command, 'login'); assert.deepEqual(byId.parameters.method.enum, ['password', 'wecom', 'dingtalk']); assert.equal(byId.parameters.browser.presentValue, false)
   assert.deepEqual(byId.transport.dingtalk, ['POST /backauth/cli-auth/device', 'POST /backauth/cli-auth/exchange', 'GET /task/login/authAjax'])
   assert.deepEqual(byId.transport.wecom, ['POST /qywxbackauth/cli-auth/device', 'POST /qywxbackauth/cli-auth/exchange', 'GET /task/login/authAjax'])
 })

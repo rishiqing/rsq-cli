@@ -1,6 +1,6 @@
 {
   "name": "@rishiqing/rsq-cli",
-  "version": "0.1.0-preview.8",
+  "version": "0.1.0-preview.9",
   "description": "日事清业务命令行与 Agent 接口目录",
   "type": "module",
   "engines": {

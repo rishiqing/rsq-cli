@@ -56,12 +56,11 @@ test('unavailable WeCom login names the failed service and offers password login
   }
 })
 
-test('login menu offers both methods and EOF cancels with a failing exit code', () => {
+test('login menu offers password, WeCom and DingTalk in order and EOF cancels with a failing exit code', () => {
   const result = run(['login'], true)
   assert.equal(result.status, 130)
   assert.equal(result.stdout, '')
-  assert.match(result.stderr, /企业微信扫码/u)
-  assert.match(result.stderr, /日事清账号密码/u)
+  assert.match(result.stderr, /1\. 日事清账号密码[\s\S]*2\. 企业微信扫码[\s\S]*3\. 钉钉扫码/u)
   assert.match(result.stderr, /CANCELLED/u)
 })
 
