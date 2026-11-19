@@ -14,11 +14,19 @@ description: 使用 rsq CLI 查询或修改日事清流程、绩效、OKR、行�
 5. 普通命令 stdout 默认 JSON；所有模块共用 `--format json|pretty|table|ndjson`，Agent 可显式使用 `--format json`（或 `--json`），人工查看可选 pretty/table。错误和提示走 stderr；机器模式按 JSON 行处理，错误读取 `error.code/message/hint/actions/details`，进度、预览、提示使用 `type=progress/preview/prompt`。SSE/NDJSON 操作始终逐行输出 JSON。分页根据叶子 Schema 的游标和返回结构逐页调用，不猜测 `--all`、自动翻页参数或总条数。
 6. 写请求失败、超时或返回结构变化时，检查 `failedStep/completedSteps/resources/writeOutcome`，通过读命令核对结果后再决定是否重试；CLI 不自动重放写请求或回滚。`writeOutcome: unknown` 表示可能已生效。不要在重新登录后直接重发创建、评分、提交等操作。错误对象不会包含令牌和完整服务端业务内容。
 
-日常待办先用 `todo context` 发现日期和筛选，再用 `todo list`；`view=dayWork` 混合普通任务与流程步骤。根据返回的 `kind/target` 进入任务或流程实例，不能把步骤 ID 当任务 ID。分页用返回的 `nextCursor`；这是绑定查询条件和结果快照的本地分页，列表变化时从第一页重新发现。`todo calendar` 是本人的日期标记，待处理任务另用 `todo pending list`。
+日常待办先用 `todo context` 发现日期和筛选，再用 `todo list`。用返回的 `target` 打开选定待办。流程待办统一走 `todo workflow inspect`，从 `target` 传入 `processId` 和可选的 `stepId`。它会自动核对项目流程或独立流程的归属、权限和实际步骤，再给出后续命令。`todo pending list` 和 `cooperation workflow list` 也提供这个入口。分页使用 `nextCursor`，列表变化时从第一页重新发现。`todo calendar` 返回本人的日期标记。
 
 保存的项目业务视图使用 `project view list/inspect`，模板视图使用 `project template view` 前缀。普通项目传 `projectId`，模板传封面 `coverId`，都绑定真实任务 `moduleId`。从 inspect 的动态筛选和显示字段发现参数，再创建/编辑，使用 `view tasks list` 核对筛选后的实际任务；`fields set` 保留首列 `taskName`。`view select` 保存个人选择，有写副作用；`project view set` 则是已有项目显示模式，两者目标不同。
 
-表格模式流程使用 `workflow instances context/list`，按实际应用、名称、状态及创建日期查询并按 `nextOffset` 翻页。项目内流程使用 `project workflow instances context/list` 并传 `projectId`，按项目模块的 PLAN_WORKFLOW 授权，不要求开通独立 WORKFLOW 产品。`finished` 沿用网页含已完成和已关闭，详情的 `status` 区分。子流程先运行 `workflow instance children list --process-id`（项目内使用 `project workflow instance children list`）发现父实例的实际步骤，再传其 `stepId` 查询关联子实例；步骤定义 `originId` 不能代替实例步骤 ID。独立标准流程可用 `workflow instance child start`，由 CLI 核对父步骤填写权、当前状态和配置允许的应用；不自行拼接来源编号。对子实例使用原有 `instance inspect/fill/act`，完成后从父级关系读回。自动发起及只有项目产品授权时的全部办理组合仍按已知限制处理。
+只有流程名称时用 `workflow find --name <名称>`。已有应用或实例 ID 时用相应 ID 参数。查找覆盖当前账号可见的项目流程与独立流程。按结果中的 `target` 读取配置或实例，按具体步骤的可用动作办理。若有多个匹配，先用已有的项目、应用、实例或日期信息缩小范围，再让用户确认具体对象。
+
+导出流程用 `workflow export --name <名称>` 或调用查找结果中的 `exportTarget`。可传 `--form-name`、`--status`、`--created-between` 限定记录。导出核对实际应用权限与可见范围，保存为 Excel，stdout 返回 `output` 和记录数。省略 `--output` 时在当前目录自动选文件名。用户指定文件或目录时按其路径保存，已有文件保持原样。
+
+已知项目时可用 `project workflow modules list --project-id <项目ID>` 直接发现模块。项目命令按 `PLAN` + `PLAN_WORKFLOW` 及实际模块校验，独立流程命令按 `WORKFLOW` 校验。
+
+`form describe` 返回表单定义，`form records list` 返回实际值。项目表单记录从可见流程实例和步骤读取，按 `pagination.nextPage` 翻页；本页没有匹配表单时也要看 `nextPage`。实例列表的 `target` 保留相应入口和实际 ID。沿该入口调用 `instance inspect` 获取步骤、表单值及可用动作，再按需 `fill`、`act` 或 `transfer`。实例列表按 `nextOffset` 翻页，`finished` 筛选包括已完成及已关闭，详情的 `status` 区分终态。
+
+子流程先按父实例入口运行 `instance children list --process-id`，再提供实际实例步骤 `stepId` 查询关联；`originId` 是定义 ID。子实例使用它自己实际所属的入口和项目。独立标准流程可使用 `workflow instance child start` 显式发起，CLI 核对父步骤填写权和配置允许的应用。
 
 数据表记录协作用 `datasheet record comments list`、`comment add/remove` 和 `activity list`，始终传实际项目、表及记录 ID；只能删除本人可写记录中的评论。评论 `text` 自动按纯文本转义。记录活动按 revision 游标分页；局部字段/视图权限下暂拒绝历史原始值，避免泄露隐藏内容。任务历史另用 `task activity list`，按事件 ID 游标分页；评论、活动和任务历史的游标不能混用。
 
@@ -34,7 +42,8 @@ description: 使用 rsq CLI 查询或修改日事清流程、绩效、OKR、行�
 
 | 业务 | 模块 | 发现入口与常用读取 |
 | --- | --- | --- |
-| 流程、审批、流程表单 | `workflow` | `rsq schema workflow`；`rsq workflow application list`、`rsq workflow process get --process-info-id <id>` |
+| 项目流程模块 | `project workflow` | `rsq schema 'project workflow'`、`rsq project workflow modules list --project-id <id>` |
+| 独立流程系统 | `workflow` | `rsq schema workflow`、`rsq workflow application list`、`rsq workflow instance inspect --process-id <id>` |
 | 绩效考核、指标、评分、模板 | `appraisal` | `rsq schema appraisal`；`rsq appraisal list`、`rsq appraisal cycle list`、`rsq appraisal template list` |
 | OKR、规划、目标、关键结果、周期、对齐 | `okr` | 先查 `okr cycles context`、`okr objectives context`；对齐用 `okr alignment inspect`，行动用 `okr actions inspect`。规划使用 `okr planning objectives context`；公示和工作计划分别用 `okr publicity context`、`okr work-plans context` |
 | 行动、行动分组和任务 | `action` | `rsq schema "action workspace inspect"`；显式提供日期、范围与必要 typeId；用发现的分组业务 ID 执行维护、计数或分页 |
@@ -173,7 +182,7 @@ OKR 规划与执行共用目标资源，不存在 CLI 自行定义的草稿状�
 
 签名先查 `signature latest --business-unit task|workflow|performance`。登记或上传需要 `--yes`，仅使用用户明确提供、标明对应审批用途的本人 PNG，不根据姓名生成签名图片。`signature upload` 自动核对公司状态、图片大小、空间、扩展名、上传回执及真实文件创建者；`signature register` 可使用本人已有 PNG。任务审核、流程动作及绩效本人确认通过 `useLastSignature` 显式选择；若提供 `signatureFileId`，它须匹配该业务的本人最近签名。绩效内容与结果确认共用 performance 最近签名，提交后 CLI 核对实际流程签名关联。后台没有签名历史删除或清空首签接口，失败先按文件 ID 查询，不自动重新上传、登记或审批。
 
-项目变更先查 `project alteration context inspect`。模块为 `alteration`，真正承载审批的流程模块是 `workflowModuleSubType=alterationWorkflow`，模块 ID、配置总 ID、单项配置 ID 和应用 ID 各自独立。`flow templates` 返回可复制的模板模块 ID；新建或复制后，再用 `workflow configuration inspect` 发现实际表单、步骤及发布条件。HTTP 创建可能异步受理，CLI 只在明确受理后等待五秒读取一次目录；结果未明时用目录核对，不能重复创建。
+项目变更先查 `project alteration context inspect`。模块为 `alteration`，真正承载审批的流程模块是 `workflowModuleSubType=alterationWorkflow`，模块 ID、配置总 ID、单项配置 ID 和应用 ID 各自独立。`flow templates` 返回可复制的模板模块 ID；新建或复制后，用同一变更模块的 `project alteration context inspect` 核对关联应用及配置。HTTP 创建可能异步受理，CLI 只在明确受理后等待五秒读取一次目录；结果未明时用目录核对，不能重复创建。
 
 手动应用选择 `[]` 表示 UI 回退全部变更流程。任务配置的成员 `[]` 表示 UI 的任何人，实际一键发起仍需核对服务端返回，不能自行绕过。停用配置的成员也不能分配给其他配置。列表的 `serviceTotal` 是服务端分页结果，`total: null` 表示没有可靠总数；按 `nextPage` 继续发现。查询变更任务字段可能写入旧值快照，不能当成可无限轮询的只读请求；保存提议值不证明审批后任务已变更，必须核对终态和实际任务。
 

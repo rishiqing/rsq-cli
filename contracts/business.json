@@ -493,11 +493,11 @@
       }
     ],
     "operationAudit": {
-      "reviewedContracts": 1344,
-      "executable": 768,
-      "requiresBusinessContext": 576,
+      "reviewedContracts": 1346,
+      "executable": 763,
+      "requiresBusinessContext": 583,
       "verified": 0,
-      "pending": 21,
+      "pending": 23,
       "stale": 1323,
       "independentlyObserved": 0
     },
@@ -62911,6 +62911,126 @@
                   "尚未核对为可执行契约"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.todo-workflow-visibility",
+              "context": "todo workflow inspect",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/process/info/listByIdsForDataModule",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "todo workflow inspect"
+              ]
+            },
+            {
+              "operationId": "rsq.ac5f2bf25fad",
+              "context": "todo workflow inspect",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/process/info/details",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "todo workflow inspect"
+              ]
+            },
+            {
+              "operationId": "rsq.471c5e192b8d",
+              "context": "todo workflow inspect",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/application/list",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "todo workflow inspect"
+              ]
+            },
+            {
+              "operationId": "rsq.project-workflow-cover",
+              "context": "todo workflow inspect",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/v1/kanbanCrud",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "todo workflow inspect"
+              ]
+            },
+            {
+              "operationId": "rsq.0049502086e1",
+              "context": "todo workflow inspect",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/v1/kanbanChildCrud/list",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "todo workflow inspect"
+              ]
+            },
+            {
+              "operationId": "rsq.38741e60b872",
+              "context": "todo workflow inspect",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/application",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "todo workflow inspect"
+              ]
+            },
+            {
+              "operationId": "rsq.bcae04df8eb2",
+              "context": "todo workflow inspect",
+              "role": "discover",
+              "method": "POST",
+              "route": "/task/workflow/process/info/sheet/list",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "todo workflow inspect"
+              ]
+            },
+            {
+              "operationId": "rsq.aecc6286dfc1",
+              "context": "todo workflow inspect",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/process/info/step",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "todo workflow inspect"
+              ]
+            },
+            {
+              "operationId": "rsq.12722ecef099",
+              "context": "todo workflow inspect",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/process/info/step/list/auditsAndForms",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "todo workflow inspect"
+              ]
+            },
+            {
+              "operationId": "rsq.f4685612e93b",
+              "context": "todo workflow inspect",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/process/info/step/operate/status",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "todo workflow inspect"
+              ]
             }
           ],
           "prerequisites": [
@@ -62971,7 +63091,8 @@
             "closure.search.suggest",
             "closure.arms.todo.context",
             "closure.arms.todo.list",
-            "closure.arms.todo.pending.list"
+            "closure.arms.todo.pending.list",
+            "closure.arms.todo.workflow.inspect"
           ],
           "contract": "pending",
           "validation": {
@@ -75461,6 +75582,18 @@
                   "尚未按业务闭环要求复核"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.project-workflow-cover",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/v1/kanbanCrud",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "project workflow modules list"
+              ]
             }
           ],
           "prerequisites": [
@@ -80343,6 +80476,463 @@
             "契约尚未全部重新复核",
             "正式组织场景与适用身份尚未全部验收"
           ]
+        },
+        {
+          "id": "workflow",
+          "name": "项目流程模块的表单、配置和实例",
+          "prerequisites": [
+            "当前项目和项目流程功能可用，业务操作遵守应用、实例和步骤的实际权限。"
+          ],
+          "context": [
+            "从普通项目的模块找到应用 ID，实例操作核对实际应用和项目。"
+          ],
+          "steps": [
+            "发现流程模块",
+            "读取配置或筛选实例",
+            "查询表单记录、发起、填写及办理",
+            "核对业务结果"
+          ],
+          "assertions": [
+            "项目流程使用 PLAN 与 PLAN_WORKFLOW。",
+            "工作流应用、实例和表单归属一致。",
+            "没有权限时停止，写入后从服务端读回。"
+          ],
+          "bindings": [
+            {
+              "operationId": "rsq.project-workflow-cover",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/v1/kanbanCrud",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "project workflow modules list"
+              ]
+            },
+            {
+              "operationId": "rsq.0049502086e1",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/v1/kanbanChildCrud/list",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "project module list"
+              ]
+            },
+            {
+              "operationId": "rsq.38741e60b872",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/workflow/application",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow application get"
+              ]
+            },
+            {
+              "operationId": "rsq.003a9e022a92",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/workflow/form/list",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow form list"
+              ]
+            },
+            {
+              "operationId": "rsq.35f901010b2f",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/workflow/form",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow form get"
+              ]
+            },
+            {
+              "operationId": "rsq.c840bc10f2ec",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/workflow/step/info/recursive/tree/list",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow step info-recursive-tree list"
+              ]
+            },
+            {
+              "operationId": "rsq.041a31e96710",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/workflow/form/form/copy",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow form form-copy get"
+              ]
+            },
+            {
+              "operationId": "rsq.c0313ebc2317",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "POST",
+              "route": "/task/workflow/form",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow form create"
+              ]
+            },
+            {
+              "operationId": "rsq.7fd2efb88118",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "PUT",
+              "route": "/task/workflow/form",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow form update"
+              ]
+            },
+            {
+              "operationId": "rsq.6d2676776375",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "DELETE",
+              "route": "/task/workflow/form",
+              "effect": "destructive",
+              "status": "available",
+              "executableCommands": [
+                "workflow form delete"
+              ]
+            },
+            {
+              "operationId": "rsq.45fe07614b44",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "POST",
+              "route": "/task/workflow/step/info",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow step info create"
+              ]
+            },
+            {
+              "operationId": "rsq.19a55f6edb3a",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "PUT",
+              "route": "/task/workflow/step/info",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow step info update"
+              ]
+            },
+            {
+              "operationId": "rsq.40ab11c64775",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "DELETE",
+              "route": "/task/workflow/step/info",
+              "effect": "destructive",
+              "status": "available",
+              "executableCommands": [
+                "workflow step info delete"
+              ]
+            },
+            {
+              "operationId": "rsq.e5737e929960",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "POST",
+              "route": "/task/workflow/step/info/adjust/close",
+              "effect": "destructive",
+              "status": "available",
+              "executableCommands": [
+                "workflow step info-adjust-close create"
+              ]
+            },
+            {
+              "operationId": "rsq.454107c9cfc9",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/workflow/step/info/adjust/init",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow step info-adjust-init get"
+              ]
+            },
+            {
+              "operationId": "rsq.3c645e026151",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "POST",
+              "route": "/task/workflow/step/info/adjust/save",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow step info-adjust-save create"
+              ]
+            },
+            {
+              "operationId": "rsq.4ea9fdcd9c3e",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "POST",
+              "route": "/task/workflow/process/info/start",
+              "effect": "destructive",
+              "status": "available",
+              "executableCommands": [
+                "workflow process start"
+              ]
+            },
+            {
+              "operationId": "rsq.ac5f2bf25fad",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/workflow/process/info/details",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow process get"
+              ]
+            },
+            {
+              "operationId": "rsq.aecc6286dfc1",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/workflow/process/info/step",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow process info-step get"
+              ]
+            },
+            {
+              "operationId": "rsq.12722ecef099",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/workflow/process/info/step/list/auditsAndForms",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow process info-step-list-audits-and-forms get"
+              ]
+            },
+            {
+              "operationId": "rsq.f4685612e93b",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/workflow/process/info/step/operate/status",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow process info-step-operate-status get"
+              ]
+            },
+            {
+              "operationId": "rsq.f1a3819a34f4",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "PUT",
+              "route": "/task/workflow/process/info/form",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow process info-form update"
+              ]
+            },
+            {
+              "operationId": "rsq.a2e2a125cd3f",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/workflow/process/info/step/reverse/list",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow process info-step-reverse list"
+              ]
+            },
+            {
+              "operationId": "rsq.0683333c3acb",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/file/signature/getFront",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "signature latest",
+                "signature register",
+                "signature upload",
+                "task audit act",
+                "workflow instance act",
+                "appraisal assessments acknowledge-content",
+                "appraisal assessments acknowledge-result"
+              ]
+            },
+            {
+              "operationId": "rsq.be47dbd0d2d7",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/v1/folder/file",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "doc get-file-detail"
+              ]
+            },
+            {
+              "operationId": "rsq.bec483b52b5c",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "PUT",
+              "route": "/task/workflow/formulaValidate",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow formula-validate update"
+              ]
+            },
+            {
+              "operationId": "rsq.21f9a7e1bc0c",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "PUT",
+              "route": "/task/workflow/process/info/step/operate/status",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow process info-step-operate-status update"
+              ]
+            },
+            {
+              "operationId": "rsq.afb72992ccb7",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "POST",
+              "route": "/task/workflow/process/info/close",
+              "effect": "destructive",
+              "status": "available",
+              "executableCommands": [
+                "workflow process info-close create"
+              ]
+            },
+            {
+              "operationId": "rsq.47c701ca783d",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/workflow/process/info/activate",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow process info-activate get"
+              ]
+            },
+            {
+              "operationId": "rsq.0df5d7d4a356",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "POST",
+              "route": "/task/workflow/process/info/step/transfer/user",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow process info-step-transfer-user create"
+              ]
+            },
+            {
+              "operationId": "rsq.d04c7521598b",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/login/authAjax",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "identity inspect"
+              ]
+            },
+            {
+              "operationId": "rsq.bcae04df8eb2",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "POST",
+              "route": "/task/workflow/process/info/sheet/list",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow instances list",
+                "project workflow instances list"
+              ]
+            },
+            {
+              "operationId": "rsq.f09c1e49875f",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/workflow/childProcess/processInfo/list",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow instance children list",
+                "workflow instance child start",
+                "project workflow instance children list"
+              ]
+            }
+          ],
+          "workflows": [
+            "closure.project.workflow.configuration.inspect",
+            "closure.project.workflow.form.describe",
+            "closure.project.workflow.form.clone",
+            "closure.project.workflow.form.define",
+            "closure.project.workflow.form.replace",
+            "closure.project.workflow.form.field.add",
+            "closure.project.workflow.form.field.configure",
+            "closure.project.workflow.form.field.remove",
+            "closure.project.workflow.form.remove",
+            "closure.project.workflow.step.insert",
+            "closure.project.workflow.step.configure",
+            "closure.project.workflow.step.remove",
+            "closure.project.workflow.configuration.deploy",
+            "closure.project.workflow.configuration.graph.inspect",
+            "closure.project.workflow.configuration.graph.apply",
+            "closure.project.workflow.instance.start",
+            "closure.project.workflow.instance.inspect",
+            "closure.project.workflow.instance.fill",
+            "closure.project.workflow.instance.act",
+            "closure.project.workflow.instance.close",
+            "closure.project.workflow.instance.reopen",
+            "closure.project.workflow.instance.transfer",
+            "closure.project.workflow.modules.list",
+            "closure.project.workflow.form.records.list"
+          ],
+          "status": "partial",
+          "contract": "reviewed",
+          "scenario": "pending"
         }
       ],
       "accepted": false,
@@ -89562,6 +90152,186 @@
                   "缺少本轮复核：idempotency"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.d04c7521598b",
+              "context": "workflow find",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/login/authAjax",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow find"
+              ]
+            },
+            {
+              "operationId": "rsq.129150909f0b",
+              "context": "workflow find",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/ordercenter/v2/member/state/independent",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow find"
+              ]
+            },
+            {
+              "operationId": "rsq.bdc8fe16f33e",
+              "context": "workflow find",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/ordercenter/v2/function/available",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow find"
+              ]
+            },
+            {
+              "operationId": "rsq.86858b69446b",
+              "context": "workflow find",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/authority/v3/authorities/company/current",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow find"
+              ]
+            },
+            {
+              "operationId": "rsq.91474354ee33",
+              "context": "workflow find",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/application/appListForSelector",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow find"
+              ]
+            },
+            {
+              "operationId": "rsq.471c5e192b8d",
+              "context": "workflow find",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/application/list",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow find"
+              ]
+            },
+            {
+              "operationId": "rsq.d286abebba83",
+              "context": "workflow find",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/v3/kanbanGroup/list",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow find"
+              ]
+            },
+            {
+              "operationId": "rsq.31761be913c4",
+              "context": "workflow find",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/v3/kanbanGroup/kanbanList",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow find"
+              ]
+            },
+            {
+              "operationId": "rsq.0049502086e1",
+              "context": "workflow find",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/v1/kanbanChildCrud/list",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow find"
+              ]
+            },
+            {
+              "operationId": "rsq.ab87297b330d",
+              "context": "workflow find",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/process/info/search",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow find"
+              ]
+            },
+            {
+              "operationId": "rsq.todo-workflow-visibility",
+              "context": "workflow find",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/process/info/listByIdsForDataModule",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow find"
+              ]
+            },
+            {
+              "operationId": "rsq.ac5f2bf25fad",
+              "context": "workflow find",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/process/info/details",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow find"
+              ]
+            },
+            {
+              "operationId": "rsq.bcae04df8eb2",
+              "context": "workflow export",
+              "role": "discover",
+              "method": "POST",
+              "route": "/task/workflow/process/info/sheet/list",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.aecc6286dfc1",
+              "context": "workflow export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/process/info/step",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.12722ecef099",
+              "context": "workflow export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/process/info/step/list/auditsAndForms",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
             }
           ],
           "prerequisites": [
@@ -89615,7 +90385,9 @@
             "closure.workflow.template.apply",
             "closure.workflow.application.clone",
             "closure.workflow.application.rename",
-            "closure.workflow.application.remove"
+            "closure.workflow.application.remove",
+            "closure.workflow.find",
+            "closure.workflow.export"
           ],
           "contract": "pending",
           "validation": {
@@ -95773,6 +96545,162 @@
                   "缺少本轮复核：independent-request"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.2779acda7c5c",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/workflow/form/content/tableHeader",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow form records list"
+              ]
+            },
+            {
+              "operationId": "rsq.b4d7baef3130",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/workflow/form/content/tableElement",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow form records list"
+              ]
+            },
+            {
+              "operationId": "rsq.129150909f0b",
+              "context": "workflow export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/ordercenter/v2/member/state/independent",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.bdc8fe16f33e",
+              "context": "workflow export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/ordercenter/v2/function/available",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.86858b69446b",
+              "context": "workflow export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/authority/v3/authorities/company/current",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.91474354ee33",
+              "context": "workflow export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/application/appListForSelector",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.471c5e192b8d",
+              "context": "workflow export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/application/list",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.d286abebba83",
+              "context": "workflow export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/v3/kanbanGroup/list",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.31761be913c4",
+              "context": "workflow export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/v3/kanbanGroup/kanbanList",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.0049502086e1",
+              "context": "workflow export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/v1/kanbanChildCrud/list",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.ab87297b330d",
+              "context": "workflow export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/process/info/search",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.todo-workflow-visibility",
+              "context": "workflow export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/process/info/listByIdsForDataModule",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.bcae04df8eb2",
+              "context": "workflow export",
+              "role": "discover",
+              "method": "POST",
+              "route": "/task/workflow/process/info/sheet/list",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
             }
           ],
           "prerequisites": [
@@ -96512,7 +97440,9 @@
             "closure.project.workflow.instance.task.change",
             "closure.project.workflow.instance.task.remove",
             "closure.workflow.instance.task.reorder",
-            "closure.project.workflow.instance.task.reorder"
+            "closure.project.workflow.instance.task.reorder",
+            "closure.workflow.form.records.list",
+            "closure.workflow.export"
           ],
           "contract": "pending",
           "validation": {
@@ -103871,6 +104801,126 @@
                   "缺少本轮复核：idempotency"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.project-workflow-cover",
+              "context": "按实际流程所属入口使用",
+              "role": "business",
+              "method": "GET",
+              "route": "/task/v1/kanbanCrud",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "project workflow modules list"
+              ]
+            },
+            {
+              "operationId": "rsq.129150909f0b",
+              "context": "todo workflow inspect",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/ordercenter/v2/member/state/independent",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "todo workflow inspect"
+              ]
+            },
+            {
+              "operationId": "rsq.bdc8fe16f33e",
+              "context": "todo workflow inspect",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/ordercenter/v2/function/available",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "todo workflow inspect"
+              ]
+            },
+            {
+              "operationId": "rsq.86858b69446b",
+              "context": "todo workflow inspect",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/authority/v3/authorities/company/current",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "todo workflow inspect"
+              ]
+            },
+            {
+              "operationId": "rsq.todo-workflow-visibility",
+              "context": "todo workflow inspect",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/process/info/listByIdsForDataModule",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "todo workflow inspect"
+              ]
+            },
+            {
+              "operationId": "rsq.471c5e192b8d",
+              "context": "todo workflow inspect",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/application/list",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "todo workflow inspect"
+              ]
+            },
+            {
+              "operationId": "rsq.91474354ee33",
+              "context": "workflow find",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/application/appListForSelector",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow find"
+              ]
+            },
+            {
+              "operationId": "rsq.d286abebba83",
+              "context": "workflow find",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/v3/kanbanGroup/list",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow find"
+              ]
+            },
+            {
+              "operationId": "rsq.31761be913c4",
+              "context": "workflow find",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/v3/kanbanGroup/kanbanList",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow find"
+              ]
+            },
+            {
+              "operationId": "rsq.ab87297b330d",
+              "context": "workflow find",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/process/info/search",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow find"
+              ]
             }
           ],
           "prerequisites": [
@@ -104666,7 +105716,10 @@
             "closure.arms.workflow.instance.child.start",
             "closure.arms.project.workflow.instances.context",
             "closure.arms.project.workflow.instances.list",
-            "closure.arms.project.workflow.instance.children.list"
+            "closure.arms.project.workflow.instance.children.list",
+            "closure.arms.todo.workflow.inspect",
+            "closure.workflow.find",
+            "closure.workflow.export"
           ],
           "contract": "pending",
           "validation": {

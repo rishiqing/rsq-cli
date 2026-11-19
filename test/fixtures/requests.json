@@ -29401,5 +29401,49 @@
         }
       }
     }
+  ],
+  "rsq.project-workflow-cover": [
+    {
+      "origin": "handwritten-caller-fixture",
+      "input": {
+        "query": {
+          "id": "7001",
+          "isDefault": false
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "/task/v1/kanbanCrud?id=7001&isDefault=false"
+      },
+      "response": {
+        "id": "7001",
+        "name": "项目流程测试项目",
+        "coverId": null
+      }
+    }
+  ],
+  "rsq.todo-workflow-visibility": [
+    {
+      "origin": "handwritten-caller-fixture",
+      "input": {
+        "query": {
+          "processInfoIds": "123"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "/task/workflow/process/info/listByIdsForDataModule?processInfoIds=123"
+      },
+      "response": {
+        "code": 200,
+        "data": [
+          {
+            "id": "123",
+            "isCanOpen": true,
+            "isDeleted": false
+          }
+        ]
+      }
+    }
   ]
 }

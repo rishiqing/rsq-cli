@@ -1,19 +1,10 @@
 import { asObject, RsqError, type JsonObject } from './core.js'
 import { companyDirectoryUsers } from './contact.js'
-import { validateFeatures } from './access.js'
+import { validateWorkflowAvailability } from './access.js'
+import { todoWorkflowCommand, todoWorkflowTarget } from './workflow-scope.js'
 const rows = (value: unknown): JsonObject[] => {
   if (!Array.isArray(value)) throw new RsqError('CONTEXT_MISSING', '协作服务未返回预期列表。', 5)
   return value.map(asObject)
-}
-function workflowAvailable(results: JsonObject) {
-  let failure: unknown
-  for (const features of [['WORKFLOW'], ['PLAN', 'PLAN_WORKFLOW']]) try {
-    validateFeatures(features, results.features, asObject(results.authorities)); return
-  } catch (error) {
-    if (!(error instanceof RsqError) || !['FEATURE_DISABLED', 'FEATURE_UPGRADE_REQUIRED', 'FEATURE_FORBIDDEN'].includes(error.code)) throw error
-    failure = error
-  }
-  throw failure
 }
 export function prepareCooperation(kind: string, input: JsonObject, results: JsonObject): JsonObject {
   if (kind.startsWith('cooperation-tasks-')) {
@@ -24,7 +15,7 @@ export function prepareCooperation(kind: string, input: JsonObject, results: Jso
     results.cooperation = { view, filter, query }
     return { query }
   }
-  workflowAvailable(results)
+  validateWorkflowAvailability(results.features, asObject(results.authorities))
   if (kind === 'cooperation-workflow-discover') return { body: { todoType: input.queue ?? 'pending', from: 'cooperation', pageNum: 1, pageSize: 1 } }
   if (kind !== 'cooperation-workflow-list') throw new RsqError('INVALID_CONTRACT', '未登记的协作业务适配。')
   const body: JsonObject = { todoType: input.queue ?? 'pending', from: 'cooperation', pageNum: input.pageNum ?? 1, pageSize: input.pageSize ?? 20 }
@@ -51,7 +42,16 @@ export function describeCooperation(input: JsonObject, results: JsonObject) {
     return { view: context.view, filter: context.filter, items: page, nextCursor: page.at(-1)?.id ?? null, limit: asObject(context.query).max, completeness: 'single-page', sideEffects: ['personal-view-filter-preference-saved'] }
   }
   const page = asObject(asObject(results.page ?? results.available).data)
-  return { queue: input.queue ?? 'pending', page: page.pageInfo ?? null, applications: page.applicationTypes ?? [],
+  const queue = input.queue ?? 'pending'
+  const isInstanceQueue = queue === 'my' || queue === 'participant'
+  const pageInfo = asObject(page.pageInfo)
+  const items = Array.isArray(pageInfo.list) ? rows(pageInfo.list).map(row => {
+    const stepId = isInstanceQueue ? undefined : row.type === 'audit' ? row.relatedId ?? row.stepInfoId : row.stepInfoId
+    const target = todoWorkflowTarget(row.processInfoId, stepId)
+    return target ? { ...row, target } : row
+  }) : pageInfo.list
+  return { queue, page: page.pageInfo == null ? null : { ...pageInfo, list: items }, applications: page.applicationTypes ?? [],
     ...(results.directory !== undefined && { members: companyDirectoryUsers(results.directory).map(user => ({ id: String(user.id), name: user.showName ?? user.name })) }),
-    context: { from: 'cooperation', includesProjectWorkflows: true }, nextCommands: ['workflow instance inspect', 'workflow instance fill', 'workflow instance act', 'workflow instance transfer'] }
+    context: { from: 'cooperation', includesProjectWorkflows: true },
+    nextCommands: [todoWorkflowCommand] }
 }

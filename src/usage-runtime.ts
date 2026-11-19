@@ -38,7 +38,7 @@ export function validateUsageWorkflow(flow: Workflow) {
 export type UsageRuntime = ReturnType<typeof usageRuntime>
 export function usageRuntime(ctx: Context, flow: Workflow, supplied: Session | null, options: { transport?: Transport; approved?: boolean; timeoutMs?: number }) {
   const session = requireSession(supplied), completed: string[] = [], resources: JsonObject = {}
-  let phase = 'context', mutationAttempted = false, verifiedWorkflowProject: {projectId:string;applicationId:string}|undefined
+  let phase = 'context', mutationAttempted = false
   const runtime = { ctx, flow, session, options, completed, resources,
     async call(method: string, route: string, args: JsonObject = {}, label = method + ' ' + route): Promise<unknown> {
       phase = label
@@ -54,22 +54,12 @@ export function usageRuntime(ctx: Context, flow: Workflow, supplied: Session | n
       const target = workflows.workflows.find(item => item.command === command)
       if (!target || target.steps.some(step => !flow.steps.some(allowed => allowed.operationId === step.operationId))) usageError('INVALID_CONTRACT', '当前命令没有登记所需的资源上下文：' + command)
       if (target.effect !== 'read') mutationAttempted = true
-      // Embedded flows use PLAN_WORKFLOW, rather than requiring the separately
-      // sold standalone WORKFLOW product. Only these two read-context adapters
-      // can reuse their server permissions after explicit project membership.
-      const scoped=flow.usageProject===true && ['workflow configuration inspect','workflow instance inspect'].includes(command)
-      if(scoped && (!verifiedWorkflowProject || command==='workflow configuration inspect' && input.applicationId!==verifiedWorkflowProject.applicationId)) usageError('INVALID_CONTRACT','项目流程上下文尚未证明实际归属。')
-      const out = asObject(scoped ? await (await import('./workflows.js')).runWorkflow(ctx,target,input,session,options) : await executeWorkflow(ctx, target, input, session, options))
+      const out = asObject(await executeWorkflow(ctx, target, input, session, options))
       Object.assign(resources, asObject(out.resources))
+      const scope = asObject(out.scope)
+      if (scope.kind === 'project') Object.assign(resources, { projectId: scope.projectId, applicationId: scope.applicationId, moduleId: scope.moduleId })
       completed.push(command)
       return asObject(out.result)
-    },
-    async bindWorkflowProject(projectId:string,applicationId:string){
-      if(flow.usageProject!==true)usageError('INVALID_CONTRACT','只有项目流程命令允许绑定嵌入模块。')
-      const project=asObject(await runtime.call('GET','/task/v1/kanbanCrud',{query:{id:projectId,isDefault:false}})),modules=usageRows(await runtime.call('GET','/task/v1/kanbanChildCrud/list',{query:{kanbanId:projectId}}))
-      requireUsage(String(project.id)===projectId && Object.hasOwn(project,'coverId') && project.coverId===null,'项目流程必须绑定真实普通项目。')
-      if(!modules.some(module=>module.type==='workflow'&&String(module.flowApplicationId)===applicationId))usageError('FORBIDDEN','流程应用不是当前项目中的实际模块。')
-      verifiedWorkflowProject={projectId,applicationId};Object.assign(resources,{projectId,applicationId})
     },
     async identity() {
       const actor = usageData(await runtime.call('GET', '/task/login/authAjax'))

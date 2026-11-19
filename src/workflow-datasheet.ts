@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { isDeepStrictEqual } from 'node:util'
 import { asObject, request, RsqError, type Context, type JsonObject, type Transport } from './core.js'
-import { checkAccess } from './access.js'
+import { checkAccess, checkProjectWorkflowType } from './access.js'
 import { catalog, runOperation } from './operations.js'
 import { requireSession, type Session } from './session.js'
 import { normalizeCell } from './datasheet.js'
@@ -90,19 +90,20 @@ export async function runWorkflowDatasheet(ctx: Context, flow: Workflow, input: 
   const read = async () => {
     const process = await call('process', { query: { processInfoId: input.processId } }), step = await call('instanceStep', { query: { stepInfoId: input.stepId } })
     if (id(process.id) !== input.processId || id(step.id) !== input.stepId || id(step.processInfoId) !== input.processId || id(step.applicationId) !== id(process.flowAppId) || !rows(process.processInfoStepList).some(row => id(row.id) === input.stepId)) fail('CONTEXT_MISMATCH', '流程实例、应用与实际步骤不一致。')
-    const form = await call('instanceForm', { query: { stepInfoId: input.stepId, isRefresh: false } })
-    if (id(form.formId) !== id(step.formId)) fail('CONTEXT_MISMATCH', '步骤表单身份发生变化。')
-    const selected = rows(form.fields).filter(row => id(row.id) === input.fieldId)
-    if (selected.length !== 1 || Number(selected[0].type) !== 45 || selected[0].isHidden === true || typeof selected[0].isRequired !== 'boolean') fail('INVALID_INPUT', '请选择当前步骤可见的 DatasheetModify 字段45；不能将普通关联字段35当作修改草稿。')
-    const field = selected[0], application = await call('application', { query: { id: id(process.flowAppId) } })
+    const application = await call('application', { query: { id: id(process.flowAppId) } })
     if (id(application.id) !== id(process.flowAppId)) fail('CONTEXT_MISMATCH', '实际流程应用与实例不一致。')
     const subtype = application.workflowModuleSubType
     if (flow.workflowDatasheetProject) {
       if (!['projectWorkflow', 'alterationWorkflow'].includes(String(subtype)) || id(process.belongToProjectId) !== input.projectId) fail('FORBIDDEN', '项目流程命令须绑定实际所属项目，不能猜测所属或使用独立流程。')
       const project = await call('project', { query: { id: input.projectId, isDefault: false } })
       if (id(project.id) !== input.projectId || !Object.hasOwn(project, 'coverId') || project.coverId != null) fail('FORBIDDEN', '项目流程实例只接受实际普通项目。')
-      if (subtype === 'alterationWorkflow') await checkAccess(ctx, { ...flow, command: 'project alteration flow inspect' }, input, session, options.transport)
+      await checkProjectWorkflowType(ctx, subtype, session, options.transport)
     } else if (subtype != null || process.belongToProjectId != null) fail('FORBIDDEN', '此实例来自项目；请用 project workflow datasheet 并明确项目。')
+    const form = await call('instanceForm', { query: { stepInfoId: input.stepId, isRefresh: false } })
+    if (id(form.formId) !== id(step.formId)) fail('CONTEXT_MISMATCH', '步骤表单身份发生变化。')
+    const selected = rows(form.fields).filter(row => id(row.id) === input.fieldId)
+    if (selected.length !== 1 || Number(selected[0].type) !== 45 || selected[0].isHidden === true || typeof selected[0].isRequired !== 'boolean') fail('INVALID_INPUT', '请选择当前步骤可见的 DatasheetModify 字段45；不能将普通关联字段35当作修改草稿。')
+    const field = selected[0]
     const controls = asObject(form.editControl), canEdit = controls.fillStepForm === true || controls.modifyStepForm === true
     if (action !== 'inspect' && !canEdit) fail('FORBIDDEN', '当前身份不能填写或修改此步骤表单。')
     const pack = workflowDatasheetPack(await call('pack', { path, query: { stepInfoId: input.stepId, mode: canEdit ? 'edit' : 'view' } }), field)

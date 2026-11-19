@@ -9,23 +9,59 @@ const text = (value: unknown): string => value == null ? '' : typeof value === '
 const unescapeXstring = (value: string) => value.replace(/_x([a-fA-F0-9]{4})_/g, (_, hex: string) => String.fromCharCode(parseInt(hex, 16)))
 function richText(value: unknown) { const row = asObject(value); return row.t != null ? unescapeXstring(text(row.t)) : values(row.r).map(run => unescapeXstring(text(asObject(run).t))).join('') }
 export type XlsxCell = { row: number; column: number; value: string; type: string; formula: boolean }
-// The deployed POI entry parser silently loses inlineStr values when it changes
-// their cell type. Project inspected A/J entries into an ordinary shared-string
-// workbook; no macros, formulas, other sheets or original file paths are sent.
-export function entryImportWorkbook(entries: { indicatorId: string; value: string }[]): Uint8Array {
-  const escape = (value: string) => value.replace(/_x[a-fA-F0-9]{4}_/g, code => '_x005F_' + code.slice(1)).replace(/[\u0000-\u0008\u000b-\u001f]/g, character => '_x' + character.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0') + '_')
-    .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
-  const strings = [...new Set(['指标 ID', '结果值', ...entries.flatMap(row => [row.indicatorId, row.value])])], indices = new Map(strings.map((value, index) => [value, index]))
-  const cell = (reference: string, index: number) => `<c r="${reference}" t="s"><v>${index}</v></c>`
-  const files = {
-    '[Content_Types].xml': '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/></Types>',
-    '_rels/.rels': '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
-    'xl/workbook.xml': '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Entry" sheetId="1" r:id="rId1"/></sheets></workbook>',
-    'xl/_rels/workbook.xml.rels': '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/></Relationships>',
-    'xl/sharedStrings.xml': `<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${strings.length}" uniqueCount="${strings.length}">` + strings.map(value => '<si><t xml:space="preserve">' + escape(value) + '</t></si>').join('') + '</sst>',
-    'xl/worksheets/sheet1.xml': '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"/><row r="2">' + cell('A2', 0) + cell('J2', 1) + '</row>' + entries.map((row, index) => `<row r="${index + 3}">` + cell('A' + (index + 3), indices.get(row.indicatorId)!) + cell('J' + (index + 3), indices.get(row.value)!) + '</row>').join('') + '</sheetData></worksheet>',
+const xmlText = (value: string) => value.replace(/_x[a-fA-F0-9]{4}_/g, code => '_x005F_' + code.slice(1))
+  .replace(/[\u0000-\u0008\u000b-\u001f\ufffe\uffff]/g, character => '_x' + character.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0') + '_')
+  .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
+function columnName(index: number) {
+  let letters = ''
+  for (let column = index + 1; column > 0; column = Math.floor((column - 1) / 26)) {
+    letters = String.fromCharCode(65 + (column - 1) % 26) + letters
   }
+  return letters
+}
+
+export function textWorkbook(sheets: { name: string; rows: (string | undefined)[][] }[]): Uint8Array {
+  const sheetNs = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+  const officeRel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+  const packageRel = 'http://schemas.openxmlformats.org/package/2006/relationships'
+  const spreadsheetType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.'
+  const strings = new Map<string, number>(), files: Record<string, string> = {}
+  let stringCount = 0
+  const relationships: string[] = [], overrides: string[] = [], sheetList: string[] = []
+  sheets.forEach(({ name, rows }, index) => {
+    if (rows.length > 1048576) invalid('工作表超过 Excel 行数上限。')
+    const id = index + 1, path = 'worksheets/sheet' + id + '.xml'
+    relationships.push('<Relationship Id="rId' + id + '" Type="' + officeRel + '/worksheet" Target="' + path + '"/>')
+    overrides.push('<Override PartName="/xl/' + path + '" ContentType="' + spreadsheetType + 'worksheet+xml"/>')
+    sheetList.push('<sheet name="' + xmlText(name) + '" sheetId="' + id + '" r:id="rId' + id + '"/>')
+    const sheetRows = rows.map((row, rowIndex) => {
+      if (row.length > 16384) invalid('工作表超过 Excel 列数上限。')
+      const cells = row.map((value, column) => {
+        if (value === undefined) return ''
+        if (value.length > 32767) invalid('单元格文本超过 Excel 长度上限。')
+        if (!strings.has(value)) strings.set(value, strings.size)
+        stringCount++
+        return '<c r="' + columnName(column) + (rowIndex + 1) + '" t="s"><v>' + strings.get(value) + '</v></c>'
+      })
+      return '<row r="' + (rowIndex + 1) + '">' + cells.join('') + '</row>'
+    })
+    files['xl/' + path] = '<worksheet xmlns="' + sheetNs + '"><sheetData>' + sheetRows.join('') + '</sheetData></worksheet>'
+  })
+  overrides.push('<Override PartName="/xl/sharedStrings.xml" ContentType="' + spreadsheetType + 'sharedStrings+xml"/>')
+  relationships.push('<Relationship Id="rId' + (sheets.length + 1) + '" Type="' + officeRel + '/sharedStrings" Target="sharedStrings.xml"/>')
+  files['[Content_Types].xml'] = '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="' + spreadsheetType + 'sheet.main+xml"/>' + overrides.join('') + '</Types>'
+  files['_rels/.rels'] = '<Relationships xmlns="' + packageRel + '"><Relationship Id="rId1" Type="' + officeRel + '/officeDocument" Target="xl/workbook.xml"/></Relationships>'
+  files['xl/workbook.xml'] = '<workbook xmlns="' + sheetNs + '" xmlns:r="' + officeRel + '"><sheets>' + sheetList.join('') + '</sheets></workbook>'
+  files['xl/_rels/workbook.xml.rels'] = '<Relationships xmlns="' + packageRel + '">' + relationships.join('') + '</Relationships>'
+  files['xl/sharedStrings.xml'] = '<sst xmlns="' + sheetNs + '" count="' + stringCount + '" uniqueCount="' + strings.size + '">' +
+    [...strings.keys()].map(value => '<si><t xml:space="preserve">' + xmlText(value) + '</t></si>').join('') + '</sst>'
   return zipSync(Object.fromEntries(Object.entries(files).map(([path, value]) => [path, strToU8(value)])))
+}
+
+// The deployed POI parser needs the values in columns A and J as shared strings.
+export function entryImportWorkbook(entries: { indicatorId: string; value: string }[]): Uint8Array {
+  const cells = (indicator: string, value: string) => [indicator, ...Array<string | undefined>(8).fill(undefined), value]
+  return textWorkbook([{ name: 'Entry', rows: [[], cells('指标 ID', '结果值'), ...entries.map(row => cells(row.indicatorId, row.value))] }])
 }
 export async function readXlsxFirstSheet(file: string): Promise<{ bytes: Uint8Array; cells: XlsxCell[] }> {
   if (extname(file).toLowerCase() !== '.xlsx') invalid('此导入适配只接受 .xlsx。')

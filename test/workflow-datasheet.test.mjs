@@ -41,7 +41,7 @@ function fixture(options = {}) {
   if (path.endsWith('/process/info/details')) return wf({ id: '8101', flowAppId: '8001', status: 'doing', belongToProjectId: options.project ? '8501' : null, processInfoStepList: [{ id: '8201' }] })
   if (path.endsWith('/process/info/step')) return wf({ id: '8201', applicationId: '8001', processInfoId: options.wrongStep ? '8999' : '8101', formId: '8601', status: 'doing' })
   if (path.endsWith('/auditsAndForms')) { forms++; return wf({ formId: '8601', editControl: { fillStepForm: options.noFormEdit ? false : !(options.revoked && forms > 1) }, fields: [{ ...field, ...(options.drift && forms > 1 ? { name: 'concurrent configuration' } : {}) }] }) }
-  if (path.endsWith('/workflow/application')) return wf({ id: '8001', workflowModuleSubType: options.project ? 'projectWorkflow' : options.ambiguous ? 'projectWorkflow' : null })
+  if (path.endsWith('/workflow/application')) return wf({ id: '8001', workflowModuleSubType: options.subtype ?? (options.project || options.ambiguous ? 'projectWorkflow' : null) })
   if (path.endsWith('/kanbanCrud')) return json({ id: '8501', coverId: options.template ? '8901' : null })
   if (path === prefix + 'pack') { packs++; return wf(structuredClone(draft)) }
   if (path.startsWith(prefix) && init.method !== 'GET') {
@@ -71,6 +71,15 @@ test('pack binds actual target, configured field scope, ordered internal IDs and
 })
 test('independent and project inspect discover live field types and disclose draft-side effects', async () => {
  for (const project of [false, true]) { const f = fixture({ project }), result = await run('inspect', {}, f, project); assert.equal(result.result.proofScope, 'workflow-draft-only'); assert.equal(result.result.targetSynchronizationVerified, false); assert.equal(result.result.snapshot.meta.fieldMap.fldNumber.type, 1); assert.equal(f.writes.length, 0); assert.equal(f.packs, 1) }
+})
+test('alteration datasheet fields use the entitlement of their actual project module', async () => {
+ const features = [{ funcName: 'PLAN_WORKFLOW', status: 'disable' }, { funcName: 'PLAN_ALTERATION', status: 'enable' }]
+ const alteration = fixture({ project: true, features, subtype: 'alterationWorkflow' })
+ const result = await run('inspect', {}, alteration, true)
+ assert.equal(result.result.snapshot.meta.fieldMap.fldNumber.type, 1)
+ const ordinary = fixture({ project: true, features })
+ await assert.rejects(run('inspect', {}, ordinary, true), { code: 'FEATURE_DISABLED' })
+ assert.ok(ordinary.calls.every(call => !call.path.endsWith('/auditsAndForms') && !call.path.endsWith('/pack')))
 })
 test('zero, false, explicit null and actual option names survive independent cell readback', async () => {
  for (const [targetFieldId, value, encoded] of [['fldNumber', 0, 0], ['fldCheck', false, false], ['fldText', null, null], ['fldChoice', '准备', ['optReady']]]) {

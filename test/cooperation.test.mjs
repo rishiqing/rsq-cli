@@ -46,7 +46,9 @@ function workflowService(features = [], permissions = {}) {
     if (url.pathname === '/task/v1/department/list') return json(tree)
     if (url.pathname === '/task/workflow/process/info/task/list') {
       const body = JSON.parse(init.body); assert.equal(body.from, 'cooperation'); assert.equal(body.todoUserId, undefined)
-      return json({ code: 200, data: { applicationTypes: [{ id: 31, name: 'Fixture' }], pageInfo: { list: [], total: 0, pageNum: body.pageNum, pageSize: body.pageSize } } })
+      return json({ code: 200, data: { applicationTypes: [{ id: 31, name: 'Fixture' }], pageInfo: {
+        list: [{ processInfoId: 55, type: 'audit', relatedId: 56, stepInfoId: 57 }], total: 1, pageNum: body.pageNum, pageSize: body.pageSize,
+      } } })
     }
     throw Error('Unexpected route ' + url.pathname)
   } }
@@ -55,6 +57,10 @@ test('cooperation workflows permit standalone or embedded flows and stop when ne
   const embedded = workflowService([{ funcName: 'WORKFLOW', status: 'disable' }, { funcName: 'PLAN', status: 'enable' }, { funcName: 'PLAN_WORKFLOW', status: 'enable' }], { useKanban: true })
   const out = await run('workflow context', { queue: 'participant' }, embedded.transport)
   assert.equal(out.result.context.includesProjectWorkflows, true); assert.equal(out.result.queue, 'participant'); assert.equal(out.result.members[0].id, '1')
+  assert.deepEqual(out.result.nextCommands, ['todo workflow inspect'])
+  assert.deepEqual(out.result.page.list[0].target, { command: 'todo workflow inspect', processId: '55' })
+  const pending = await run('workflow list', { queue: 'pending' }, embedded.transport)
+  assert.deepEqual(pending.result.page.list[0].target, { command: 'todo workflow inspect', processId: '55', stepId: '56' })
   const disabled = workflowService([{ funcName: 'WORKFLOW', status: 'disable' }, { funcName: 'PLAN_WORKFLOW', status: 'disable' }])
   await assert.rejects(run('workflow list', {}, disabled.transport), { code: 'FEATURE_DISABLED' }); assert.equal(disabled.calls.length, 4)
   const malformed = workflowService(null)

@@ -32,6 +32,9 @@ export function cliDiagnostic(value: unknown, profile = 'default', command = '')
     } }
   }
   const error = value instanceof RsqError ? value : new RsqError('UNEXPECTED_ERROR', '命令未能完成。')
+  const standaloneUnavailable = error.details?.feature === 'WORKFLOW' && command.startsWith('workflow ') && !['workflow find', 'workflow export'].includes(command)
+  const projectSchemas = ['rsq schema "workflow find"', 'rsq schema "project workflow"', 'rsq schema "project workflow modules list"']
+  const projectHint = '当前命令需要独立流程功能。用 workflow find 查找实际归属，并按结果使用 workflow 或 project workflow。'
   const networkHint = error.details?.reason === 'proxy_configuration' ? '代理地址须为 http:// 或 https:// URL；检查 HTTP_PROXY、HTTPS_PROXY 或对应小写变量。'
     : error.details?.reason === 'proxy_auth' ? '检查代理账号和密码，或联系代理管理员；不要把代理凭证发送到反馈中。'
       : error.details?.reason === 'proxy_http' ? '检查代理的访问规则和服务状态，或联系代理管理员。'
@@ -49,9 +52,12 @@ export function cliDiagnostic(value: unknown, profile = 'default', command = '')
     AUTH_REQUIRED: { hint: '请先登录当前 profile，再重新核对身份；写操作失败后先查结果，不直接重复提交。', actions: [login, 'rsq whoami' + profileOption] },
     LOGIN_EXPIRED: { hint: '本次浏览器登录已过期，请重新发起登录。', actions: [login] },
     FORBIDDEN: { hint: '请核对当前身份、组织及资源权限；不要绕过权限限制。', actions: ['rsq whoami' + profileOption, access] },
-    FEATURE_FORBIDDEN: { hint: '当前公司角色没有此功能权限，请联系管理员确认。', actions: [access] },
-    FEATURE_DISABLED: { hint: '当前公司未开通所需功能，请联系管理员确认套餐。', actions: [access] },
-    FEATURE_UPGRADE_REQUIRED: { hint: '当前套餐不支持所需功能，请联系管理员确认。', actions: [access] },
+    FEATURE_FORBIDDEN: standaloneUnavailable ? { hint: projectHint, actions: [...projectSchemas, access] } : { hint: '当前公司角色没有此功能权限，请联系管理员确认。', actions: [access] },
+    FEATURE_DISABLED: standaloneUnavailable ? { hint: projectHint, actions: [...projectSchemas, access] } : { hint: '当前公司未开通所需功能，请联系管理员确认套餐。', actions: [access] },
+    FEATURE_UPGRADE_REQUIRED: standaloneUnavailable ? { hint: projectHint, actions: [...projectSchemas, access] } : { hint: '当前套餐不支持所需功能，请联系管理员确认。', actions: [access] },
+    WORKFLOW_SCOPE_MISMATCH: { hint: '用 workflow find 查询目标的实际归属，使用返回的入口。', actions: ['rsq schema "workflow find"', ...projectSchemas, schema] },
+    AMBIGUOUS_TARGET: { hint: '根据候选的名称、项目、应用和实例信息选择具体对象。', actions: [schema] },
+    OUTPUT_EXISTS: { hint: '指定新的输出文件，或传入目录让 CLI 选择文件名。', actions: [help] },
     COMPANY_EXPIRED: { hint: '请联系管理员处理公司到期状态；确认前不要继续业务写入。', actions: [access] },
     COMPANY_OVER_CAPACITY: { hint: '请联系管理员处理超员状态；确认前不要继续业务写入。', actions: [access] },
     UPDATE_UNAVAILABLE: { hint: networkHint, actions: ['rsq upgrade'] },

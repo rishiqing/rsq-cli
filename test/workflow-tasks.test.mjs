@@ -30,7 +30,7 @@ function fixture(options = {}) {
       forms++
       return wf({ formId: options.wrongForm ? '8699' : '8601', editControl: { fillStepForm: !options.readonly && !(options.revoke && forms > 1) }, fields: [{ id: '8301', type: options.type ?? 23, name: options.drift && forms > 1 ? 'concurrent' : '任务', isHidden: options.hidden ?? false, tasks: order.filter(id => tasks.has(id)).map(id => summary(tasks.get(id))) }, { id: '8302', type: 23, tasks: [other] }] })
     }
-    if (path.endsWith('/workflow/application')) return wf({ id: '8001', workflowModuleSubType: options.project || options.projectMismatch ? 'projectWorkflow' : null })
+    if (path.endsWith('/workflow/application')) return wf({ id: '8001', workflowModuleSubType: options.subtype ?? (options.project || options.projectMismatch ? 'projectWorkflow' : null) })
     if (path.endsWith('/kanbanCrud')) return json({ id: '8501', coverId: options.template ? '8801' : null })
     if (path.endsWith('/sheet/taskList')) { assert.deepEqual(body, { idList: [{ processInfoId: '8101', flowApplicationId: '8001', stepInfoId: '8701' }] }); return wf({ '8001-8101-8701': options.missingStepTask ? [] : [...order.filter(id => tasks.has(id)).map(id => summary(tasks.get(id))), other] }) }
     if (path.endsWith('/task/editcontrol')) { permissions++; return json({ taskId: options.wrongPermission ? '9999' : query.taskId, module: query.module, siteId: query.siteId, editControl: { editTaskName: !options.taskReadonly && !(options.revokeTask && permissions > 1), finishTask: !options.taskReadonly, editTaskProgress: true, editTaskNote: true, editTaskPriority: true } }) }
@@ -56,6 +56,13 @@ function fixture(options = {}) {
 const run = (action, input, f, project = false) => executeWorkflow(ctx, flow(action, project), { ...base, ...(project && { projectId: '8501' }), ...input }, session, { approved: true, transport: f.transport })
 test('workflow Task23 inspect binds form and definition-step observations without claiming an empty create path', async () => {
   for (const project of [false, true]) { const f = fixture({ project }), out = await run('inspect', {}, f, project); assert.deepEqual(out.result.taskIds, ['9301', '9302']); assert.equal(out.result.proof.formAndStepTasksReadBack, true); assert.equal(f.writes.length, 0); assert.match(out.result.contextVersion, /^[a-f0-9]{64}$/) }
+})
+test('embedded task fields use the entitlement of the actual alteration or project workflow', async () => {
+  const features = [{ funcName: 'PLAN_WORKFLOW', status: 'disable' }, { funcName: 'PLAN_ALTERATION', status: 'enable' }]
+  assert.deepEqual((await run('inspect', {}, fixture({ project: true, features, subtype: 'alterationWorkflow' }), true)).result.taskIds, ['9301', '9302'])
+  const ordinary = fixture({ project: true, features })
+  await assert.rejects(run('inspect', {}, ordinary, true), { code: 'FEATURE_DISABLED' })
+  assert.ok(ordinary.calls.every(call => !call.path.endsWith('/auditsAndForms')))
 })
 test('single and batch creation append in exact order and independently fetch every real task', async () => {
   for (const project of [false, true]) for (const batch of [false, true]) {

@@ -219,11 +219,10 @@ function wireValue(value: unknown, schema: Schema, root: Schema): unknown {
     wireValue(item, schema.properties?.[key] ?? (typeof schema.additionalProperties === 'object' ? schema.additionalProperties : {}), root)]))
   return value
 }
-async function download(response: Response, out: string) {
-  if (!response.body) throw new RsqError('UNEXPECTED_RESPONSE', '服务未返回文件。', 5)
+export async function saveNewOutput(data: Readable | Uint8Array, out: string) {
   const temp = out + '.' + randomUUID() + '.part'
   try {
-    await pipeline(Readable.fromWeb(response.body), createWriteStream(temp, { flags: 'wx', mode: 0o600 }))
+    await pipeline(data instanceof Readable ? data : Readable.from([data]), createWriteStream(temp, { flags: 'wx', mode: 0o600 }))
     // An existing path (including a symlink) is never overwritten.
     await link(temp, out)
     return { output: out }
@@ -231,6 +230,10 @@ async function download(response: Response, out: string) {
     if ((error as NodeJS.ErrnoException).code === 'EEXIST') throw new RsqError('OUTPUT_EXISTS', '输出路径已存在。', 2)
     throw new RsqError('DOWNLOAD_FAILED', '未能保存下载文件。', 5)
   } finally { await rm(temp, { force: true }) }
+}
+async function download(response: Response, out: string) {
+  if (!response.body) throw new RsqError('UNEXPECTED_RESPONSE', '服务未返回文件。', 5)
+  return saveNewOutput(Readable.fromWeb(response.body), out)
 }
 async function stream(response: Response, kind: 'ndjson' | 'sse', emit: (value: unknown) => Promise<void> | void) {
   if (!response.body) throw new RsqError('UNEXPECTED_RESPONSE', '服务未返回数据流。', 5)

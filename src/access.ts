@@ -20,11 +20,16 @@ export function accessPlan(target: Target, input: JsonObject = {}): AccessPlan {
   const recovery = route ? recoveryRoutes.has(route) : /^organization (?:list|context|create|switch|update|access inspect|lifecycle context)$/.test(command)
   const features = new Set<string>(), permissions = new Set<string>(), conditionalFeatures: string[] = []
   const add = (...values: string[]) => values.forEach(value => features.add(value))
+  const embeddedField = 'steps' in target && (target.workflowTaskProject || target.workflowDatasheetProject)
   if (!recovery) {
-    if (moduleFeatures[root]) add(moduleFeatures[root])
-    if (/^(?:project )?workflow datasheet /.test(command)) { add('PLAN', 'PLAN_DATASHEET'); if (root === 'project') add('PLAN_WORKFLOW') }
-    if (/^project workflow instance task /.test(command)) add('PLAN_WORKFLOW')
-    if (/^project workflow (?:instances |instance children )/.test(command)) add('PLAN_WORKFLOW')
+    if (moduleFeatures[root] && !['workflow find', 'workflow export'].includes(command)) add(moduleFeatures[root])
+    if (command.startsWith('project workflow ') && !embeddedField) add('PLAN_WORKFLOW')
+    if (embeddedField) conditionalFeatures.push('按实际应用所属模块检查 PLAN_WORKFLOW 或 PLAN_ALTERATION')
+    if (['todo workflow inspect', 'workflow find', 'workflow export'].includes(command)) {
+      conditionalFeatures.push('按实际归属检查 PLAN + PLAN_WORKFLOW 或 WORKFLOW')
+    }
+    if (command === 'workflow export') conditionalFeatures.push('实际流程应用的 exportFlow 及当前用户可见的实例和步骤')
+    if (/^(?:project )?workflow datasheet /.test(command)) add('PLAN', 'PLAN_DATASHEET')
     if (/^doc group (?:create|rename|move|remove)$/.test(command)) permissions.add('editCorpusGroup')
     if (command.startsWith('okr performance ')) add('PERFORMANCE', 'OKR_PERFORMANCE')
     if (command.startsWith('okr statistics ')) add('OKR_STATISTICS')
@@ -68,7 +73,7 @@ export function accessPlan(target: Target, input: JsonObject = {}): AccessPlan {
     if (root === 'milestone') add('PLAN')
     if (command.startsWith('project risk ') || route.startsWith('/task/v3/kanban/risk')) add('PLAN', 'PLAN_RISK')
     if (command.startsWith('project alteration ') || route.startsWith('/task/v3/kanban/alteration/') || route.startsWith('/task/workflow/alteration/')) add('PLAN', 'PLAN_ALTERATION')
-    if (command.startsWith('project alteration flow ') || asObject(input.body).workflowModuleSubType === 'alterationWorkflow') add('PLAN', 'PLAN_WORKFLOW', 'PLAN_ALTERATION')
+    if (asObject(input.body).workflowModuleSubType === 'alterationWorkflow') add('PLAN', 'PLAN_ALTERATION')
     if (command.startsWith('task attachment ') || command.startsWith('task audit ')) add('PLAN', 'TASK_TYPE')
     if (command === 'project card tasks archive-completed' || route === '/task/api/v3/projectTask/batchArchive') add('PLAN', 'ARCHIVE')
     if (root === 'task' && input.projectId != null) add('PLAN')
@@ -92,7 +97,6 @@ export function accessPlan(target: Target, input: JsonObject = {}): AccessPlan {
     if (command.startsWith('statistics company ') && !command.startsWith('statistics company usage ') || route.startsWith('/task/api/statistics/')) add('TEAM_STATISTICS')
     if (command.startsWith('statistics company usage ') || route === '/task/v1/team/useStatistical') permissions.add('viewTeamStatistics')
     if (command.startsWith('statistics company okr ')) add('OKR')
-    if (command.startsWith('statistics company workflow ')) add('WORKFLOW')
     if (command.startsWith('cooperation workflow ')) conditionalFeatures.push('独立流程 WORKFLOW，或项目 PLAN + PLAN_WORKFLOW；从当前功能真值表核对，均不可用时停止队列请求')
     if (command.startsWith('statistics project ') || route.startsWith('/task/v5/kanban/stats/')) add('PLAN', 'PLAN_STATISTICS')
     if (command.startsWith('statistics project drilldown ')) {
@@ -197,6 +201,14 @@ export function validateFeatures(features: string[], payload: unknown, permissio
 export function validatePermissions(required: string[], permissions: JsonObject) {
   for (const permission of required) if (permissions[permission] !== true) throw new RsqError('FEATURE_FORBIDDEN', '当前用户的公司权限不允许执行此操作。', 4, { permission })
 }
+export function validateWorkflowAvailability(features: unknown, permissions: JsonObject) {
+  try {
+    validateFeatures(['WORKFLOW'], features, permissions)
+  } catch (error) {
+    if (!(error instanceof RsqError) || !['FEATURE_DISABLED', 'FEATURE_UPGRADE_REQUIRED', 'FEATURE_FORBIDDEN'].includes(error.code)) throw error
+    validateFeatures(['PLAN', 'PLAN_WORKFLOW'], features, permissions)
+  }
+}
 export async function readAccessContext(ctx: Context, supplied: Session | null, transport?: Transport) {
   const session = requireSession(supplied), identity = asObject(await runOperation(ctx, operation('/task/login/authAjax'), {}, session, { transport }))
   const teamId = asObject(identity.team).id ?? identity.teamId
@@ -207,6 +219,13 @@ export async function readAccessContext(ctx: Context, supplied: Session | null, 
 export async function checkAccess(ctx: Context, target: Target, input: JsonObject, supplied: Session | null, transport?: Transport) {
   const plan = accessPlan(target, input)
   if (plan.mode === 'recovery') return
+  await checkBusinessAccess(ctx, plan, supplied, transport)
+}
+export async function checkProjectWorkflowType(ctx: Context, subtype: unknown, supplied: Session, transport?: Transport) {
+  if (subtype !== 'projectWorkflow' && subtype !== 'alterationWorkflow') throw new RsqError('FORBIDDEN', '应用没有可识别的项目流程类型。', 4)
+  await checkBusinessAccess(ctx, { features: ['PLAN', subtype === 'alterationWorkflow' ? 'PLAN_ALTERATION' : 'PLAN_WORKFLOW'], permissions: [] }, supplied, transport)
+}
+async function checkBusinessAccess(ctx: Context, plan: Pick<AccessPlan, 'features' | 'permissions'>, supplied: Session | null, transport?: Transport) {
   const { session, state } = await readAccessContext(ctx, supplied, transport)
   validateCompanyState(state)
   if (!plan.features.length && !plan.permissions.length) return

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { isDeepStrictEqual } from 'node:util'
 import { asObject, request, RsqError, type Context, type JsonObject, type Transport } from './core.js'
-import { checkAccess } from './access.js'
+import { checkAccess, checkProjectWorkflowType } from './access.js'
 import { catalog, runOperation } from './operations.js'
 import { requireSession, type Session } from './session.js'
 import type { Workflow } from './workflows.js'
@@ -66,11 +66,6 @@ export async function runWorkflowTasks(ctx: Context, flow: Workflow, input: Json
     const process = asObject(await call('process', { query: { processInfoId: input.processId } })), step = asObject(await call('instanceStep', { query: { stepInfoId: input.stepId } }))
     if (id(process.id) !== input.processId || id(step.id) !== input.stepId || id(step.processInfoId) !== input.processId || id(step.applicationId) !== id(process.flowAppId)
       || !rows(process.processInfoStepList).some(row => id(row.id) === input.stepId)) fail('CONTEXT_MISMATCH', '实际流程实例、应用与步骤归属不一致。')
-    const form = asObject(await call('instanceForm', { query: { stepInfoId: input.stepId, isRefresh: false } }))
-    if (id(form.formId) !== id(step.formId)) fail('CONTEXT_MISMATCH', '实际步骤表单不一致。')
-    const fields = rows(form.fields), selected = fields.filter(field => id(field.id) === input.fieldId)
-    if (selected.length !== 1 || Number(selected[0].type) !== 23 || selected[0].isHidden === true) fail('INVALID_INPUT', '请选择当前实例步骤中实际可见的 Task 字段23。')
-    const field = selected[0], tasks = rows(field.tasks ?? []), taskIds = ids(tasks), controls = asObject(form.editControl)
     const application = asObject(await call('application', { query: { id: id(process.flowAppId) } }))
     if (id(application.id) !== id(process.flowAppId)) fail('CONTEXT_MISMATCH', '实际流程应用不一致。')
     const subtype = application.workflowModuleSubType
@@ -78,8 +73,13 @@ export async function runWorkflowTasks(ctx: Context, flow: Workflow, input: Json
       if (!['projectWorkflow', 'alterationWorkflow'].includes(String(subtype)) || id(process.belongToProjectId) !== input.projectId) fail('FORBIDDEN', '请选择实际属于该项目的流程实例。')
       const project = asObject(await call('project', { query: { id: input.projectId, isDefault: false } }))
       if (id(project.id) !== input.projectId || !Object.hasOwn(project, 'coverId') || project.coverId != null) fail('FORBIDDEN', '此命令只接受普通项目中的实例，不接受项目模板。')
-      if (subtype === 'alterationWorkflow') await checkAccess(ctx, { ...flow, command: 'project alteration flow inspect' }, input, session, options.transport)
+      await checkProjectWorkflowType(ctx, subtype, session, options.transport)
     } else if (subtype != null || process.belongToProjectId != null) fail('FORBIDDEN', '项目流程请使用 project workflow instance task 并指定实际项目。')
+    const form = asObject(await call('instanceForm', { query: { stepInfoId: input.stepId, isRefresh: false } }))
+    if (id(form.formId) !== id(step.formId)) fail('CONTEXT_MISMATCH', '实际步骤表单不一致。')
+    const fields = rows(form.fields), selected = fields.filter(field => id(field.id) === input.fieldId)
+    if (selected.length !== 1 || Number(selected[0].type) !== 23 || selected[0].isHidden === true) fail('INVALID_INPUT', '请选择当前实例步骤中实际可见的 Task 字段23。')
+    const field = selected[0], tasks = rows(field.tasks ?? []), taskIds = ids(tasks), controls = asObject(form.editControl)
     const map = asObject(await call('stepTasks', { body: { idList: [{ processInfoId: input.processId, flowApplicationId: id(process.flowAppId), stepInfoId: id(step.originId) }] } })), key = [id(process.flowAppId), input.processId, id(step.originId)].join('-')
     if (Object.keys(map).length !== 1 || !Object.hasOwn(map, key)) fail('CONTEXT_MISMATCH', '步骤任务查询未返回精确的实际应用/实例/定义步骤键。')
     const observed = rows(map[key])

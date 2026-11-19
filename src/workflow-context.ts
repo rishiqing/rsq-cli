@@ -3,6 +3,7 @@ import { asObject, RsqError, type JsonObject } from './core.js'
 import { requireSession, type Session } from './session.js'
 import { prepareWorkflowStatistics } from './workflow-statistics.js'
 import { prepareWorkflowLifecycle, workflowDefinitionVersion, workflowFieldTypes, describeWorkflowDefinitionSteps } from './workflow-lifecycle.js'
+import { prepareWorkflowInstanceVisibility } from './workflow-scope.js'
 
 const id = (value: unknown): string => {
   if (typeof value === 'string' && /^[1-9][0-9]*$/.test(value) || typeof value === 'number' && Number.isSafeInteger(value) && value > 0) return String(value)
@@ -33,10 +34,11 @@ function selectedGroup(input: JsonObject, results: JsonObject) {
 }
 const requirePermission = (results: JsonObject, permission: string) => {
   const source = asObject(data(results.source))
-  if (asObject(source.editControl)[permission] !== true) throw new RsqError('FORBIDDEN', '当前身份没有此流程操作所需权限。', 4)
+  if (asObject(source.editControl)[permission] !== true) throw new RsqError('FORBIDDEN', '当前身份没有此流程操作所需权限。', 4, { permission })
   return source
 }
 export function prepareWorkflowContext(kind: string, input: JsonObject, results: JsonObject, session: Session | null): JsonObject | null {
+  if (kind === 'workflow-scope-instance-visibility') return prepareWorkflowInstanceVisibility(results)
   if (kind.startsWith('workflow-statistics-')) return prepareWorkflowStatistics(kind, input, results, session)
   if (kind.startsWith('workflow-lifecycle-')) return prepareWorkflowLifecycle(kind, input, results, session)
   if (kind === 'workflow-template-apply') {
@@ -66,6 +68,17 @@ export function prepareWorkflowContext(kind: string, input: JsonObject, results:
     if (kind === 'workflow-form-clone') requirePermission(results, 'flowConfig')
     return { query: { [kind === 'workflow-form-clone' ? 'formId' : 'id']: input.formId } }
   }
+  if (kind === 'workflow-form-records-header') {
+    if (!list(data(results.forms)).some(form => String(form.id) === input.formId)) throw new RsqError('CONTEXT_MISSING', '表单不属于该流程应用，请先查看流程配置。', 2)
+    // The aggregate form endpoint includes rows from all steps in the form.
+    // Apply the table entrance and full visibility controls before asking for it.
+    for (const permission of ['enterTable', 'viewAllProcess', 'viewPrivateSteps']) requirePermission(results, permission)
+    return { query: { formId: input.formId } }
+  }
+  if (kind === 'workflow-form-records-page') {
+    list(data(results.headers))
+    return { query: { formId: input.formId, pageNum: input.page ?? 1, pageSize: input.limit ?? 25 } }
+  }
   throw new RsqError('INVALID_CONTRACT', '未知流程上下文适配。')
 }
 export function verifyWorkflowContext(input: JsonObject, results: JsonObject, step: string) {
@@ -83,4 +96,23 @@ export function verifyWorkflowContext(input: JsonObject, results: JsonObject, st
 }
 export function describeWorkflowConfiguration(results: JsonObject) {
   return { application: data(results.source), forms: list(results.details).map(value => { const form = asObject(data(value)); return { ...form, definitionVersion: workflowDefinitionVersion(form) } }), steps: describeWorkflowDefinitionSteps(data(results.steps)), fieldTypes: workflowFieldTypes }
+}
+
+export function describeWorkflowFormRecords(input: JsonObject, results: JsonObject) {
+  const pageNum = Number(input.page ?? 1), pageSize = Number(input.limit ?? 25), response = asObject(data(results.records))
+  const rows = list(response.list), headers = list(data(results.headers)), total = response.total
+  const emptyPage = rows.length === 0 && String(total) === '0' && response.pageNum === 0 && response.pageSize === 0
+  if (rows.length > pageSize || !/^[0-9]+$/.test(String(total)) || typeof total === 'number' && !Number.isSafeInteger(total) ||
+      !emptyPage && (response.pageNum !== pageNum || response.pageSize !== pageSize || rows.length > 0 && BigInt(String(total)) < BigInt((pageNum - 1) * pageSize + rows.length))) {
+    throw new RsqError('RESPONSE_SCHEMA_MISMATCH', '表单记录缺少可信分页信息，请重新查询。', 5)
+  }
+  return {
+    applicationId: input.applicationId, formId: input.formId, headers, items: rows.map(row => ({ ...row,
+      ...(row.processId != null && /^[1-9][0-9]*$/.test(String(row.processId)) && { target: {
+        command: 'workflow instance inspect', processId: id(row.processId),
+      } }),
+    })),
+    pagination: { page: pageNum, limit: pageSize, total: emptyPage && pageNum > 1 ? null : total,
+      nextPage: BigInt(String(total)) > BigInt(pageNum * pageSize) ? pageNum + 1 : null },
+  }
 }

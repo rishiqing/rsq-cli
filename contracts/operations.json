@@ -351197,7 +351197,8 @@
       "description": "当前 HTTP 业务传输；由 ARMS 补齐命令核对动态上下文后执行",
       "requiresBusinessContext": [
         "workflow instances list",
-        "project workflow instances list"
+        "project workflow instances list",
+        "project workflow form records list"
       ],
       "semanticReason": "人工交叉核对当前调用方与固定版本服务端。请求与独立读回在业务命令中执行，契约核对和真实验收分别记录；不把 ARMS URL 出现或 DTO 样例当作业务成功。",
       "fields": [
@@ -364852,8 +364853,8 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
+      "effect": "write",
+      "idempotency": "unknown",
       "response": "business",
       "responseSchema": {
         "type": "object",
@@ -379811,6 +379812,9 @@
             "description": "64 位整数可用十进制字符串，避免精度丢失"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "project workflow modules list"
       ]
     },
     {
@@ -404375,6 +404379,9 @@
             "type": "string"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "workflow export"
       ]
     },
     {
@@ -409742,8 +409749,8 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
+      "effect": "write",
+      "idempotency": "unknown",
       "response": "business",
       "responseSchema": {
         "type": "object",
@@ -415496,7 +415503,7 @@
       },
       "review": "reviewed",
       "command": "workflow form content-table-element get",
-      "description": "tableElement",
+      "description": "tableElement。会初始化当前用户的默认表头，仅通过有流程范围和表单查看权限的业务命令执行。",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
@@ -415532,6 +415539,9 @@
             "type": "integer"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "workflow form records list"
       ]
     },
     {
@@ -421467,8 +421477,8 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
+      "effect": "write",
+      "idempotency": "unknown",
       "response": "business",
       "responseSchema": {
         "type": "object",
@@ -421618,7 +421628,7 @@
       },
       "review": "reviewed",
       "command": "workflow form content-table-header get",
-      "description": "tableHeader",
+      "description": "tableHeader。会初始化当前用户的默认表头，仅通过有流程范围和表单查看权限的业务命令执行。",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
@@ -421638,6 +421648,9 @@
             "description": "64 位整数可用十进制字符串，避免精度丢失"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "workflow form records list"
       ]
     },
     {
@@ -485764,6 +485777,9 @@
             "description": "导出筛选条件"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "workflow export"
       ]
     },
     {
@@ -610010,6 +610026,275 @@
       ],
       "examples": [
         "printf '%s\\n' '{\"body\":{\"idList\":[{\"processInfoId\":\"123\",\"stepInfoId\":\"123\",\"flowApplicationId\":\"123\"}]}}' | rsq workflow transport step-timing get --input - --dry-run"
+      ]
+    },
+    {
+      "id": "rsq.project-workflow-cover",
+      "route": "/task/v1/kanbanCrud",
+      "method": "GET",
+      "service": "account",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "json",
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "coverId": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "templateKanbanId": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]*$"
+                  }
+                ]
+              },
+              "isDefault": {
+                "type": "boolean"
+              },
+              "kanbanGroupId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "review": "reviewed",
+      "command": "project workflow transport ordinary-project",
+      "description": "核对普通项目，使用普通项目请求。项目流程操作还会读取实际模块目录。",
+      "encoding": "json",
+      "queryArray": "repeat",
+      "semanticReason": "GET 保存阅读记录，可能补偿公司模板管理员、更新选择偏好并同步微应用；不能视为纯读取。",
+      "fields": [
+        {
+          "option": "id",
+          "in": "query",
+          "name": "id",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            ]
+          }
+        },
+        {
+          "option": "is-default",
+          "in": "query",
+          "name": "isDefault",
+          "schema": {
+            "type": "boolean"
+          }
+        },
+        {
+          "option": "kanban-group-id",
+          "in": "query",
+          "name": "kanbanGroupId",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "examples": [
+        "rsq project workflow modules list --project-id 123"
+      ],
+      "requiresBusinessContext": [
+        "project workflow modules list"
+      ]
+    },
+    {
+      "id": "rsq.todo-workflow-visibility",
+      "command": "workflow transport todo-visibility get",
+      "description": "按当前身份确认单个流程实例是否可打开及是否已删除。由待办详情命令组合使用。",
+      "route": "/task/workflow/process/info/listByIdsForDataModule",
+      "method": "GET",
+      "service": "account",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "effect": "read",
+      "idempotency": "idempotent",
+      "response": "json",
+      "review": "reviewed",
+      "requiresBusinessContext": [
+        "todo workflow inspect",
+        "workflow find",
+        "workflow export"
+      ],
+      "fields": [
+        {
+          "option": "process-info-ids",
+          "in": "query",
+          "name": "processInfoIds",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        }
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "processInfoIds": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            },
+            "required": [
+              "processInfoIds"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]*$"
+                    },
+                    {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    }
+                  ]
+                },
+                "isCanOpen": {
+                  "type": "boolean"
+                },
+                "isDeleted": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "isCanOpen",
+                "isDeleted"
+              ],
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "code",
+          "data"
+        ],
+        "additionalProperties": true
+      },
+      "examples": [
+        "rsq schema \"todo workflow inspect\""
       ]
     }
   ]

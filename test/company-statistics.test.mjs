@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { CookieJar } from 'tough-cookie'
 import { catalog } from '../dist/operations.js'
 import { workflows, runWorkflow, workflowSchema } from '../dist/workflows.js'
+import { executeWorkflow } from '../dist/dispatch.js'
 import { auditWorkflows } from '../scripts/check-coverage.mjs'
 import { businessScope } from '../dist/business.js'
 const ctx = { environment: 'production', profile: 'fixture' }, jar = new CookieJar()
@@ -15,6 +16,10 @@ function service({ report = { data: [{ id: 1, type: 'person', number: 1 }], ext:
   const calls = []
   return { calls, transport: async (url, init) => {
     calls.push({ url, init }); const path = url.pathname
+    if (path === '/task/login/authAjax') return json({ success: true, id: 1, username: 'fixture', token: 'fixture', team: { id: 7, name: 'Fixture' } })
+    if (path.endsWith('/member/state/independent')) return json({ vt: 'fixture', deadLine: '2100-01-01 00:00:00', usersCount: 1, userLimit: 2, mainApp: 'rsq' })
+    if (path.endsWith('/function/available')) return json([{ funcName: 'WORKFLOW', status: 'disable' }, { funcName: 'TEAM_STATISTICS', status: 'enable' }])
+    if (path.endsWith('/authorities/company/current')) return json({ useFlow: false, useEnterpriseStatistics: true })
     if (path === '/task/v1/department/list') return json(tree)
     if (path === '/task/v1/staffGroupCrud/list') return json([{ id: 21, name: 'Fixture', displayOrder: 1, userCount: 0, users: [] }])
     if (path === '/task/workflow/application/list') { assert.equal(url.searchParams.get('statisticsFrom'), 'team'); return json({ code: 200, data: [{ id: 31, name: 'Fixture' }] }) }
@@ -30,11 +35,18 @@ function service({ report = { data: [{ id: 1, type: 'person', number: 1 }], ext:
 const run = (suffix, input, mock, identity = session) => runWorkflow(ctx, workflows.workflows.find(flow => flow.command === 'statistics company ' + suffix), input, identity, { transport: mock.transport })
 test('company OKR and workflow commands expose distinct module entitlements and validated adapters', () => {
   assert.deepEqual(auditWorkflows(workflows, catalog, businessScope), [])
-  for (const [suffix, names] of [['okr people analyze', ['TEAM_STATISTICS', 'OKR']], ['workflow people analyze', ['TEAM_STATISTICS', 'WORKFLOW']]]) {
+  for (const [suffix, names] of [['okr people analyze', ['OKR', 'TEAM_STATISTICS']], ['workflow people analyze', ['TEAM_STATISTICS']]]) {
     const flow = workflows.workflows.find(flow => flow.command === 'statistics company ' + suffix)
-    for (const name of names) assert.ok(workflowSchema(flow).access.features.includes(name))
+    assert.deepEqual(workflowSchema(flow).access.features, names)
     assert.equal(flow.effect, 'read')
   }
+})
+test('company workflow analysis uses company statistics permission for the team scene', async () => {
+  const target = workflows.workflows.find(flow => flow.command === 'statistics company workflow people analyze')
+  const mock = service()
+  const result = await executeWorkflow(ctx, target, { applicationIds: ['31'] }, session, { transport: mock.transport })
+  assert.equal(result.result.page.total, 1)
+  assert.equal(mock.calls.at(-1).url.searchParams.get('statisticsFrom'), 'team')
 })
 test('company workflow analysis validates all selected company resources before the HTTP query', async () => {
   for (const filter of ['userIds', 'deptIds', 'groupIds', 'applicationIds']) {

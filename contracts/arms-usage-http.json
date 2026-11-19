@@ -5371,6 +5371,111 @@
         ],
         "additionalProperties": true
       }
+    },
+    {
+      "id": "rsq.todo-workflow-visibility",
+      "command": "workflow transport todo-visibility get",
+      "description": "按当前身份确认单个流程实例是否可打开及是否已删除。由待办详情命令组合使用。",
+      "route": "/task/workflow/process/info/listByIdsForDataModule",
+      "method": "GET",
+      "service": "account",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "effect": "read",
+      "idempotency": "idempotent",
+      "response": "json",
+      "review": "reviewed",
+      "requiresBusinessContext": [
+        "todo workflow inspect"
+      ],
+      "fields": [
+        {
+          "option": "process-info-ids",
+          "in": "query",
+          "name": "processInfoIds",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        }
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "processInfoIds": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            },
+            "required": [
+              "processInfoIds"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]*$"
+                    },
+                    {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    }
+                  ]
+                },
+                "isCanOpen": {
+                  "type": "boolean"
+                },
+                "isDeleted": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "isCanOpen",
+                "isDeleted"
+              ],
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "code",
+          "data"
+        ],
+        "additionalProperties": true
+      },
+      "examples": [
+        "rsq schema \"todo workflow inspect\""
+      ]
     }
   ],
   "workflows": [
@@ -5667,26 +5772,45 @@
                   ]
                 },
                 "target": {
-                  "type": "object",
-                  "properties": {
-                    "command": {
-                      "type": "string"
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "command": {
+                          "const": "task context inspect"
+                        },
+                        "taskId": {
+                          "type": "string",
+                          "pattern": "^[A-Za-z0-9_-]+$"
+                        }
+                      },
+                      "required": [
+                        "command",
+                        "taskId"
+                      ],
+                      "additionalProperties": false
                     },
-                    "taskId": {
-                      "type": "string",
-                      "pattern": "^[A-Za-z0-9_-]+$"
-                    },
-                    "processId": {
-                      "type": "string",
-                      "pattern": "^[1-9][0-9]*$"
-                    },
-                    "stepId": {
-                      "type": "string",
-                      "pattern": "^[1-9][0-9]*$"
+                    {
+                      "type": "object",
+                      "properties": {
+                        "command": {
+                          "const": "todo workflow inspect"
+                        },
+                        "processId": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]*$"
+                        },
+                        "stepId": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]*$"
+                        }
+                      },
+                      "required": [
+                        "command",
+                        "processId"
+                      ],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": [
-                    "command"
                   ]
                 }
               },
@@ -5898,7 +6022,10 @@
         "代表性 HTTP 主路径；其他角色、罕见筛选/配置组合的验证状态单独登记。",
         "读取上下文可能初始化个人偏好，因此部分查询声明为 write。"
       ],
-      "recovery": "失败返回已完成步骤和资源 ID；先读回再决定后续操作，不自动重放写请求。"
+      "recovery": "失败返回已完成步骤和资源 ID；先读回再决定后续操作，不自动重放写请求。",
+      "relatedCommands": [
+        "todo workflow inspect"
+      ]
     },
     {
       "id": "closure.arms.todo.calendar",
@@ -6090,7 +6217,31 @@
           "list": {
             "type": "array",
             "items": {
-              "type": "object"
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "object",
+                  "properties": {
+                    "command": {
+                      "const": "todo workflow inspect"
+                    },
+                    "processId": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]*$"
+                    },
+                    "stepId": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]*$"
+                    }
+                  },
+                  "required": [
+                    "command",
+                    "processId"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": true
             }
           },
           "total": {
@@ -6180,7 +6331,236 @@
         "代表性 HTTP 主路径；其他角色、罕见筛选/配置组合的验证状态单独登记。",
         "读取上下文可能初始化个人偏好，因此部分查询声明为 write。"
       ],
-      "recovery": "失败返回已完成步骤和资源 ID；先读回再决定后续操作，不自动重放写请求。"
+      "recovery": "失败返回已完成步骤和资源 ID；先读回再决定后续操作，不自动重放写请求。",
+      "relatedCommands": [
+        "todo workflow inspect"
+      ]
+    },
+    {
+      "id": "closure.arms.todo.workflow.inspect",
+      "command": "todo workflow inspect",
+      "executor": "arms-usage",
+      "usageAction": "todo-workflow-inspect",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "description": "从待办自动识别项目流程或独立流程，核对当前用户的可见实例及步骤，再读取表单与可用动作。查询可能刷新公式或保存个人偏好。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "processId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "待办 target 返回的流程实例 ID。"
+          },
+          "stepId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "待办 target 的可见实例步骤 ID。省略时打开整个实例。"
+          }
+        },
+        "required": [
+          "processId"
+        ],
+        "additionalProperties": false
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "enum": [
+                  "project",
+                  "standalone"
+                ]
+              },
+              "projectId": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "applicationId": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            },
+            "required": [
+              "kind",
+              "applicationId"
+            ],
+            "additionalProperties": false
+          },
+          "instance": {
+            "type": "object"
+          },
+          "step": {
+            "type": "object",
+            "description": "传入 stepId 时返回该待办对应的可见步骤、表单和动作。"
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "command": {
+                "enum": [
+                  "project workflow instance inspect",
+                  "workflow instance inspect"
+                ]
+              },
+              "processId": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "projectId": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            },
+            "required": [
+              "command",
+              "processId"
+            ],
+            "additionalProperties": false
+          },
+          "nextCommands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "scope",
+          "instance",
+          "target",
+          "nextCommands"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "option": "process-id",
+          "name": "processId",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "待办 target 返回的流程实例 ID。"
+          }
+        },
+        {
+          "option": "step-id",
+          "name": "stepId",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "待办 target 的可见实例步骤 ID。省略时打开整个实例。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "http0",
+          "operationId": "rsq.d04c7521598b",
+          "description": "核对当前账号和公司。",
+          "input": {}
+        },
+        {
+          "id": "http1",
+          "operationId": "rsq.129150909f0b",
+          "description": "核对当前公司有效期及名额。",
+          "input": {}
+        },
+        {
+          "id": "http2",
+          "operationId": "rsq.bdc8fe16f33e",
+          "description": "读取功能状态，至少需要可用的流程入口。",
+          "input": {}
+        },
+        {
+          "id": "http3",
+          "operationId": "rsq.86858b69446b",
+          "description": "核对当前公司角色权限。",
+          "input": {}
+        },
+        {
+          "id": "http4",
+          "operationId": "rsq.todo-workflow-visibility",
+          "description": "用精确的实例 ID 确认当前用户允许打开。",
+          "input": {}
+        },
+        {
+          "id": "http5",
+          "operationId": "rsq.ac5f2bf25fad",
+          "description": "读取已授权实例的实际应用、项目归属和可见步骤。",
+          "input": {}
+        },
+        {
+          "id": "http6",
+          "operationId": "rsq.471c5e192b8d",
+          "description": "没有所属项目时，从独立流程应用目录核对实际入口。",
+          "input": {}
+        },
+        {
+          "id": "http7",
+          "operationId": "rsq.project-workflow-cover",
+          "description": "项目内实例核对实际普通项目。",
+          "input": {}
+        },
+        {
+          "id": "http8",
+          "operationId": "rsq.0049502086e1",
+          "description": "项目内实例核对实际所属模块。",
+          "input": {}
+        },
+        {
+          "id": "http9",
+          "operationId": "rsq.38741e60b872",
+          "description": "项目内实例核对真实应用及用户可见范围。",
+          "input": {}
+        },
+        {
+          "id": "http10",
+          "operationId": "rsq.bcae04df8eb2",
+          "description": "按项目流程的可见范围校验实例。",
+          "input": {}
+        },
+        {
+          "id": "http11",
+          "operationId": "rsq.aecc6286dfc1",
+          "description": "读取实例的实际步骤。",
+          "input": {}
+        },
+        {
+          "id": "http12",
+          "operationId": "rsq.12722ecef099",
+          "description": "按实际步骤读取表单，可能刷新公式字段。",
+          "input": {}
+        },
+        {
+          "id": "http13",
+          "operationId": "rsq.f4685612e93b",
+          "description": "读取当前身份可用的步骤动作。",
+          "input": {}
+        }
+      ],
+      "capabilities": [
+        "task/search",
+        "workflow/instance"
+      ],
+      "relatedCommands": [
+        "todo list",
+        "todo pending list",
+        "cooperation workflow list",
+        "project workflow instance inspect",
+        "workflow instance inspect"
+      ],
+      "examples": [
+        "rsq todo workflow inspect --process-id 123 --step-id 456",
+        "rsq todo workflow inspect --process-id 123 --dry-run"
+      ],
+      "recovery": "无权打开或步骤未找到时，刷新待办并核对当前公司和账号。"
     },
     {
       "id": "closure.arms.project.view.list",
@@ -9279,6 +9659,13 @@
             "items": {
               "type": "string"
             }
+          },
+          "forms": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "当前流程应用下的表单，可用 id 查询字段定义或实例表单记录。"
           }
         },
         "required": [
@@ -10935,6 +11322,13 @@
             "items": {
               "type": "string"
             }
+          },
+          "forms": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "当前流程应用下的表单，可用 id 查询字段定义或实例表单记录。"
           }
         },
         "required": [
@@ -10998,7 +11392,7 @@
         },
         {
           "id": "http5",
-          "operationId": "rsq.87743b1e7fd8",
+          "operationId": "rsq.project-workflow-cover",
           "input": {},
           "description": "从实际对象发现并核对上下文；执行分支只调用所需 HTTP，写入后独立读回。"
         },
@@ -11261,7 +11655,7 @@
         },
         {
           "id": "http6",
-          "operationId": "rsq.87743b1e7fd8",
+          "operationId": "rsq.project-workflow-cover",
           "input": {},
           "description": "从实际对象发现并核对上下文；执行分支只调用所需 HTTP，写入后独立读回。"
         },
@@ -11479,7 +11873,7 @@
         },
         {
           "id": "http6",
-          "operationId": "rsq.87743b1e7fd8",
+          "operationId": "rsq.project-workflow-cover",
           "input": {},
           "description": "从实际对象发现并核对上下文；执行分支只调用所需 HTTP，写入后独立读回。"
         },
@@ -11488,6 +11882,18 @@
           "operationId": "rsq.0049502086e1",
           "input": {},
           "description": "从实际对象发现并核对上下文；执行分支只调用所需 HTTP，写入后独立读回。"
+        },
+        {
+          "id": "http8",
+          "operationId": "rsq.38741e60b872",
+          "input": {},
+          "description": "从实际流程应用核对当前用户的可见实例范围。"
+        },
+        {
+          "id": "http9",
+          "operationId": "rsq.bcae04df8eb2",
+          "input": {},
+          "description": "从实际流程应用核对当前用户的可见实例范围。"
         }
       ],
       "output": {},
@@ -11509,6 +11915,1221 @@
       ],
       "recovery": "失败返回已完成步骤和资源 ID；先读回再决定后续操作，不自动重放写请求。",
       "usageProject": true
+    },
+    {
+      "id": "closure.project.workflow.form.records.list",
+      "command": "project workflow form records list",
+      "description": "按项目流程的可见实例和步骤查询已填写表单数据。支持按实例名称、状态和创建日期筛选，按可见实例分页。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "project/workflow"
+      ],
+      "executor": "arms-usage",
+      "usageAction": "workflow-form-records",
+      "usageProject": true,
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "实际普通项目；应用或父实例必须确实属于其中的流程模块。"
+          },
+          "applicationId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "all",
+              "doing",
+              "finished"
+            ]
+          },
+          "createdBetween": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 25,
+            "description": "每页扫描的可见流程实例数，默认 5。本页可见步骤超过 200 时缩小每页实例数。"
+          },
+          "formId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000,
+            "description": "页码从 1 开始。默认 1。"
+          }
+        },
+        "required": [
+          "projectId",
+          "applicationId",
+          "formId"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "projectId",
+          "option": "project-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "实际普通项目；应用或父实例必须确实属于其中的流程模块。"
+          }
+        },
+        {
+          "name": "applicationId",
+          "option": "application-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "name",
+          "option": "name",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        },
+        {
+          "name": "status",
+          "option": "status",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "all",
+              "doing",
+              "finished"
+            ]
+          }
+        },
+        {
+          "name": "createdBetween",
+          "option": "created-between",
+          "schema": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          }
+        },
+        {
+          "name": "limit",
+          "option": "limit",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 25,
+            "description": "每页扫描的可见流程实例数，默认 5。本页可见步骤超过 200 时缩小每页实例数。"
+          }
+        },
+        {
+          "name": "formId",
+          "option": "form-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "page",
+          "option": "page",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000,
+            "description": "页码从 1 开始。默认 1。"
+          }
+        }
+      ],
+      "examples": [
+        "rsq project workflow form records list --project-id 123 --application-id 321 --form-id 456 --page 1"
+      ],
+      "relatedCommands": [
+        "project workflow modules list",
+        "project workflow configuration inspect",
+        "project workflow instances list",
+        "project workflow instance inspect",
+        "workflow form records list"
+      ],
+      "steps": [
+        {
+          "id": "http0",
+          "operationId": "rsq.d04c7521598b",
+          "input": {},
+          "description": "从实际对象发现并核对上下文；执行分支只调用所需 HTTP，写入后独立读回。"
+        },
+        {
+          "id": "http1",
+          "operationId": "rsq.38741e60b872",
+          "input": {},
+          "description": "从实际对象发现并核对上下文；执行分支只调用所需 HTTP，写入后独立读回。"
+        },
+        {
+          "id": "http2",
+          "operationId": "rsq.003a9e022a92",
+          "input": {},
+          "description": "从实际对象发现并核对上下文；执行分支只调用所需 HTTP，写入后独立读回。"
+        },
+        {
+          "id": "http3",
+          "operationId": "rsq.35f901010b2f",
+          "input": {},
+          "description": "从实际对象发现并核对上下文；执行分支只调用所需 HTTP，写入后独立读回。"
+        },
+        {
+          "id": "http4",
+          "operationId": "rsq.bcae04df8eb2",
+          "input": {},
+          "description": "从实际对象发现并核对上下文；执行分支只调用所需 HTTP，写入后独立读回。"
+        },
+        {
+          "id": "http5",
+          "operationId": "rsq.project-workflow-cover",
+          "input": {},
+          "description": "从实际对象发现并核对上下文；执行分支只调用所需 HTTP，写入后独立读回。"
+        },
+        {
+          "id": "http6",
+          "operationId": "rsq.0049502086e1",
+          "input": {},
+          "description": "从实际对象发现并核对上下文；执行分支只调用所需 HTTP，写入后独立读回。"
+        },
+        {
+          "id": "http7",
+          "operationId": "rsq.ac5f2bf25fad",
+          "description": "核对每个可见实例的实际项目、应用和步骤。",
+          "input": {}
+        },
+        {
+          "id": "http8",
+          "operationId": "rsq.aecc6286dfc1",
+          "description": "用可见的实例步骤 ID 读取实际表单归属。",
+          "input": {}
+        },
+        {
+          "id": "http9",
+          "operationId": "rsq.12722ecef099",
+          "description": "读取匹配的可见表单值，服务端可能重算公式。",
+          "input": {}
+        }
+      ],
+      "output": {},
+      "resultSchema": {
+        "type": "object",
+        "required": [
+          "projectId",
+          "applicationId",
+          "formId",
+          "items",
+          "pagination"
+        ],
+        "properties": {
+          "projectId": {
+            "type": "string"
+          },
+          "applicationId": {
+            "type": "string"
+          },
+          "formId": {
+            "type": "string"
+          },
+          "form": {
+            "type": "object"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "processId",
+                "stepId",
+                "fields",
+                "target"
+              ],
+              "properties": {
+                "processId": {
+                  "type": "string"
+                },
+                "stepId": {
+                  "type": "string"
+                },
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                },
+                "target": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "required": [
+              "mode",
+              "page",
+              "limit",
+              "nextPage",
+              "sourceInstanceCount"
+            ],
+            "properties": {
+              "mode": {
+                "const": "visible-instances"
+              },
+              "page": {
+                "type": "integer"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "nextPage": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "sourceInstanceCount": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "recovery": "先用项目流程配置查实际表单。按 pagination.nextPage 翻页，即便本页没有匹配表单也应检查 nextPage。只读取可见实例的步骤表单。打开项目模块或读取流程时可能初始化本人偏好和计算字段。"
+    },
+    {
+      "command": "workflow find",
+      "id": "closure.workflow.find",
+      "usageAction": "workflow-find",
+      "description": "按名称或 ID 查找当前账号可见的项目流程和独立流程，返回可直接调用的业务入口。查询可能初始化个人分组与模块偏好。",
+      "capabilities": [
+        "workflow/application",
+        "workflow/instance"
+      ],
+      "examples": [
+        "rsq workflow find --name \"供应商审核\"",
+        "rsq workflow find --process-id 123"
+      ],
+      "relatedCommands": [
+        "workflow export",
+        "todo workflow inspect",
+        "project workflow modules list",
+        "workflow configuration inspect"
+      ],
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "application",
+                    "instance"
+                  ]
+                },
+                "id": {
+                  "type": "string",
+                  "pattern": "^[1-9][0-9]*$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "projectName": {
+                  "type": "string"
+                },
+                "applicationName": {
+                  "type": "string"
+                },
+                "scope": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "project",
+                        "standalone"
+                      ]
+                    },
+                    "projectId": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]*$"
+                    },
+                    "applicationId": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]*$"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "applicationId"
+                  ],
+                  "additionalProperties": false
+                },
+                "target": {
+                  "type": "object",
+                  "properties": {
+                    "command": {
+                      "enum": [
+                        "workflow configuration inspect",
+                        "project workflow configuration inspect",
+                        "workflow instance inspect",
+                        "project workflow instance inspect"
+                      ]
+                    },
+                    "projectId": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]*$",
+                      "description": "从名称查询结果取得的流程应用 ID。"
+                    },
+                    "applicationId": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]*$",
+                      "description": "从名称查询结果取得的流程应用 ID。"
+                    },
+                    "processId": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]*$",
+                      "description": "从名称查询结果取得的流程应用 ID。"
+                    }
+                  },
+                  "required": [
+                    "command"
+                  ],
+                  "additionalProperties": false
+                },
+                "exportTarget": {
+                  "type": "object",
+                  "properties": {
+                    "command": {
+                      "const": "workflow export"
+                    },
+                    "applicationId": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]*$",
+                      "description": "从名称查询结果取得的流程应用 ID。"
+                    },
+                    "processId": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]*$",
+                      "description": "从名称查询结果取得的流程应用 ID。"
+                    }
+                  },
+                  "required": [
+                    "command"
+                  ],
+                  "additionalProperties": false
+                },
+                "relatedCommands": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "kind",
+                "id",
+                "name",
+                "scope",
+                "target",
+                "exportTarget"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "exact": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "nextPage": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "exact",
+          "page",
+          "limit",
+          "nextPage"
+        ],
+        "additionalProperties": false
+      },
+      "executor": "arms-usage",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "pattern": "\\S",
+            "description": "流程应用或已发起实例的名称。项目流程也可用「项目名称-应用名称」。"
+          },
+          "applicationId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "从名称查询结果取得的流程应用 ID。"
+          },
+          "processId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "从待办、链接或名称查询取得的实例 ID。"
+          },
+          "kind": {
+            "enum": [
+              "application",
+              "instance"
+            ],
+            "description": "已明确对象层次时可限定查询范围。"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "查找结果页码，默认 1。"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "每页数量，默认 20。"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "name"
+            ]
+          },
+          {
+            "required": [
+              "applicationId"
+            ],
+            "properties": {
+              "kind": {
+                "const": "application"
+              }
+            }
+          },
+          {
+            "required": [
+              "processId"
+            ],
+            "properties": {
+              "kind": {
+                "const": "instance"
+              }
+            }
+          }
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "option": "name",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "pattern": "\\S",
+            "description": "流程应用或已发起实例的名称。项目流程也可用「项目名称-应用名称」。"
+          }
+        },
+        {
+          "name": "applicationId",
+          "option": "application-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "从名称查询结果取得的流程应用 ID。"
+          }
+        },
+        {
+          "name": "processId",
+          "option": "process-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "从待办、链接或名称查询取得的实例 ID。"
+          }
+        },
+        {
+          "name": "kind",
+          "option": "kind",
+          "schema": {
+            "enum": [
+              "application",
+              "instance"
+            ],
+            "description": "已明确对象层次时可限定查询范围。"
+          }
+        },
+        {
+          "name": "page",
+          "option": "page",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "查找结果页码，默认 1。"
+          }
+        },
+        {
+          "name": "limit",
+          "option": "limit",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "每页数量，默认 20。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "http0",
+          "operationId": "rsq.d04c7521598b",
+          "description": "核对当前账号与公司。",
+          "input": {}
+        },
+        {
+          "id": "http1",
+          "operationId": "rsq.129150909f0b",
+          "description": "核对当前公司有效期和名额。",
+          "input": {}
+        },
+        {
+          "id": "http2",
+          "operationId": "rsq.bdc8fe16f33e",
+          "description": "读取当前租户功能授权。",
+          "input": {}
+        },
+        {
+          "id": "http3",
+          "operationId": "rsq.86858b69446b",
+          "description": "核对当前公司角色权限。",
+          "input": {}
+        },
+        {
+          "id": "http4",
+          "operationId": "rsq.91474354ee33",
+          "description": "从网页同源的应用选择目录发现可见候选。",
+          "input": {}
+        },
+        {
+          "id": "http5",
+          "operationId": "rsq.471c5e192b8d",
+          "description": "核对独立应用归属。",
+          "input": {}
+        },
+        {
+          "id": "http6",
+          "operationId": "rsq.d286abebba83",
+          "description": "读取当前账号可见的项目分组。",
+          "input": {}
+        },
+        {
+          "id": "http7",
+          "operationId": "rsq.31761be913c4",
+          "description": "查找当前账号可见的普通项目。",
+          "input": {}
+        },
+        {
+          "id": "http8",
+          "operationId": "rsq.0049502086e1",
+          "description": "用实际项目模块核对流程应用的归属。",
+          "input": {}
+        },
+        {
+          "id": "http9",
+          "operationId": "rsq.ab87297b330d",
+          "description": "按名称查询服务端可见流程实例。",
+          "input": {}
+        },
+        {
+          "id": "http10",
+          "operationId": "rsq.todo-workflow-visibility",
+          "description": "单独确认每条实例的打开权限。",
+          "input": {}
+        },
+        {
+          "id": "http11",
+          "operationId": "rsq.ac5f2bf25fad",
+          "description": "核对实际项目、应用和实例。",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "command": "workflow export",
+      "id": "closure.workflow.export",
+      "usageAction": "workflow-export",
+      "description": "自动定位实际流程，按导出权限把可见实例、步骤和表单数据保存为 Excel。默认在当前目录生成 .xlsx 文件。",
+      "capabilities": [
+        "workflow/application",
+        "workflow/instance",
+        "workflow/forms"
+      ],
+      "examples": [
+        "rsq workflow export --name \"供应商审核\" --output ./供应商.xlsx",
+        "rsq workflow export --process-id 123",
+        "rsq workflow export --application-id 123 --form-name \"基本信息\""
+      ],
+      "relatedCommands": [
+        "workflow find",
+        "workflow form records list",
+        "project workflow form records list"
+      ],
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "output": {
+            "type": "string"
+          },
+          "fileFormat": {
+            "const": "xlsx"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "enum": [
+                  "application",
+                  "instance"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "name": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "projectName": {
+                "type": "string"
+              },
+              "applicationName": {
+                "type": "string"
+              },
+              "scope": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "project",
+                      "standalone"
+                    ]
+                  },
+                  "projectId": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]*$"
+                  },
+                  "applicationId": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]*$"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "applicationId"
+                ],
+                "additionalProperties": false
+              },
+              "target": {
+                "type": "object",
+                "properties": {
+                  "command": {
+                    "enum": [
+                      "workflow configuration inspect",
+                      "project workflow configuration inspect",
+                      "workflow instance inspect",
+                      "project workflow instance inspect"
+                    ]
+                  },
+                  "projectId": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]*$",
+                    "description": "从名称查询结果取得的流程应用 ID。"
+                  },
+                  "applicationId": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]*$",
+                    "description": "从名称查询结果取得的流程应用 ID。"
+                  },
+                  "processId": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]*$",
+                    "description": "从名称查询结果取得的流程应用 ID。"
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "additionalProperties": false
+              },
+              "exportTarget": {
+                "type": "object",
+                "properties": {
+                  "command": {
+                    "const": "workflow export"
+                  },
+                  "applicationId": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]*$",
+                    "description": "从名称查询结果取得的流程应用 ID。"
+                  },
+                  "processId": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]*$",
+                    "description": "从名称查询结果取得的流程应用 ID。"
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "additionalProperties": false
+              },
+              "relatedCommands": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "kind",
+              "id",
+              "name",
+              "scope",
+              "target",
+              "exportTarget"
+            ],
+            "additionalProperties": true
+          },
+          "scope": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "enum": [
+                  "project",
+                  "standalone"
+                ]
+              },
+              "projectId": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "applicationId": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            },
+            "required": [
+              "kind",
+              "applicationId"
+            ],
+            "additionalProperties": false
+          },
+          "instances": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "steps": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "records": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "formId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        "required": [
+          "output",
+          "fileFormat",
+          "bytes",
+          "target",
+          "scope",
+          "instances",
+          "steps",
+          "records"
+        ],
+        "additionalProperties": false
+      },
+      "executor": "arms-usage",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "pattern": "\\S",
+            "description": "流程应用或已发起实例的名称。项目流程也可用「项目名称-应用名称」。"
+          },
+          "applicationId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "从名称查询结果取得的流程应用 ID。"
+          },
+          "processId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "从待办、链接或名称查询取得的实例 ID。"
+          },
+          "kind": {
+            "enum": [
+              "application",
+              "instance"
+            ],
+            "description": "已明确对象层次时可限定查询范围。"
+          },
+          "output": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "pattern": "\\S",
+            "description": "已有目录，或新 .xlsx 文件路径。省略时在当前目录自动命名。已存在文件不会覆盖。"
+          },
+          "formName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "pattern": "\\S",
+            "description": "按表单名称限定导出范围。"
+          },
+          "formId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "按表单 ID 限定导出范围。"
+          },
+          "status": {
+            "enum": [
+              "all",
+              "doing",
+              "finished"
+            ],
+            "description": "按流程状态筛选，默认 all。finished 含已完成和已关闭。"
+          },
+          "createdBetween": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            },
+            "minItems": 2,
+            "maxItems": 2,
+            "description": "创建日期范围 [开始,结束]，含结束日，按 GMT+8。"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "name"
+            ]
+          },
+          {
+            "required": [
+              "applicationId"
+            ],
+            "properties": {
+              "kind": {
+                "const": "application"
+              }
+            }
+          },
+          {
+            "required": [
+              "processId"
+            ],
+            "properties": {
+              "kind": {
+                "const": "instance"
+              }
+            }
+          }
+        ],
+        "not": {
+          "required": [
+            "formName",
+            "formId"
+          ]
+        },
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "option": "name",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "pattern": "\\S",
+            "description": "流程应用或已发起实例的名称。项目流程也可用「项目名称-应用名称」。"
+          }
+        },
+        {
+          "name": "applicationId",
+          "option": "application-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "从名称查询结果取得的流程应用 ID。"
+          }
+        },
+        {
+          "name": "processId",
+          "option": "process-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "从待办、链接或名称查询取得的实例 ID。"
+          }
+        },
+        {
+          "name": "kind",
+          "option": "kind",
+          "schema": {
+            "enum": [
+              "application",
+              "instance"
+            ],
+            "description": "已明确对象层次时可限定查询范围。"
+          }
+        },
+        {
+          "name": "output",
+          "option": "output",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "pattern": "\\S",
+            "description": "已有目录，或新 .xlsx 文件路径。省略时在当前目录自动命名。已存在文件不会覆盖。"
+          }
+        },
+        {
+          "name": "formName",
+          "option": "form-name",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "pattern": "\\S",
+            "description": "按表单名称限定导出范围。"
+          }
+        },
+        {
+          "name": "formId",
+          "option": "form-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "按表单 ID 限定导出范围。"
+          }
+        },
+        {
+          "name": "status",
+          "option": "status",
+          "schema": {
+            "enum": [
+              "all",
+              "doing",
+              "finished"
+            ],
+            "description": "按流程状态筛选，默认 all。finished 含已完成和已关闭。"
+          }
+        },
+        {
+          "name": "createdBetween",
+          "option": "created-between",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            },
+            "minItems": 2,
+            "maxItems": 2,
+            "description": "创建日期范围 [开始,结束]，含结束日，按 GMT+8。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "http0",
+          "operationId": "rsq.d04c7521598b",
+          "description": "核对当前账号与公司。",
+          "input": {}
+        },
+        {
+          "id": "http1",
+          "operationId": "rsq.129150909f0b",
+          "description": "核对当前公司有效期和名额。",
+          "input": {}
+        },
+        {
+          "id": "http2",
+          "operationId": "rsq.bdc8fe16f33e",
+          "description": "读取当前租户功能授权。",
+          "input": {}
+        },
+        {
+          "id": "http3",
+          "operationId": "rsq.86858b69446b",
+          "description": "核对当前公司角色权限。",
+          "input": {}
+        },
+        {
+          "id": "http4",
+          "operationId": "rsq.91474354ee33",
+          "description": "从网页同源的应用选择目录发现可见候选。",
+          "input": {}
+        },
+        {
+          "id": "http5",
+          "operationId": "rsq.471c5e192b8d",
+          "description": "核对独立应用归属。",
+          "input": {}
+        },
+        {
+          "id": "http6",
+          "operationId": "rsq.d286abebba83",
+          "description": "读取当前账号可见的项目分组。",
+          "input": {}
+        },
+        {
+          "id": "http7",
+          "operationId": "rsq.31761be913c4",
+          "description": "查找当前账号可见的普通项目。",
+          "input": {}
+        },
+        {
+          "id": "http8",
+          "operationId": "rsq.0049502086e1",
+          "description": "用实际项目模块核对流程应用的归属。",
+          "input": {}
+        },
+        {
+          "id": "http9",
+          "operationId": "rsq.ab87297b330d",
+          "description": "按名称查询服务端可见流程实例。",
+          "input": {}
+        },
+        {
+          "id": "http10",
+          "operationId": "rsq.todo-workflow-visibility",
+          "description": "单独确认每条实例的打开权限。",
+          "input": {}
+        },
+        {
+          "id": "http11",
+          "operationId": "rsq.ac5f2bf25fad",
+          "description": "核对实际项目、应用和实例。",
+          "input": {}
+        },
+        {
+          "id": "http12",
+          "operationId": "rsq.38741e60b872",
+          "description": "从实际流程应用核对 exportFlow 导出权限。",
+          "input": {}
+        },
+        {
+          "id": "http13",
+          "operationId": "rsq.003a9e022a92",
+          "description": "选定表单时核对表单确实属于该流程应用。",
+          "input": {}
+        },
+        {
+          "id": "http14",
+          "operationId": "rsq.bcae04df8eb2",
+          "description": "分页读取当前用户可见实例。",
+          "input": {}
+        },
+        {
+          "id": "http15",
+          "operationId": "rsq.aecc6286dfc1",
+          "description": "根据实例可见步骤核对实际步骤和表单。",
+          "input": {}
+        },
+        {
+          "id": "http16",
+          "operationId": "rsq.12722ecef099",
+          "description": "读取可见字段与表单值。此过程可能刷新计算字段。",
+          "input": {}
+        }
+      ]
     }
   ]
 }

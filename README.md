@@ -86,7 +86,9 @@ rsq task get --id '<任务ID>'
 | --- | --- |
 | 任务与日程 | `rsq schema task` |
 | 项目、项目集与项目模板 | `rsq schema project` |
-| 流程配置与审批 | `rsq schema workflow` |
+| 独立流程配置与审批 | `rsq schema workflow` |
+| 项目流程模块 | `rsq schema 'project workflow'` |
+| 跨入口查找流程与导出 Excel | `rsq workflow find --name '流程名称'`、`rsq schema 'workflow export'` |
 | OKR、行动与执行台 | `rsq schema okr`、`rsq schema action`、`rsq schema execution` |
 | 复盘与绩效 | `rsq schema replay`、`rsq schema appraisal` |
 | 文档与数据表 | `rsq schema doc`、`rsq schema datasheet` |

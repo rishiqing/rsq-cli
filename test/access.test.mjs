@@ -29,6 +29,15 @@ test('template operations retain the feature limits of their shared HTTP impleme
 test('indicator feature restrictions cover imported indicator HTTP routes as well as business command names', () => {
   for (const target of [{ command: 'okr import optional-indicator', route: '/task/okr/import/optional/indicator/list', method: 'GET', effect: 'read' }, { command: 'okr import indicator', route: '/task/okr/import/indicator', method: 'POST', effect: 'write' }, flow('okr indicator context')]) assert.ok(accessPlan(target).features.includes('OKR_INDICATOR'))
 })
+test('project alteration flow maintenance follows the actual alteration module entitlement', () => {
+  for (const command of ['project alteration flow templates', 'project alteration flow create', 'project alteration flow copy-template']) {
+    const features = accessPlan(flow(command)).features
+    assert.deepEqual(features, ['PLAN', 'PLAN_ALTERATION'])
+    assert.doesNotThrow(() => validateFeatures(features, [
+      { funcName: 'PLAN_WORKFLOW', status: 'disable' }, { funcName: 'PLAN_ALTERATION', status: 'enable' },
+    ], { useKanban: true, useFlow: false }))
+  }
+})
 test('current replay configuration writes require UI management permission before any business request', async () => {
   for (const command of ['replay template create', 'replay template question add', 'replay template rename', 'replay collection add', 'replay collection rename', 'replay collection remove']) {
     assert.ok(accessPlan(flow(command), {}).permissions.includes('replayManage'), command)

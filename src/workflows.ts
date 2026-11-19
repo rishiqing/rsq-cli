@@ -43,7 +43,7 @@ import { describeReplayTemplateComponents } from './replay.js'
 import { prepareCooperation, describeCooperation } from './cooperation.js'
 import { prepareAction, verifyAction, validateActionInput } from './action.js'
 import { prepareProjectCollection, verifyProjectCollection, describeProjectCollection } from './project-collection.js'
-import { prepareWorkflowContext, verifyWorkflowContext, describeWorkflowConfiguration } from './workflow-context.js'
+import { prepareWorkflowContext, verifyWorkflowContext, describeWorkflowConfiguration, describeWorkflowFormRecords } from './workflow-context.js'
 import { verifyWorkflowLifecycle, describeWorkflowInstance, describeWorkflowArrangement, validateWorkflowStepObservation } from './workflow-lifecycle.js'
 import { prepareOkrContext, verifyOkrContext, describeOkrContext } from './okr-context.js'
 import { runOkrAction, validateOkrActionWorkflow, type OkrAction } from './okr-actions.js'
@@ -84,17 +84,19 @@ import { runSignature, validateSignatureWorkflow, type SignatureAction } from '.
 import { runProjectSchedule, validateProjectScheduleWorkflow, type ProjectScheduleAction } from './project-schedule.js'
 
 import { prepareExecution, verifyExecution, describeExecution, validateExecutionInput } from './execution-context.js'
+import { describeProjectWorkflowModules, scopeWorkflowContracts, validateWorkflowScope, verifyWorkflowScope, workflowScopeSchema } from './workflow-scope.js'
 
 export type Value = unknown
 export type Workflow = {
   usageAction?: string; usageTemplate?: boolean; usageProject?: boolean
+  workflowScope?: 'project' | 'standalone'
   statisticsDrilldownAction?: StatisticsDrilldownAction
   workflowTaskAction?: WorkflowTaskAction; workflowTaskProject?: boolean
   projectCardBatchAction?: ProjectCardBatchAction; projectCardBatchTemplate?: boolean
   id: string; command: string; description: string; effect: Operation['effect']; methods: LoginMethod[]
   inputSchema: Schema; parameters: { option: string; name: string; schema: Schema }[]
   resultSchema?: Schema; recovery?: string
-  capabilities: string[]; examples: string[]
+  capabilities: string[]; examples: string[]; relatedCommands?: string[]
   workflowDatasheetAction?: WorkflowDatasheetAction; workflowDatasheetProject?: boolean; taskTypeAction?: TaskTypeAction; taskTypeTarget?: TaskTypeTarget; datasheetRecordsAction?: DatasheetRecordsAction; executor?: 'arms-usage' | 'statistics-drilldown' | 'workflow-tasks' | 'datasheet-records' | 'workflow-datasheet' | 'task-type-transition' | 'project-card-batch' | 'replay-navigation' | 'file-library-quit' | 'replay-collection-config' | 'project-excel' | 'project-import' | 'ai-config' | 'automation' | 'developer' | 'okr-indicators' | 'okr-performance' | 'okr-statistics' | 'ai-market' | 'replay-topic' | 'signature' | 'project-schedule' | 'okr-actions' | 'okr-alignment' | 'organization' | 'minder' | 'document' | 'cloud-file' | 'datasheet-admin' | 'appraisal' | 'task-audit'; replayNavigationAction?: ReplayNavigationAction; replayCollectionConfigAction?: ReplayCollectionConfigAction; projectExcelAction?: ProjectExcelAction; projectImportAction?: ProjectImportAction; aiConfigAction?: AiConfigAction; automationAction?: AutomationAction; developerAction?: DeveloperAction; okrIndicatorAction?: OkrIndicatorAction; okrPerformanceAction?: OkrPerformanceAction; okrStatisticsAction?: OkrStatisticsAction; aiMarketAction?: AiMarketAction; replayTopicAction?: ReplayTopicAction; signatureAction?: SignatureAction; projectScheduleAction?: ProjectScheduleAction; projectScheduleTemplate?: boolean; okrAction?: OkrAction; okrAlignmentAction?: OkrAlignmentAction; taskAuditAction?: TaskAuditAction; appraisalAction?: AppraisalAction; datasheetAdminAction?: DatasheetAdminAction; cloudFileAction?: CloudFileAction; docAction?: DocAction; organizationAction?: OrganizationAction; minderAction?: MinderAction
   steps: { id: string; operationId: string; description: string; input: JsonObject;
     authentication?: 'cookie';
@@ -103,7 +105,8 @@ export type Workflow = {
     prepare?: string; transfer?: 'storage-upload'; verify?: 'replay-push-rule' | 'company-usage' | 'okr-views' | 'company-role' | 'identity-settings' | 'archive' | 'project-context' | 'efficiency' | 'task-hours' | 'contact' | 'notification' | 'personal-resource' | 'datasheet' | 'statistics' | 'action' | 'datasheet-import' | 'project-collection' | 'workflow-context' | 'workflow-lifecycle' | 'okr-context' | 'okr-cycles' | 'deliverable' | 'file-library' | 'file-item' | 'replay' | 'application' | 'task-template' | 'task-business' | 'execution'; forEach?: { path: string; limit: number } }[]
   output: Value; outputAdapter?: 'workflow-templates' | 'company-okr-statistics' | 'replay-push-rules' | 'workflow-statistics' | 'company-usage' | 'okr-superiors' | 'okr-views' | 'company-role' | 'identity-settings' | 'archive' | 'collection-fields' | 'replay-created-tasks' | 'replay-okr-relations' | 'replay-relations' | 'replay-template-components' | 'replay-statistics' | 'okr-cycles' | 'cooperation' | 'project-context' | 'search' | 'efficiency' | 'task-hours' | 'contact' | 'notifications' | 'personal-resources' | 'datasheet-description' | 'datasheet-import' | 'collection-roadmap' | 'collection-stages' | 'workflow-configuration' | 'workflow-instance' | 'task-template' | 'task-attachments' | 'file-items' | 'workflow-arrangement' | 'okr-objectives' | 'okr-planning' | 'deliverable-context' | 'deliverable-files' | 'replay-template' | 'replay-score' | 'replay-features' | 'access-context' | 'execution-workspace'
 }
-export const workflows = JSON.parse(readFileSync(new URL('../contracts/workflows.json', import.meta.url), 'utf8')) as { version: number; workflows: Workflow[] }
+const workflowDefinitions = JSON.parse(readFileSync(new URL('../contracts/workflows.json', import.meta.url), 'utf8')) as { version: number; workflows: Workflow[] }
+export const workflows = { ...workflowDefinitions, workflows: scopeWorkflowContracts(workflowDefinitions.workflows) }
 export function validateWorkflowWait(flow: Workflow, index: number) {
   const step = flow.steps[index]
   if (step.waitBeforeMs === undefined) return
@@ -145,6 +148,7 @@ function equivalent(actual: unknown, expected: unknown, identifier = false) {
 export function workflowSchema(flow: Workflow) {
   return { ...flow, executable: flow.steps.every(s => catalog.operations.some(op => op.id === s.operationId && op.review === 'reviewed')),
     access: accessDescription(flow),
+    ...(workflowScopeSchema(flow) && { scope: workflowScopeSchema(flow) }),
     confirmation: flow.effect === 'destructive' ? 'required' : 'not_required',
     context: flow.steps.map(step => ({ id: step.id, operationId: step.operationId, description: step.description,
       input: step.input, assertions: step.assertions ?? [], resources: step.resources ?? {}, prepare: step.prepare, transfer: step.transfer, verify: step.verify, forEach: step.forEach, authentication: step.authentication, creationVisibility: step.creationVisibility, readback: step.readback, collectPages: step.collectPages, expectAbsent: step.expectAbsent, waitBeforeMs: step.waitBeforeMs })),
@@ -167,6 +171,7 @@ async function executeWorkflowSteps(ctx: Context, flow: Workflow, input: JsonObj
     issues: validate.errors?.map(e => ({ path: e.instancePath, keyword: e.keyword, message: e.message })),
   })
   for (const step of flow.steps) validateTaskCreationVisibility(flow, step)
+  validateWorkflowScope(flow)
   if (flow.steps.some(step => step.prepare?.startsWith('workflow-statistics-'))) validateWorkflowStatisticsInput(input)
   if (flow.steps.some(step => step.prepare?.startsWith('identity-settings-'))) validateIdentitySettingsInput(input)
   if (flow.command.startsWith('task label ')) validateLabelPatch(input.patch == null ? Object.fromEntries(['name','color'].filter(key => Object.hasOwn(input, key)).map(key => [key, input[key]])) : asObject(input.patch))
@@ -222,6 +227,7 @@ async function executeWorkflowSteps(ctx: Context, flow: Workflow, input: JsonObj
     if (step.readback && (op.effect !== 'read' || op.idempotency !== 'idempotent' || !step.verify && !step.assertions?.length || step.forEach || step.transfer || step.resources || !Number.isInteger(step.readback.attempts) || step.readback.attempts < 1 || step.readback.attempts > 5 || !Number.isInteger(step.readback.delayMs) || step.readback.delayMs < 50 || step.readback.delayMs > 2000)) throw new RsqError('INVALID_CONTRACT', '仅可为无资源创建的幂等读取声明有界断言等待。', 6)
   }
   if (options.dryRun) return { dryRun: true, command: flow.command, effect: flow.effect,
+    ...(workflowScopeSchema(flow) && { scope: workflowScopeSchema(flow) }),
     inputFields: Object.keys(input), steps: flow.steps.map((step, index) => ({ id: step.id, description: step.description,
       command: step.transfer ? 'HTTP 对象存储字节上传' : operations[index]!.command, effect: step.transfer ? 'write' : operations[index]!.effect,
       ...(step.creationVisibility && { creationVisibility: step.creationVisibility }), ...(step.collectPages && { collectPages: step.collectPages }), ...(step.readback && { readback: step.readback }), ...(step.waitBeforeMs && { waitBeforeMs: step.waitBeforeMs }),
@@ -317,6 +323,7 @@ async function executeWorkflowSteps(ctx: Context, flow: Workflow, input: JsonObj
       }
       completed.push(step.id)
       const verify = () => {
+        if (flow.workflowScope) verifyWorkflowScope(flow, step.id, input, results)
         if (step.verify === 'company-usage') verifyCompanyUsage(results, session)
         if (step.verify === 'okr-views') verifyOkrView(input, results, step.id, session)
         if (step.verify === 'company-role') verifyCompanyRole(input, results, step.id, session)
@@ -382,9 +389,12 @@ async function executeWorkflowSteps(ctx: Context, flow: Workflow, input: JsonObj
     }
   }
   try {
+    if (flow.command === 'project workflow modules list') return { command: flow.command, completedSteps: completed, resources, result: describeProjectWorkflowModules(input, results) }
+    if (flow.command === 'workflow form records list') return { command: flow.command, completedSteps: completed, resources,
+      result: describeWorkflowFormRecords(input, results) }
     const output = { command: flow.command, completedSteps: completed, ...(skipped.length && { skippedSteps: skipped }), resources, result: flow.outputAdapter === 'workflow-templates' ? describeWorkflowTemplates(input, results) : flow.outputAdapter === 'company-okr-statistics' ? describeCompanyOkrStatistics(results) : flow.outputAdapter === 'workflow-statistics' ? describeWorkflowStatistics(input, results, session) : flow.outputAdapter === 'company-usage' ? describeCompanyUsage(input, results, session) : flow.outputAdapter === 'okr-views' ? describeOkrView(input, results, session) : flow.outputAdapter === 'company-role' ? describeCompanyRole(input, results, session) : flow.outputAdapter === 'identity-settings' ? describeIdentitySettings(results, session) : flow.outputAdapter === 'archive' ? describeArchive(input, results, session) : flow.outputAdapter === 'collection-fields' ? describeCollectionFields(input, results, session) : flow.outputAdapter === 'replay-created-tasks' ? describeReplayCreatedTasks(input, results, session) : flow.outputAdapter === 'replay-okr-relations' ? describeReplayOkrRelations(input, results, session) : flow.outputAdapter === 'replay-relations' ? describeReplayRelations(input, results, session) : flow.outputAdapter === 'replay-template-components' ? describeReplayTemplateComponents(input, results) : flow.outputAdapter === 'replay-statistics' ? describeReplayStatistics(input, results) : flow.outputAdapter === 'okr-cycles' ? describeOkrCycles(input, results) : flow.outputAdapter === 'cooperation' ? describeCooperation(input, results) : flow.outputAdapter === 'project-context' ? describeProjectContext(input,results) : flow.outputAdapter === 'search' ? describeSearch(input, results) : flow.outputAdapter === 'efficiency' ? describeEfficiency(input, results) : flow.outputAdapter === 'task-hours' ? describeTaskHours(input, results) : flow.outputAdapter === 'contact' ? describeContact(input, results) : flow.outputAdapter === 'notifications' ? describeNotifications(input, results, session, ['okr','workflow','project'].includes(flow.command.split(' ')[1]) ? flow.command.split(' ')[1] : 'common') : flow.outputAdapter === 'personal-resources' ? describePersonalResources(input, results, flow.command.startsWith('favorite ')) : flow.outputAdapter === 'file-items' ? describeFileItems(input, results) : flow.outputAdapter === 'task-attachments' ? describeTaskAttachments(input, results) : flow.outputAdapter === 'execution-workspace' ? describeExecution(input, results, session) : flow.outputAdapter === 'task-template' ? describeTaskTemplate(results) : flow.outputAdapter === 'workflow-arrangement' ? describeWorkflowArrangement(results) : flow.outputAdapter === 'workflow-instance' ? describeWorkflowInstance(results) : flow.outputAdapter === 'access-context' ? describeApplicationAccess(results) : flow.outputAdapter === 'replay-push-rules' ? describeReplayPushRules(input, results) : flow.outputAdapter === 'replay-features' ? describeReplayFeatures(input, results) : flow.outputAdapter === 'replay-score' ? describeReplayScore(results) : flow.outputAdapter === 'replay-template' ? describeReplayTemplate(results) : flow.outputAdapter?.startsWith('deliverable-') ? describeDeliverable(input, results, flow.outputAdapter) : flow.outputAdapter?.startsWith('okr-') ? describeOkrContext(results, ['okr-planning', 'okr-superiors'].includes(flow.outputAdapter), flow.outputAdapter === 'okr-superiors') : flow.outputAdapter === 'workflow-configuration' ? describeWorkflowConfiguration(results) : flow.outputAdapter?.startsWith('collection-') ? describeProjectCollection(results, flow.outputAdapter) : flow.outputAdapter === 'datasheet-description' ? describeDatasheet(results) : flow.outputAdapter === 'datasheet-import' ? describeDatasheetImport(results) : resolve(flow.output, input, results) }
     Object.assign(resources, asObject(asObject(results.prepared).resources))
-    return output
+    return results.workflowBinding ? { ...output, scope: results.workflowBinding } : output
   } catch (error) {
     const failure = error instanceof RsqError ? error : new RsqError('WORKFLOW_FAILED', '业务结果无法整理。')
     Object.assign(resources, asObject(asObject(results.prepared).resources))

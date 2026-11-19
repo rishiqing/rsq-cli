@@ -14,7 +14,8 @@ import { validateOkrPerformanceWorkflow } from '../dist/okr-performance.js'
 import { validateOkrIndicatorWorkflow } from '../dist/okr-indicators.js'
 import { validateDeveloperWorkflow } from '../dist/developer.js'
 import { validateAutomationWorkflow } from '../dist/automation.js'
-import { validateWorkflowWait } from '../dist/workflows.js'
+import { validateWorkflowWait, workflows } from '../dist/workflows.js'
+import { validateWorkflowScope } from '../dist/workflow-scope.js'
 import { validateOkrActionWorkflow } from '../dist/okr-actions.js'
 import { validateReplayTopicWorkflow } from '../dist/replay-topic.js'
 import { validateAiMarketWorkflow } from '../dist/ai-market.js'
@@ -45,6 +46,7 @@ export function auditWorkflows(definition, catalog, businessScope) {
   const discoverable = new Set([...builtinCommands.map(command => command.command), ...commands, ...(definition.workflows ?? []).map(flow => flow.command)])
   for (const domain of businessScope?.domains ?? []) for (const cap of domain.capabilities) for (const id of cap.builtinCommands ?? []) if (!builtinCommands.some(command => command.id === id)) issues.push('unknown builtin binding: ' + domain.id + '/' + cap.id + ' -> ' + id)
   for (const flow of definition.workflows ?? []) {
+    try { validateWorkflowScope(flow) } catch { issues.push('invalid project workflow scope: ' + flow.id) }
     try { validateWorkflowStepObservation(flow) } catch { issues.push('invalid workflow step observation binding: ' + flow.id) }
     try { validateDatasheetTargetWorkflow(flow) } catch { issues.push('invalid datasheet project binding: '+flow.id) }
     for (const step of flow.steps) try { validateTaskCreationVisibility(flow, step) } catch { issues.push('invalid new task visibility readback: '+flow.id) }
@@ -264,6 +266,9 @@ export function auditWorkflows(definition, catalog, businessScope) {
           'workflow-application-rename': ['PUT', '/task/workflow/application', ['source']],
           'workflow-application-remove': ['DELETE', '/task/workflow/application', ['source']],
           'workflow-form-describe': ['GET', '/task/workflow/form', ['source', 'forms']],
+          'workflow-form-records-header': ['GET', '/task/workflow/form/content/tableHeader', ['source', 'forms']],
+          'workflow-form-records-page': ['GET', '/task/workflow/form/content/tableElement', ['source', 'forms', 'headers']],
+          'workflow-scope-instance-visibility': ['POST', '/task/workflow/process/info/sheet/list', ['scopeProject', 'scopeModules', 'process', 'scopeApplication']],
           'workflow-form-clone': ['GET', '/task/workflow/form/form/copy', ['source', 'forms', 'original']],
           'workflow-lifecycle-form-context': ['GET', '/task/workflow/form', ['source', 'forms']],
           'workflow-lifecycle-form-create': ['POST', '/task/workflow/form', ['source']],
@@ -678,7 +683,7 @@ export function auditContracts(catalog, definition) {
   return [...issues, ...auditWorkflows(definition, catalog)]
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const issues = auditContracts(read('operations.json'), read('workflows.json'))
+  const issues = auditContracts(read('operations.json'), workflows)
   if (issues.length) { console.error(JSON.stringify({ issues }, null, 2)); process.exitCode = 1 }
   else console.log('Business request schemas and workflow bindings are consistent.')
 }

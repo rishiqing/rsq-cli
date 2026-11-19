@@ -40,11 +40,11 @@ function fixture(options={}){
 }
 const run=(command,input,f,options={})=>runWorkflow(ctx,flow(command),input,session,{transport:f.transport,approved:true,...options})
 test('ARMS commands are packaged executable schemas; all offline plans send zero HTTP',async()=>{
- const f=fixture();for(const item of workflows.workflows.filter(f=>f.executor==='arms-usage')){assert.equal(workflowSchema(item).executable,true);assert.ok(item.examples.length);const input=Object.fromEntries((item.inputSchema.required??[]).map(key=>[key,key.includes('Date')?'2026-11-09':key==='fieldIds'?['taskName']:key==='text'?'text':'71']));if(item.command==='project view update'||item.command==='project template view update')input.name='edited';await runWorkflow(ctx,item,input,null,{dryRun:true,transport:f.transport})}assert.equal(f.calls.length,0)
+ const f=fixture();for(const item of workflows.workflows.filter(f=>f.executor==='arms-usage')){assert.equal(workflowSchema(item).executable,true);assert.ok(item.examples.length);const input=Object.fromEntries((item.inputSchema.required??[]).map(key=>[key,key.includes('Date')?'2026-11-09':key==='fieldIds'?['taskName']:key==='text'?'text':'71']));if(item.command==='project view update'||item.command==='project template view update')input.name='edited';if(item.command==='workflow find'||item.command==='workflow export')input.name='流程样例';await runWorkflow(ctx,item,input,null,{dryRun:true,transport:f.transport})}assert.equal(f.calls.length,0)
 })
 test('todo dayWork classifies flow steps and stable snapshot cursors reject changed rows and queries',async()=>{
  const f=fixture(),input={startDate:'2026-11-09',endDate:'2026-11-09',limit:1};const first=(await run('todo list',input,f)).result
- assert.equal(first.items[0].kind,'workflow-step');assert.deepEqual(first.items[0].target,{command:'workflow instance inspect',processId:'801',stepId:'802'})
+ assert.equal(first.items[0].kind,'workflow-step');assert.deepEqual(first.items[0].target,{command:'todo workflow inspect',processId:'801',stepId:'802'})
  const second=(await run('todo list',{...input,cursor:first.nextCursor},f)).result;assert.equal(second.items[0].id,'taskB')
  f.state.items[1].name='changed';await assert.rejects(run('todo list',{...input,cursor:first.nextCursor},f),e=>e.code==='CONTEXT_CONFLICT')
  assert.ok(f.calls.filter(c=>c.path.endsWith('/filterList')).every(c=>c.method==='PUT'))

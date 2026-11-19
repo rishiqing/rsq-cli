@@ -192,7 +192,7 @@ function summary(op: Operation) {
 }
 const moduleDescriptions: Record<string, string> = {
   task: '任务', project: '项目', doc: '文档', contact: '通讯录', file: '文件',
-  workflow: '流程：应用、分组、步骤、审批、表单和统计',
+  workflow: '流程。find 和 export 自动解析归属，详情和办理使用对应的业务入口。',
   appraisal: '绩效：考核、指标、评分、模板和统计',
   okr: 'OKR：目标、关键结果、周期、对齐和指标',
   action: '行动：视图、分组、任务和导出',
@@ -267,7 +267,7 @@ for (const op of catalog.operations) {
     const key = prefix ? prefix + ' ' + part : part
     let group = groups.get(key)
     if (!group) {
-      group = parent.command(part).description(moduleDescriptions[part] ?? part + ' 业务接口').showHelpAfterError(false)
+      group = parent.command(part).description(key === 'project workflow' ? '项目流程模块：先发现所属项目及流程应用。' : moduleDescriptions[part] ?? part + ' 业务接口').showHelpAfterError(false)
       groups.set(key, group)
     }
     parent = group
