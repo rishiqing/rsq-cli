@@ -14,6 +14,8 @@ description: 使用 rsq CLI 查询或修改日事清流程、绩效、OKR、行�
 5. 普通命令 stdout 默认 JSON；所有模块共用 `--format json|pretty|table|ndjson`，Agent 可显式使用 `--format json`（或 `--json`），人工查看可选 pretty/table。错误和提示走 stderr；机器模式按 JSON 行处理，错误读取 `error.code/message/hint/actions/details`，进度、预览、提示使用 `type=progress/preview/prompt`。SSE/NDJSON 操作始终逐行输出 JSON。分页根据叶子 Schema 的游标和返回结构逐页调用，不猜测 `--all`、自动翻页参数或总条数。
 6. 写请求失败、超时或返回结构变化时，检查 `failedStep/completedSteps/resources/writeOutcome`，通过读命令核对结果后再决定是否重试；CLI 不自动重放写请求或回滚。`writeOutcome: unknown` 表示可能已生效。不要在重新登录后直接重发创建、评分、提交等操作。错误对象不会包含令牌和完整服务端业务内容。
 
+业务编排命令成功时，stdout 顶层包含 `command`、`completedSteps`、`resources` 和 `result`。叶子 Schema 的 `resultSchema` 描述 `.result` 内的业务数据。先检查退出码，再读取业务字段。`workflow find` 的匹配项在 `.result.items`，`workflow export` 的文件路径在 `.result.output`，`todo workflow inspect` 对指定步骤返回的可用动作在 `.result.step.actions`。`--dry-run` 的计划在顶层以 `dryRun: true` 标记。
+
 日常待办先用 `todo context` 发现日期和筛选，再用 `todo list`。用返回的 `target` 打开选定待办。流程待办统一走 `todo workflow inspect`，从 `target` 传入 `processId` 和可选的 `stepId`。它会自动核对项目流程或独立流程的归属、权限和实际步骤，再给出后续命令。`todo pending list` 和 `cooperation workflow list` 也提供这个入口。分页使用 `nextCursor`，列表变化时从第一页重新发现。`todo calendar` 返回本人的日期标记。
 
 保存的项目业务视图使用 `project view list/inspect`，模板视图使用 `project template view` 前缀。普通项目传 `projectId`，模板传封面 `coverId`，都绑定真实任务 `moduleId`。从 inspect 的动态筛选和显示字段发现参数，再创建/编辑，使用 `view tasks list` 核对筛选后的实际任务；`fields set` 保留首列 `taskName`。`view select` 保存个人选择，有写副作用；`project view set` 则是已有项目显示模式，两者目标不同。
@@ -65,7 +67,7 @@ description: 使用 rsq CLI 查询或修改日事清流程、绩效、OKR、行�
 | 文集分组 | `doc groups list`、`doc group` | 分组属于公司配置。先发现数字 ID、公司和 `contextVersion`，维护时明确 `companyId`、确认副作用并加 `--yes`；`all/star` 不可维护。删除会把全公司该组文集移到未分组，不删除正文，不能用可见文集读回冒充隐藏范围已验证。 |
 | 文档动态 | `doc activities list` | 先发现文集/文档。按 `nextCursor` 向更早记录翻页，服务端固定10条，CLI 输出 newest-first；有后续或已传游标时不能声称完整历史。GET会生成编辑器历史，失败后不要自动重放；不等于版本还原。 |
 
-每个模块同时包含读取和写入。评分、发起审批、提交、撤回、发送及删除前必须检查 `effect` 和确认要求，不根据 HTTP 动词或命令末尾的 `get/create/update` 猜测副作用。例如查询评分与提交评分是不同操作。返回结果保留服务端原有结构：有些接口有 `data` 外层，有些直接返回数组，少数删除成功返回 `null`；以叶子 Schema 为准。
+每个模块同时包含读取和写入。评分、发起审批、提交、撤回、发送及删除前必须检查 `effect` 和确认要求，不根据 HTTP 动词或命令末尾的 `get/create/update` 猜测副作用。例如查询评分与提交评分是不同操作。直接接口命令按自己的叶子 Schema 读取响应。响应可能包含 `data` 外层，也可能直接返回数组或 `null`。
 
 简报已下架，部分能力并入复盘；使用 `replay` 的当前 Schema 和 coverage，不调用旧简报 HTTP 协议，也不把迁移视为复盘场景已验收。
 

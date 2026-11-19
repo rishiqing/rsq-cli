@@ -29,17 +29,21 @@ rsq task get --id '<任务ID>' --profile work
 
 普通项目和项目模板分别选择命令。流程配置和流程执行也分别发现。先通过列表、上下文命令获取目标，再创建、编辑或推进状态；模板应用后核对实际创建的资源。写入失败时检查 `completedSteps`、`resources`、`failedStep`、`writeOutcome`，用读取命令核实结果。
 
+## 读取 JSON 结果
+
+业务编排命令成功时，stdout 的 JSON 顶层包含 `command`、`completedSteps`、`resources` 和 `result`。叶子 Schema 的 `resultSchema` 对应 `.result` 内的业务数据。直接接口命令按自己的响应 Schema 读取。脚本先检查 CLI 的退出码，失败时从 stderr 查看错误。`--dry-run` 的计划由顶层的 `dryRun: true` 标记。
+
 ## 项目流程和独立流程
 
-只有流程名称时，先用 `workflow find`。结果分别标出应用和已发起实例，并给出实际归属、`target` 和 `exportTarget`。名称重合时，按项目、应用、实例或创建时间辨认具体对象。已知 ID 时可直接传 `--application-id` 或 `--process-id`。
+只有流程名称时，先用 `workflow find`。`.result.items` 中的匹配项分别标出应用和已发起实例，并给出实际归属、`target` 和 `exportTarget`。名称重合时，按项目、应用、实例或创建时间辨认具体对象。已知 ID 时可直接传 `--application-id` 或 `--process-id`。
 
 ```sh
-rsq workflow find --name '供应商审核'
+rsq --format json workflow find --name '供应商审核' | jq -e '.result.items'
 rsq workflow export --name '供应商审核' --output ./供应商审核.xlsx
 rsq workflow export --application-id '<应用ID>' --form-name '基本信息'
 ```
 
-导出按实际应用的导出权限读取可见实例、步骤和表单，保存为 Excel。可以用 `--status`、`--created-between` 或表单名称缩小范围。省略 `--output` 时保存到当前目录并自动命名。传入已有目录时按相同规则命名，显式文件名必须是新的 `.xlsx` 路径。stdout 返回文件路径和记录数。
+导出按实际应用的导出权限读取可见实例、步骤和表单，保存为 Excel。可以用 `--status`、`--created-between` 或表单名称缩小范围。省略 `--output` 时保存到当前目录并自动命名。传入已有目录时按相同规则命名，显式文件名必须是新的 `.xlsx` 路径。文件路径读取 `.result.output`，计数读取 `.result.instances`、`.result.steps` 和 `.result.records`。
 
 项目里的流程模块用 `project workflow`。先从项目取得 `projectId`，再从模块目录取得 `applicationId`。CLI 校验项目流程功能及实际模块归属。
 
@@ -54,10 +58,11 @@ rsq project workflow instance inspect --project-id '<项目ID>' --process-id '<�
 
 从独立「流程」系统打开的应用用 `workflow`，例如 `rsq workflow configuration inspect --application-id '<应用ID>'`。它使用独立流程功能，表单记录可按配有查看权限的表格分页。
 
-从 `todo list`、`todo pending list` 或 `cooperation workflow list` 打开流程待办时，直接使用列表项的 `target`。CLI 自动核对归属和权限，返回实际步骤、表单和可用动作。
+从 `todo list`、`todo pending list` 或 `cooperation workflow list` 打开流程待办时，直接使用列表项的 `target`。CLI 自动核对归属和权限，返回实际步骤、表单和可用动作。指定待办步骤后，使用 `.result.step.actions` 核对当前账号可执行的动作。
 
 ```sh
-rsq todo workflow inspect --process-id '<待办的实例ID>' --step-id '<待办的步骤ID>'
+rsq --format json todo workflow inspect --process-id '<待办的实例ID>' --step-id '<待办的步骤ID>' |
+  jq -e '.result | objects | {scope, target, actions: .step.actions}'
 ```
 
 ## 复盘
