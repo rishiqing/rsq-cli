@@ -37,6 +37,8 @@ rsq task get --id '<任务ID>' --profile work
 
 先启动 `rsq export watch --output ./exports`。看到 `listening` 后，用同一 profile 在另一终端发起业务导出。
 
+发起前按业务模块检查公司状态、套餐、角色和实际资源权限。流程会自动识别项目内流程或独立流程。接收进程使用当前登录账号收取其导出通知。
+
 | 业务 | 发起命令示例 |
 | --- | --- |
 | 项目、任务模块、卡片与项目集 | `rsq schema 'project tasks export'`、`rsq schema 'project module tasks export'`、`rsq schema 'project card tasks export'`、`rsq schema 'project collection tasks export'` |

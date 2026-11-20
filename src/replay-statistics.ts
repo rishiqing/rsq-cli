@@ -1,4 +1,5 @@
 import { asObject, RsqError, type JsonObject } from './core.js'
+import { requirePermission } from './access.js'
 import { replayPeriod } from './replay.js'
 
 const fail = (message: string, code = 'CONTEXT_CONFLICT'): never => { throw new RsqError(code, message, code === 'INVALID_INPUT' ? 2 : code === 'FORBIDDEN' ? 4 : 5) }
@@ -11,7 +12,7 @@ const statuses = new Set(['noNeedWrite', 'committedOnTimeCommit', 'committedSupp
   'noNeedWriteCommittedOnTimeCommit', 'noNeedWriteCommittedSupplementCommit', 'noNeedWriteAuditedOnTimeCommit', 'noNeedWriteAuditedSupplementCommit', 'noNeedWriteAuditedRefused'])
 function permitted(input: JsonObject, results: JsonObject) {
   const permission = results[input.application === 'okr' ? 'okrPermissions' : 'companyPermissions']
-  if (asObject(permission).replayStatistics !== true) fail('当前应用未授权复盘统计；不能用可调用的 HTTP 接口绕过页面权限。', 'FORBIDDEN')
+  requirePermission(permission, 'replayStatistics', { message: '当前应用未授权复盘统计。' })
 }
 function cards(results: JsonObject) {
   const value = asObject(results.cards), seen = new Set<string>()

@@ -14,11 +14,13 @@ const adapters: Record<string, { route: string | RegExp; context: string[] }> = 
   'appraisal-entry': { route: '/task/performance/appraisal/export/entryDownload', context: appraisalContext },
   'appraisal-template': { route: '/task/performance/template/indicator/export', context: appraisalContext },
   'appraisal-assessments': { route: '/task/performance/v4/appraisal/export', context: appraisalContext },
-  appraisal: { route: /^\/task\/performance\/content\/(?:monthlyAppraisalData|departmentAppraisalData)\/detailExport$/, context: appraisalContext },
+  'appraisal-monthly': { route: '/task/performance/content/monthlyAppraisalData/detailExport', context: [...appraisalContext, 'assessment', 'content'] },
+  'appraisal-department': { route: '/task/performance/content/departmentAppraisalData/detailExport', context: [...appraisalContext, 'assessment', 'content'] },
   'appraisal-report': { route: '/task/performance/appraisal/report/export', context: appraisalContext },
   'appraisal-salary-list': { route: '/task/performance/salaryReport/list', context: appraisalContext },
   'appraisal-salary': { route: /^\/task\/performance\/salaryReport\/(?:template\/)?export$/, context: [...appraisalContext, 'salaryReports'] },
-  replay: { route: /^\/task\/review\/(?:replay\/collect|stat\/report)\/export$/, context: ['replayCollection'] },
+  'replay-collection': { route: '/task/review/replay/collect/export', context: ['replayCollections', 'replayCollection'] },
+  'replay-statistics': { route: '/task/review/stat/report/export', context: ['replayCollection'] },
   'project-task-fields': { route: /^\/task\/(?:api\/v3\/template\/projectUsed|v3\/taskTemplate\/kanban(?:Child|Card|Collection)UsedTaskTemplate)$/, context: [] },
   'project-task-filter': { route: '/task/v1/kanbanExport/setFilterCondition', context: ['project', 'fields'] },
   'project-tasks': { route: /^\/task\/v4\/kanban(?:Child|Collection|Card)?\/exportExcel$/, context: ['fields'] },
@@ -42,14 +44,13 @@ function validateExportDates(input: JsonObject) {
   if (usageDate(String(input.startDate).replaceAll('.', '-')) > usageDate(String(input.endDate).replaceAll('.', '-'))) invalid('开始日期不能晚于结束日期。')
 }
 
-function projectScope(input: JsonObject, results: JsonObject, checkExportPermission: boolean) {
+function projectScope(input: JsonObject, results: JsonObject) {
   if (input.collectionId !== undefined) {
     if (String(usageData(results.collection).id) !== input.collectionId) denied('项目集不在当前可见范围。')
     return String(input.collectionId)
   }
   const project = usageData(results.project)
   if (String(project.id) !== input.projectId || project.coverId !== null) denied('导出范围须绑定当前普通项目。')
-  if (checkExportPermission && asObject(project.editControl).exportKanban !== true) denied('项目角色没有导出项目任务权限。')
   if (input.moduleId !== undefined && !usageList(results.modules).some(module => String(module.id) === input.moduleId && module.type === 'task')) {
     denied('此任务模块不属于所选普通项目。')
   }
@@ -58,7 +59,7 @@ function projectScope(input: JsonObject, results: JsonObject, checkExportPermiss
 }
 
 function taskExportQuery(input: JsonObject, results: JsonObject) {
-  const id = projectScope(input, results, true)
+  const id = projectScope(input, results)
   const fields = usageList(results.fields).flatMap(row => usageRows(row.fieldList ?? []))
   const selected = input.fieldIds === undefined
     ? fields.filter(field => field.isSelected === true).map(field => String(field.id))
@@ -74,7 +75,7 @@ export function prepareWebExport(name: string, input: JsonObject, results: JsonO
   validateExportDates(input)
   const query = asObject(args.query), body = asObject(args.body)
   if (kind === 'project-task-fields' || kind === 'gantt') {
-    projectScope(input, results, kind !== 'gantt')
+    projectScope(input, results)
     return args
   }
   if (kind === 'project-task-filter') {
@@ -101,9 +102,7 @@ export function prepareWebExport(name: string, input: JsonObject, results: JsonO
     }
     return { query }
   }
-  const sidebar = asObject(usageData(results.sidebar).editControl)
   if (kind === 'okr-report' || kind === 'okr-cycles') {
-    if (kind === 'okr-report' && sidebar.statisticsVisible !== true) denied('当前 OKR 角色没有统计菜单可见权限。')
     const cycles = usageData(results.cycles)
     const available = ['currentCycleList', 'pastCycleList', 'futureCycleList'].flatMap(key => usageRows(cycles[key] ?? []))
     for (const selected of String(input.cycleIds ?? input.cycleId).split(',')) {
@@ -116,7 +115,6 @@ export function prepareWebExport(name: string, input: JsonObject, results: JsonO
     return { query }
   }
   if (kind.startsWith('indicator-')) {
-    if (sidebar.viewIndicator !== true) denied('当前 OKR 角色没有指标模块权限。')
     if (kind === 'indicator-data' && String(query.indicatorIds).split(',').some(id => !matches(usageList(results.indicatorOptions), id))) {
       denied('选定指标不在当前账号可导出的指标目录。')
     }
@@ -133,23 +131,25 @@ export function prepareWebExport(name: string, input: JsonObject, results: JsonO
   }
   if (kind === 'ai-usage') return { query }
   if (kind.startsWith('appraisal')) {
-    if (usageData(results.initialized).hasInit !== true) denied('当前公司未初始化绩效。')
-    const permissions = asObject(usageData(results.role).authorities)
-    if (kind === 'appraisal-template' && permissions.performanceAppraisalTempManage !== true) denied('当前绩效角色没有模板管理权限。')
-    if (kind === 'appraisal-assessments' && permissions.performanceAppraisalDeptDataManage !== true && permissions.performanceAppraisalAllDataManage !== true) denied('当前绩效角色没有考核管理权限。')
+    if (kind === 'appraisal-monthly' || kind === 'appraisal-department') {
+      const expectedType = kind === 'appraisal-monthly' ? 'monthlyAppraisalData' : 'departmentAppraisalData'
+      const dimensions = usageRows(usageData(results.content).dimensions ?? [])
+      const indicators = dimensions.filter(dimension => dimension.type === expectedType).flatMap(dimension => usageRows(dimension.indicators ?? []))
+      const selected = indicators.find(indicator => String(indicator.id) === input.indicatorId)
+      if (!selected || !Object.keys(asObject(selected.detail)).length) denied('指标不属于当前考核的可查看明细。')
+    }
     if (kind === 'appraisal-report') {
-      if (permissions.performanceReportView !== true) denied('当前绩效角色没有报表查看权限。')
       for (const key of ['startDate', 'endDate']) body[key] = String(body[key]).replaceAll('-', '.')
       body.max ??= 20
       body.offset ??= 1
     }
     if (kind.startsWith('appraisal-salary')) {
-      if (permissions.performanceManageSalaryData !== true) denied('当前绩效角色没有薪酬报表权限。')
       if (kind === 'appraisal-salary' && !matches(usageList(results.salaryReports), input.salaryReportId)) denied('报表不在当前公司的薪酬报表目录。')
     }
     return args
   }
-  if (kind === 'replay') {
+  if (kind === 'replay-collection' || kind === 'replay-statistics') {
+    if (kind === 'replay-collection' && !matches(usageList(results.replayCollections), input.collectionId)) denied('复盘集不在当前账号可管理的目录。')
     if (String(usageData(results.replayCollection).id) !== input.collectionId) denied('复盘集与当前导出范围不一致。')
     return args
   }

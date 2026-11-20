@@ -4,7 +4,12 @@ import { requireSession, type Session } from './session.js'
 import type { Workflow } from './workflows.js'
 
 type Target = Operation | Workflow
-type AccessPlan = { mode: 'business' | 'recovery'; features: string[]; permissions: string[]; conditionalFeatures: string[] }
+type AccessRequirements = { features?: readonly string[]; permissions?: readonly string[] }
+type AccessPlan = Required<AccessRequirements> & { mode: 'business' | 'recovery'; conditionalFeatures: string[] }
+export const workflowScopeFeatures = { standalone: ['WORKFLOW'], project: ['PLAN', 'PLAN_WORKFLOW'] } as const
+export const projectStatisticsSourceFeatures = {
+  tasks: [], risks: ['PLAN_RISK'], workflows: ['PLAN_WORKFLOW'], records: ['PLAN_DATASHEET'],
+} as const
 const moduleFeatures: Record<string, string> = { workflow: 'WORKFLOW', appraisal: 'PERFORMANCE', okr: 'OKR', action: 'OKR', execution: 'EXECUTION',
   replay: 'REPLAY', project: 'PLAN', datasheet: 'PLAN', deliverable: 'PLAN', doc: 'KNOWLEDGE', file: 'CLOUD_LIB',
   'enterprise-statistics': 'TEAM_STATISTICS', 'plan-statistics-v2': 'PLAN',minder: 'MIND_MAP', archive: 'ARCHIVE', ai: 'AI_EMPLOYEE', automation: 'PLAN' }
@@ -21,14 +26,15 @@ export function accessPlan(target: Target, input: JsonObject = {}): AccessPlan {
   const features = new Set<string>(), permissions = new Set<string>(), conditionalFeatures: string[] = []
   const add = (...values: string[]) => values.forEach(value => features.add(value))
   const embeddedField = 'steps' in target && (target.workflowTaskProject || target.workflowDatasheetProject)
+  const workflowScope = 'steps' in target ? target.workflowScope : undefined
   if (!recovery) {
-    if (moduleFeatures[root] && !['workflow find', 'workflow export'].includes(command)) add(moduleFeatures[root])
-    if (command.startsWith('project workflow ') && !embeddedField) add('PLAN_WORKFLOW')
+    if (workflowScope === 'project' || workflowScope === 'standalone') add(...workflowScopeFeatures[workflowScope])
+    if (moduleFeatures[root] && workflowScope !== 'automatic') add(moduleFeatures[root])
+    if (command.startsWith('project workflow ') && !embeddedField) add(...workflowScopeFeatures.project)
     if (embeddedField) conditionalFeatures.push('按实际应用所属模块检查 PLAN_WORKFLOW 或 PLAN_ALTERATION')
-    if (['todo workflow inspect', 'workflow find', 'workflow export'].includes(command)) {
+    if (workflowScope === 'automatic') {
       conditionalFeatures.push('按实际归属检查 PLAN + PLAN_WORKFLOW 或 WORKFLOW')
     }
-    if (command === 'workflow export') conditionalFeatures.push('实际流程应用的 exportFlow 及当前用户可见的实例和步骤')
     if (/^(?:project )?workflow datasheet /.test(command)) add('PLAN', 'PLAN_DATASHEET')
     if (/^doc group (?:create|rename|move|remove)$/.test(command)) permissions.add('editCorpusGroup')
     if (command.startsWith('okr performance ')) add('PERFORMANCE', 'OKR_PERFORMANCE')
@@ -99,17 +105,17 @@ export function accessPlan(target: Target, input: JsonObject = {}): AccessPlan {
     if (command.startsWith('statistics company okr ')) add('OKR')
     if (command.startsWith('cooperation workflow ')) conditionalFeatures.push('独立流程 WORKFLOW，或项目 PLAN + PLAN_WORKFLOW；从当前功能真值表核对，均不可用时停止队列请求')
     if (command.startsWith('statistics project ') || route.startsWith('/task/v5/kanban/stats/')) add('PLAN', 'PLAN_STATISTICS')
-    if (command.startsWith('statistics project drilldown ')) {
+    if ('steps' in target && target.statisticsDrilldownAction) {
+      conditionalFeatures.push('项目集范围需要 PLAN_COLLECTION，按图表实际来源核对相应业务模块功能')
       if (input.collectionId !== undefined) add('PLAN_COLLECTION')
-      if (command.endsWith('risks list')) add('PLAN_RISK')
-      if (/workflows (?:list|export)$/.test(command)) add('PLAN_WORKFLOW')
-      if (command.endsWith('records list')) add('PLAN_DATASHEET')
+      const [kind] = target.statisticsDrilldownAction.split('-')
+      if (Object.hasOwn(projectStatisticsSourceFeatures, kind)) add(...projectStatisticsSourceFeatures[kind as keyof typeof projectStatisticsSourceFeatures])
     }
     if (command.startsWith('project collection ') || /\/kanbanCollection(?:Kanban)?(?:\/|$)|\/projectCollection\//.test(route)) add('PLAN', 'PLAN_COLLECTION')
     if (root === 'datasheet' || root === 'form-field' || route.startsWith('/task/mt/')) add('PLAN', 'PLAN_DATASHEET')
     if (root === 'deliverable' || command.startsWith('project template deliverable ') || route.startsWith('/task/files/project/') || route.startsWith('/task/files/deliverable/') || route.startsWith('/task/project/plan/deliverable/') || route.startsWith('/task/api/deliverable/')) add('PLAN', 'PLAN_DELIVERABLE')
     if (root === 'workflow' && /statistics|statistic/.test(command)) add('FLOW_STATISTICS')
-    if (command === 'replay statistics export') permissions.add('replayStatistics')
+    if (command.startsWith('replay statistics ') && input.application !== 'okr') permissions.add('replayStatistics')
     if (root === 'appraisal' && (/salary/.test(route) || command.startsWith('appraisal salary '))) add('PERFORMANCE_SALARY')
     if (root === 'okr' && /^okr indicator\b/.test(command) || /^\/task\/okr\/(?:indicator(?:\/|$)|import\/(?:optional\/)?indicator(?:\/|$))/.test(route)) add('OKR_INDICATOR')
     if (command === 'okr preferences update') {
@@ -182,7 +188,7 @@ export function validateCompanyState(state: JsonObject, now = Date.now()) {
 }
 const companyPermissions: Record<string, string> = { PLAN: 'useKanban', TEAM_STATISTICS: 'useEnterpriseStatistics', WORKFLOW: 'useFlow', OKR: 'useObjective',
   PERFORMANCE: 'usePerformance', KNOWLEDGE: 'useCorpus', REPLAY: 'useReplay', EXECUTION: 'useExecution' }
-export function validateFeatures(features: string[], payload: unknown, permissions: JsonObject) {
+export function validateFeatures(features: readonly string[], payload: unknown, permissions: JsonObject) {
   if (!Array.isArray(payload)) throw new RsqError('ENTITLEMENT_UNAVAILABLE', '功能真值表无效，未执行业务请求。', 4)
   const values = new Map<string, string>()
   for (const row of payload) {
@@ -199,16 +205,42 @@ export function validateFeatures(features: string[], payload: unknown, permissio
     if (Object.hasOwn(permissions, field) && permissions[field] !== true) throw new RsqError('FEATURE_FORBIDDEN', '当前用户的公司权限不允许使用此功能。', 4, { feature, permission: field })
   }
 }
-export function validatePermissions(required: string[], permissions: JsonObject) {
-  for (const permission of required) if (permissions[permission] !== true) throw new RsqError('FEATURE_FORBIDDEN', '当前用户的公司权限不允许执行此操作。', 4, { permission })
+export function validatePermissions(required: readonly string[], permissions: JsonObject) {
+  for (const permission of required) requirePermission(permissions, permission, {
+    code: 'FEATURE_FORBIDDEN', message: '当前用户的公司权限不允许执行此操作。',
+  })
 }
-export function validateWorkflowAvailability(features: unknown, permissions: JsonObject) {
-  try {
-    validateFeatures(['WORKFLOW'], features, permissions)
-  } catch (error) {
-    if (!(error instanceof RsqError) || !['FEATURE_DISABLED', 'FEATURE_UPGRADE_REQUIRED', 'FEATURE_FORBIDDEN'].includes(error.code)) throw error
-    validateFeatures(['PLAN', 'PLAN_WORKFLOW'], features, permissions)
+
+export function requirePermission(authorities: unknown, required: string | readonly string[], options: {
+  code?: 'FORBIDDEN' | 'FEATURE_FORBIDDEN' | 'RESOURCE_FORBIDDEN'
+  message?: string
+  details?: JsonObject
+} = {}) {
+  const flags = asObject(authorities), anyOf = typeof required === 'string' ? [required] : required
+  if (anyOf.some(flag => Object.hasOwn(flags, flag) && flags[flag] === true)) return
+  throw new RsqError(options.code ?? 'FORBIDDEN', options.message ?? '当前角色没有执行此业务操作所需的权限。', 4, {
+    ...options.details, ...(anyOf.length === 1 ? { permission: anyOf[0] } : { anyOf }),
+  })
+}
+export const isFeatureDenial = (error: unknown): error is RsqError =>
+  error instanceof RsqError && ['FEATURE_DISABLED', 'FEATURE_UPGRADE_REQUIRED', 'FEATURE_FORBIDDEN'].includes(error.code)
+
+export function availableFeatureScopes<Scope extends string>(
+  scopes: Record<Scope, readonly string[]>, functions: unknown, permissions: JsonObject,
+) {
+  const allowed = new Set<Scope>()
+  let denial: RsqError | undefined
+  for (const scope of Object.keys(scopes) as Scope[]) {
+    try {
+      validateFeatures(scopes[scope], functions, permissions)
+      allowed.add(scope)
+    } catch (error) {
+      if (!isFeatureDenial(error)) throw error
+      denial = error
+    }
   }
+  if (!allowed.size && denial) throw denial
+  return allowed
 }
 export async function readAccessContext(ctx: Context, supplied: Session | null, transport?: Transport) {
   const session = requireSession(supplied), identity = asObject(await runOperation(ctx, operation('/task/login/authAjax'), {}, session, { transport }))
@@ -224,16 +256,16 @@ export async function checkAccess(ctx: Context, target: Target, input: JsonObjec
 }
 export async function checkProjectWorkflowType(ctx: Context, subtype: unknown, supplied: Session, transport?: Transport) {
   if (subtype !== 'projectWorkflow' && subtype !== 'alterationWorkflow') throw new RsqError('FORBIDDEN', '应用没有可识别的项目流程类型。', 4)
-  await checkBusinessAccess(ctx, { features: ['PLAN', subtype === 'alterationWorkflow' ? 'PLAN_ALTERATION' : 'PLAN_WORKFLOW'], permissions: [] }, supplied, transport)
+  await checkBusinessAccess(ctx, { features: subtype === 'alterationWorkflow' ? ['PLAN', 'PLAN_ALTERATION'] : workflowScopeFeatures.project }, supplied, transport)
 }
-async function checkBusinessAccess(ctx: Context, plan: Pick<AccessPlan, 'features' | 'permissions'>, supplied: Session | null, transport?: Transport) {
+export async function checkBusinessAccess(ctx: Context, { features = [], permissions: required = [] }: AccessRequirements, supplied: Session | null, transport?: Transport) {
   const { session, state } = await readAccessContext(ctx, supplied, transport)
   validateCompanyState(state)
-  if (!plan.features.length && !plan.permissions.length) return
+  if (!features.length && !required.length) return
   const functions = await runOperation(ctx, operation('/task/ordercenter/v2/function/available'), { query: { vt: state.vt } }, session, { transport })
   const permissions = asObject(await runOperation(ctx, operation('/task/authority/v3/authorities/company/current'), {}, session, { transport }))
-  validateFeatures(plan.features, functions, permissions)
-  validatePermissions(plan.permissions, permissions)
+  validateFeatures(features, functions, permissions)
+  validatePermissions(required, permissions)
 }
 export async function inspectAccess(ctx: Context, supplied: Session | null, transport?: Transport) {
   const { session, state } = await readAccessContext(ctx, supplied, transport)

@@ -1,5 +1,6 @@
 import { isDeepStrictEqual } from 'node:util'
 import { asObject, RsqError, type JsonObject } from './core.js'
+import { requirePermission } from './access.js'
 import { companyDirectoryUnits, companyDirectoryUsers } from './contact.js'
 import { salaryCheck as check, salaryInvalid as invalid, salaryId as id, salaryRows as rows, salaryName as name, salaryPeriod, salaryFields, salaryGrid, salaryValue, salaryFormula, type SalaryField } from './appraisal-salary-data.js'
 import { salaryImportPlan } from './appraisal-salary-import.js'
@@ -46,7 +47,7 @@ export async function runAppraisalSalary(action: AppraisalSalaryAction, input: J
   call: (step: string, args?: JsonObject) => Promise<unknown>; role: JsonObject; resources: Record<string, unknown>;
 }) {
   const { call, role, resources } = context
-  if (asObject(role.authorities).performanceManageSalaryData !== true) throw new RsqError('RESOURCE_FORBIDDEN', '当前绩效角色没有管理薪酬报表权限。', 4, { permission: 'performanceManageSalaryData' })
+  requirePermission(role.authorities, 'performanceManageSalaryData', { code: 'RESOURCE_FORBIDDEN', message: '当前绩效角色没有管理薪酬报表权限。' })
   const beforeList = reportList(await call('reports')), period = salaryPeriod(input)
   const common = { context: 'appraisal-salary', period, limitations: ['report-list-may-initialize-company-example-report', 'field-settings-are-report-scoped', 'no-server-cas-or-write-retry', 'formula-values-are-calculated-by-server', 'body-row-and-column-coordinates-are-not-resource-ids'], relatedCommands: ['appraisal salary context', 'appraisal salary reports inspect', 'appraisal salary fields list', 'appraisal salary cells get'] }
   let directory: unknown

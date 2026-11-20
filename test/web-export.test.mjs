@@ -11,10 +11,12 @@ const execute = (command, input, options) => executeWorkflow(ctx, flow(command),
 const trigger = command => catalog.operations.find(op => op.id === flow(command).steps.at(-1).operationId)
 const reply = data => Response.json(data)
 
-function projectTransport(calls, { permitted = true, wrongModule = false, onExport = () => new Response(null, { status: 204 }) } = {}) {
+function projectTransport(calls, { permitted = true, wrongModule = false, responses = {},
+  onExport = () => new Response(null, { status: 204 }) } = {}) {
   return async (url, request) => {
     calls.push({ path: url.pathname, method: request.method, query: Object.fromEntries(url.searchParams),
       ...(request.body && { body: JSON.parse(request.body) }) })
+    if (Object.hasOwn(responses, url.pathname)) return reply(responses[url.pathname])
     switch (url.pathname) {
       case '/task/login/authAjax': return reply({ success: true, id: 81, username: 'fixture', team: { id: 7, name: 'Fixture' }, token: 'fixture' })
       case '/task/ordercenter/v2/member/state/independent': return reply({ deadLine: '2100-01-01 00:00:00', userLimit: 5, usersCount: 2, mainApp: 'rsq', vt: 'test' })
@@ -65,5 +67,48 @@ test('HTTP success with a business error is not an export acceptance, and write 
     const calls = []
     await assert.rejects(execute(command, input, { transport: projectTransport(calls, { onExport }) }), { code })
     assert.equal(calls.filter(call => call.path === trigger(command).route).length, 1)
+  }
+})
+
+test('OKR statistics reads and export use the role from the same business context', async () => {
+  for (const [command, input] of [
+    ['okr statistics context', {}],
+    ['okr statistics report export', { cycleId: '123', objectiveType: 'person' }],
+  ]) {
+    const calls = [], transport = projectTransport(calls, { responses: {
+      '/task/okr/objective/sidebar': { editControl: { statisticsVisible: false } },
+    } })
+    await assert.rejects(execute(command, input, { transport }), { code: 'FORBIDDEN' })
+    assert.equal(calls.at(-1).path, '/task/okr/objective/sidebar')
+  }
+})
+
+test('appraisal detail export must bind the indicator to the actor’s visible assessment', async () => {
+  const command = 'appraisal statistics monthly details export', input = { appraisalId: '123', indicatorId: '456' }
+  const envelope = data => ({ code: 200, data })
+  for (const [assessmentId, indicatorId, exportable] of [[123, 456, true], [999, 456, false], [123, 999, false]]) {
+    const calls = [], transport = projectTransport(calls, { responses: {
+      '/task/performance/init': envelope({ hasInit: true }),
+      '/task/performance/authority/role': envelope({ authorities: {} }),
+      '/task/performance/appraisal': envelope({ id: assessmentId }),
+      '/task/performance/v2/content': envelope({ dimensions: [{ type: 'monthlyAppraisalData', indicators: [{ id: indicatorId, detail: { detailType: 'monthlyAppraisalData' } }] }] }),
+      [trigger(command).route]: { code: 200 },
+    } })
+    if (exportable) assert.equal((await execute(command, input, { transport })).result.status, 'accepted')
+    else await assert.rejects(execute(command, input, { transport }), { code: assessmentId === 123 ? 'FORBIDDEN' : 'BUSINESS_ASSERTION_FAILED' })
+    assert.equal(calls.some(call => call.path === trigger(command).route), exportable)
+  }
+})
+
+test('replay export verifies the document’s actual role before requesting a file', async () => {
+  const command = 'replay entry export'
+  for (const permission of [true, false, undefined]) {
+    const calls = [], transport = projectTransport(calls, { responses: {
+      '/task/review/replay': { id: 101, editControl: { export: permission } },
+      [trigger(command).route]: { code: 200 },
+    } })
+    if (permission === true) assert.equal((await execute(command, { replayId: '101' }, { transport })).result.status, 'accepted')
+    else await assert.rejects(execute(command, { replayId: '101' }, { transport }), { code: 'FORBIDDEN' })
+    assert.equal(calls.some(call => call.path === trigger(command).route), permission === true)
   }
 })

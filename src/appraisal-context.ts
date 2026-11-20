@@ -1,5 +1,6 @@
 import { isDeepStrictEqual } from 'node:util'
 import { asObject, request, parseJson, RsqError, type Context, type JsonObject, type Transport } from './core.js'
+import { requirePermission } from './access.js'
 import { catalog, runOperation } from './operations.js'
 import { requireSession, type Session } from './session.js'
 import type { Workflow } from './workflows.js'
@@ -225,7 +226,9 @@ export async function runAppraisal(ctx: Context, flow: Workflow, input: JsonObje
     return envelope ? { data: data(response), ext: asObject(response).ext ?? null } : data(response)
   }
   const result = (value: unknown) => ({ workflow: flow.id, completedSteps: completed, resources, result: value })
-  const allow = (role: JsonObject, permission: string) => { if (asObject(role.authorities)[permission] !== true) throw new RsqError('RESOURCE_FORBIDDEN', '当前绩效角色没有授予此业务权限。', 4, { permission }) }
+  const allow = (role: JsonObject, permission: string) => requirePermission(role.authorities, permission, {
+    code: 'RESOURCE_FORBIDDEN', message: '当前绩效角色没有授予此业务权限。',
+  })
   const groupList = (step = 'groups', official = false) => call(step, { query: { isOfficialTemplate: official } }).then(rows)
   const templateList = (step = 'templates', official = false) => call(step, { query: { isAll: true, isOfficialTemplate: official } }).then(rows)
   const contentList = async (step = 'contents', query: JsonObject = {}) => {

@@ -1,4 +1,5 @@
 import { asObject, RsqError, type Context, type JsonObject, type Transport } from './core.js'
+import { requirePermission } from './access.js'
 import { catalog, runOperation } from './operations.js'
 import { companyDirectoryDepartments } from './contact.js'
 import { requireSession, type Session } from './session.js'
@@ -54,7 +55,7 @@ export async function runOkrStatistics(ctx: Context, flow: Workflow, input: Json
     const identity = asObject(await call('identity'))
     if (id(identity.id) !== session.identity.userId || id(asObject(identity.team).id) !== session.identity.teamId) fail('统计身份与当前 profile 不一致。', 'IDENTITY_CHANGED')
     const sidebar = asObject(await call('sidebar'))
-    if (asObject(sidebar.editControl).statisticsVisible !== true) fail('当前 OKR 角色没有统计菜单可见权限。', 'FORBIDDEN')
+    requirePermission(sidebar.editControl, 'statisticsVisible', { message: '当前 OKR 角色没有统计菜单可见权限。' })
     const cycleData = asObject(await call('cycles')), cycles = ['currentCycleList', 'futureCycleList', 'pastCycleList'].flatMap(key => rows(cycleData[key])), seen = new Set<string>()
     for (const cycle of cycles) { const key = id(cycle.id); if (seen.has(key)) fail('统计周期目录有重复 ID。'); seen.add(key) }
     const departments = companyDirectoryDepartments(await call('directory', { query: { cliContext: 'fresh' } }))

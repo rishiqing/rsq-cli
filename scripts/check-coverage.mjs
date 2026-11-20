@@ -15,7 +15,7 @@ import { validateOkrPerformanceWorkflow } from '../dist/okr-performance.js'
 import { validateOkrIndicatorWorkflow } from '../dist/okr-indicators.js'
 import { validateDeveloperWorkflow } from '../dist/developer.js'
 import { validateAutomationWorkflow } from '../dist/automation.js'
-import { validateWorkflowWait, workflows } from '../dist/workflows.js'
+import { validateWorkflowPermissions, validateWorkflowWait, workflows } from '../dist/workflows.js'
 import { validateWorkflowScope } from '../dist/workflow-scope.js'
 import { validateOkrActionWorkflow } from '../dist/okr-actions.js'
 import { validateReplayTopicWorkflow } from '../dist/replay-topic.js'
@@ -63,7 +63,10 @@ export function auditWorkflows(definition, catalog, businessScope) {
     if (Object.keys(properties).some(name => !parameters.some(p => p.name === name))) issues.push('missing workflow flag: ' + flow.id)
     for (const param of parameters) if (JSON.stringify(param.schema) !== JSON.stringify(properties[param.name])) issues.push('workflow flag/schema mismatch: ' + flow.id + ' ' + param.name)
     if (!flow.examples?.length || !flow.methods?.length || !flow.capabilities?.length || !flow.steps?.length) issues.push('incomplete workflow metadata: ' + flow.id)
-    for (let index = 0; index < flow.steps.length; index++) { try { validateWorkflowWait(flow, index) } catch { issues.push('invalid asynchronous creation wait: ' + flow.id) } }
+    for (let index = 0; index < flow.steps.length; index++) {
+      try { validateWorkflowWait(flow, index) } catch { issues.push('invalid asynchronous creation wait: ' + flow.id) }
+      try { validateWorkflowPermissions(flow, index) } catch { issues.push('invalid workflow permission source: ' + flow.id) }
+    }
     const steps = new Set()
     if (flow.executor === 'arms-usage') { try { validateUsageWorkflow(flow) } catch { issues.push('invalid ARMS usage workflow executor: '+flow.id) } }
     else if (flow.executor === 'document') { try { validateDocWorkflow(flow) } catch { issues.push('invalid document workflow executor: '+flow.id) } }

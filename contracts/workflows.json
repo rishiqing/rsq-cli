@@ -244398,7 +244398,8 @@
         "rsq todo workflow inspect --process-id 123 --step-id 456",
         "rsq todo workflow inspect --process-id 123 --dry-run"
       ],
-      "recovery": "无权打开或步骤未找到时，刷新待办并核对当前公司和账号。"
+      "recovery": "无权打开或步骤未找到时，刷新待办并核对当前公司和账号。",
+      "workflowScope": "automatic"
     },
     {
       "id": "closure.arms.project.view.list",
@@ -250864,13 +250865,14 @@
           "description": "核对实际项目、应用和实例。",
           "input": {}
         }
-      ]
+      ],
+      "workflowScope": "automatic"
     },
     {
       "command": "workflow export",
       "id": "closure.workflow.export",
       "usageAction": "workflow-export",
-      "description": "按网页设置发起流程应用的 Excel 导出，返回受理结果。用 export watch 接收原文件。",
+      "description": "按流程实际归属和当前应用角色核对权限，调用网页接口发起 Excel 导出。用 export watch 接收原文件。",
       "capabilities": [
         "workflow/application",
         "workflow/instance",
@@ -251370,7 +251372,8 @@
           "input": {}
         }
       ],
-      "recovery": "先开启 export watch 再发起导出。发起回执代表已受理，文件从当前账号的导出通知单独接收。网络不明确时先核对结果，避免重复提交。"
+      "recovery": "先开启 export watch 再发起导出。发起回执代表已受理，文件从当前账号的导出通知单独接收。网络不明确时先核对结果，避免重复提交。",
+      "workflowScope": "automatic"
     },
     {
       "id": "closure.export.okr-statistics-report-export",
@@ -251550,7 +251553,16 @@
           "id": "cycles",
           "operationId": "rsq.9f150c681d78",
           "description": "读取当前公司可见的 OKR 周期。",
-          "input": {}
+          "input": {},
+          "permissions": [
+            {
+              "from": "/sidebar/editControl",
+              "anyOf": [
+                "statisticsVisible"
+              ],
+              "message": "当前 OKR 角色没有统计菜单可见权限。"
+            }
+          ]
         },
         {
           "id": "requestExport",
@@ -251810,7 +251822,16 @@
           "id": "cycles",
           "operationId": "rsq.9f150c681d78",
           "description": "读取当前公司可见的 OKR 周期。",
-          "input": {}
+          "input": {},
+          "permissions": [
+            {
+              "from": "/sidebar/editControl",
+              "anyOf": [
+                "statisticsVisible"
+              ],
+              "message": "当前 OKR 角色没有统计菜单可见权限。"
+            }
+          ]
         },
         {
           "id": "requestExport",
@@ -252028,7 +252049,16 @@
           "id": "cycles",
           "operationId": "rsq.9f150c681d78",
           "description": "读取当前公司可见的 OKR 周期。",
-          "input": {}
+          "input": {},
+          "permissions": [
+            {
+              "from": "/sidebar/editControl",
+              "anyOf": [
+                "statisticsVisible"
+              ],
+              "message": "当前 OKR 角色没有统计菜单可见权限。"
+            }
+          ]
         },
         {
           "id": "requestExport",
@@ -252368,7 +252398,16 @@
           "id": "indicatorOptions",
           "operationId": "rsq.707e363e4dfc",
           "description": "读取可导出的指标定义目录。",
-          "input": {}
+          "input": {},
+          "permissions": [
+            {
+              "from": "/sidebar/editControl",
+              "anyOf": [
+                "viewIndicator"
+              ],
+              "message": "当前 OKR 角色没有指标模块权限。"
+            }
+          ]
         },
         {
           "id": "requestExport",
@@ -252488,7 +252527,16 @@
               }
             }
           },
-          "prepare": "web-export-indicator-records"
+          "prepare": "web-export-indicator-records",
+          "permissions": [
+            {
+              "from": "/sidebar/editControl",
+              "anyOf": [
+                "viewIndicator"
+              ],
+              "message": "当前 OKR 角色没有指标模块权限。"
+            }
+          ]
         }
       ],
       "output": {
@@ -252956,7 +253004,16 @@
           "id": "role",
           "operationId": "rsq.14f1827f3736",
           "description": "读取当前绩效角色。",
-          "input": {}
+          "input": {},
+          "permissions": [
+            {
+              "from": "/initialized/data",
+              "anyOf": [
+                "hasInit"
+              ],
+              "message": "当前公司未初始化绩效。"
+            }
+          ]
         },
         {
           "id": "requestExport",
@@ -253027,14 +253084,32 @@
           "id": "role",
           "operationId": "rsq.14f1827f3736",
           "description": "读取当前绩效角色。",
-          "input": {}
+          "input": {},
+          "permissions": [
+            {
+              "from": "/initialized/data",
+              "anyOf": [
+                "hasInit"
+              ],
+              "message": "当前公司未初始化绩效。"
+            }
+          ]
         },
         {
           "id": "requestExport",
           "operationId": "rsq.40b919381185",
           "description": "发起网页原生导出，文件另由账号通知送达。",
           "input": {},
-          "prepare": "web-export-appraisal-template"
+          "prepare": "web-export-appraisal-template",
+          "permissions": [
+            {
+              "from": "/role/data/authorities",
+              "anyOf": [
+                "performanceAppraisalTempManage"
+              ],
+              "message": "当前绩效角色没有模板管理权限。"
+            }
+          ]
         }
       ],
       "output": {
@@ -253170,7 +253245,16 @@
           "id": "role",
           "operationId": "rsq.14f1827f3736",
           "description": "读取当前绩效角色。",
-          "input": {}
+          "input": {},
+          "permissions": [
+            {
+              "from": "/initialized/data",
+              "anyOf": [
+                "hasInit"
+              ],
+              "message": "当前公司未初始化绩效。"
+            }
+          ]
         },
         {
           "id": "requestExport",
@@ -253192,7 +253276,17 @@
               }
             }
           },
-          "prepare": "web-export-appraisal-assessments"
+          "prepare": "web-export-appraisal-assessments",
+          "permissions": [
+            {
+              "from": "/role/data/authorities",
+              "anyOf": [
+                "performanceAppraisalAllDataManage",
+                "performanceAppraisalDeptDataManage"
+              ],
+              "message": "当前绩效角色没有考核管理权限。"
+            }
+          ]
         }
       ],
       "output": {
@@ -253233,7 +253327,7 @@
         "appraisal/statistics"
       ],
       "examples": [
-        "rsq appraisal statistics monthly details export --indicator-id 123"
+        "rsq appraisal statistics monthly details export --appraisal-id 123 --indicator-id 456"
       ],
       "relatedCommands": [
         "appraisal assessments inspect",
@@ -253249,14 +253343,31 @@
             "maxLength": 19,
             "description": "从绩效详情的系统指标取得的指标项 ID。",
             "pattern": "^[1-9][0-9]*$"
+          },
+          "appraisalId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "maxLength": 19,
+            "description": "appraisal assessments inspect 使用的考核 ID。CLI 先核对考核可见性，再检查指标归属。"
           }
         },
         "required": [
+          "appraisalId",
           "indicatorId"
         ],
         "additionalProperties": false
       },
       "parameters": [
+        {
+          "option": "appraisal-id",
+          "name": "appraisalId",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "maxLength": 19,
+            "description": "appraisal assessments inspect 使用的考核 ID。CLI 先核对考核可见性，再检查指标归属。"
+          }
+        },
         {
           "name": "indicatorId",
           "option": "indicator-id",
@@ -253280,7 +253391,49 @@
           "id": "role",
           "operationId": "rsq.14f1827f3736",
           "description": "读取当前绩效角色。",
-          "input": {}
+          "input": {},
+          "permissions": [
+            {
+              "from": "/initialized/data",
+              "anyOf": [
+                "hasInit"
+              ],
+              "message": "当前公司未初始化绩效。"
+            }
+          ]
+        },
+        {
+          "id": "assessment",
+          "operationId": "rsq.38255c6775c4",
+          "description": "读取可见考核并核对 ID。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/appraisalId"
+              }
+            }
+          },
+          "assertions": [
+            {
+              "path": "/data/id",
+              "compare": "identifier",
+              "equals": {
+                "$input": "/appraisalId"
+              }
+            }
+          ]
+        },
+        {
+          "id": "content",
+          "operationId": "rsq.3f8852aa3293",
+          "description": "核对指标属于该考核的可查看明细。",
+          "input": {
+            "query": {
+              "appraisalId": {
+                "$input": "/appraisalId"
+              }
+            }
+          }
         },
         {
           "id": "requestExport",
@@ -253293,7 +253446,7 @@
               }
             }
           },
-          "prepare": "web-export-appraisal"
+          "prepare": "web-export-appraisal-monthly"
         }
       ],
       "output": {
@@ -253334,7 +253487,7 @@
         "appraisal/statistics"
       ],
       "examples": [
-        "rsq appraisal statistics department details export --indicator-id 123"
+        "rsq appraisal statistics department details export --appraisal-id 123 --indicator-id 456"
       ],
       "relatedCommands": [
         "appraisal assessments inspect",
@@ -253350,14 +253503,31 @@
             "maxLength": 19,
             "description": "从绩效详情的系统指标取得的指标项 ID。",
             "pattern": "^[1-9][0-9]*$"
+          },
+          "appraisalId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "maxLength": 19,
+            "description": "appraisal assessments inspect 使用的考核 ID。CLI 先核对考核可见性，再检查指标归属。"
           }
         },
         "required": [
+          "appraisalId",
           "indicatorId"
         ],
         "additionalProperties": false
       },
       "parameters": [
+        {
+          "option": "appraisal-id",
+          "name": "appraisalId",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "maxLength": 19,
+            "description": "appraisal assessments inspect 使用的考核 ID。CLI 先核对考核可见性，再检查指标归属。"
+          }
+        },
         {
           "name": "indicatorId",
           "option": "indicator-id",
@@ -253381,7 +253551,49 @@
           "id": "role",
           "operationId": "rsq.14f1827f3736",
           "description": "读取当前绩效角色。",
-          "input": {}
+          "input": {},
+          "permissions": [
+            {
+              "from": "/initialized/data",
+              "anyOf": [
+                "hasInit"
+              ],
+              "message": "当前公司未初始化绩效。"
+            }
+          ]
+        },
+        {
+          "id": "assessment",
+          "operationId": "rsq.38255c6775c4",
+          "description": "读取可见考核并核对 ID。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/appraisalId"
+              }
+            }
+          },
+          "assertions": [
+            {
+              "path": "/data/id",
+              "compare": "identifier",
+              "equals": {
+                "$input": "/appraisalId"
+              }
+            }
+          ]
+        },
+        {
+          "id": "content",
+          "operationId": "rsq.3f8852aa3293",
+          "description": "核对指标属于该考核的可查看明细。",
+          "input": {
+            "query": {
+              "appraisalId": {
+                "$input": "/appraisalId"
+              }
+            }
+          }
         },
         {
           "id": "requestExport",
@@ -253394,7 +253606,7 @@
               }
             }
           },
-          "prepare": "web-export-appraisal"
+          "prepare": "web-export-appraisal-department"
         }
       ],
       "output": {
@@ -253680,7 +253892,16 @@
           "id": "role",
           "operationId": "rsq.14f1827f3736",
           "description": "读取当前绩效角色。",
-          "input": {}
+          "input": {},
+          "permissions": [
+            {
+              "from": "/initialized/data",
+              "anyOf": [
+                "hasInit"
+              ],
+              "message": "当前公司未初始化绩效。"
+            }
+          ]
         },
         {
           "id": "requestExport",
@@ -253723,7 +253944,16 @@
               }
             }
           },
-          "prepare": "web-export-appraisal-report"
+          "prepare": "web-export-appraisal-report",
+          "permissions": [
+            {
+              "from": "/role/data/authorities",
+              "anyOf": [
+                "performanceReportView"
+              ],
+              "message": "当前绩效角色没有报表查看权限。"
+            }
+          ]
         }
       ],
       "output": {
@@ -253855,14 +254085,32 @@
           "id": "role",
           "operationId": "rsq.14f1827f3736",
           "description": "读取当前绩效角色。",
-          "input": {}
+          "input": {},
+          "permissions": [
+            {
+              "from": "/initialized/data",
+              "anyOf": [
+                "hasInit"
+              ],
+              "message": "当前公司未初始化绩效。"
+            }
+          ]
         },
         {
           "id": "salaryReports",
           "operationId": "rsq.af9f8c909a86",
           "description": "核对当前公司可管理的薪酬报表。",
           "input": {},
-          "prepare": "web-export-appraisal-salary-list"
+          "prepare": "web-export-appraisal-salary-list",
+          "permissions": [
+            {
+              "from": "/role/data/authorities",
+              "anyOf": [
+                "performanceManageSalaryData"
+              ],
+              "message": "当前绩效角色没有薪酬报表权限。"
+            }
+          ]
         },
         {
           "id": "requestExport",
@@ -254013,14 +254261,32 @@
           "id": "role",
           "operationId": "rsq.14f1827f3736",
           "description": "读取当前绩效角色。",
-          "input": {}
+          "input": {},
+          "permissions": [
+            {
+              "from": "/initialized/data",
+              "anyOf": [
+                "hasInit"
+              ],
+              "message": "当前公司未初始化绩效。"
+            }
+          ]
         },
         {
           "id": "salaryReports",
           "operationId": "rsq.af9f8c909a86",
           "description": "核对当前公司可管理的薪酬报表。",
           "input": {},
-          "prepare": "web-export-appraisal-salary-list"
+          "prepare": "web-export-appraisal-salary-list",
+          "permissions": [
+            {
+              "from": "/role/data/authorities",
+              "anyOf": [
+                "performanceManageSalaryData"
+              ],
+              "message": "当前绩效角色没有薪酬报表权限。"
+            }
+          ]
         },
         {
           "id": "requestExport",
@@ -254067,7 +254333,7 @@
     {
       "id": "closure.export.replay-entry-export",
       "command": "replay entry export",
-      "description": "导出一篇复盘正文。返回受理回执，通过 export watch 接收原文件。",
+      "description": "导出可见的日、周、月复盘正文。返回受理回执，通过 export watch 接收原文件。",
       "effect": "write",
       "methods": [
         "password",
@@ -254084,7 +254350,6 @@
       ],
       "relatedCommands": [
         "replay report get",
-        "replay topic list",
         "export watch"
       ],
       "inputSchema": {
@@ -254094,7 +254359,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 19,
-            "description": "从 replay report get 或 replay topic list 取得的复盘 ID。",
+            "description": "从 replay report get 取得的周期复盘 ID。CLI 核对该篇复盘的导出权限。",
             "pattern": "^[1-9][0-9]*$"
           }
         },
@@ -254111,12 +254376,33 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 19,
-            "description": "从 replay report get 或 replay topic list 取得的复盘 ID。",
+            "description": "从 replay report get 取得的周期复盘 ID。CLI 核对该篇复盘的导出权限。",
             "pattern": "^[1-9][0-9]*$"
           }
         }
       ],
       "steps": [
+        {
+          "id": "report",
+          "operationId": "rsq.7817030248a4",
+          "description": "核对当前用户可见的复盘及其权限。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/replayId"
+              }
+            }
+          },
+          "assertions": [
+            {
+              "path": "/id",
+              "compare": "identifier",
+              "equals": {
+                "$input": "/replayId"
+              }
+            }
+          ]
+        },
         {
           "id": "requestExport",
           "operationId": "rsq.de7bf533712b",
@@ -254127,7 +254413,16 @@
                 "$input": "/replayId"
               }
             }
-          }
+          },
+          "permissions": [
+            {
+              "from": "/report/editControl",
+              "anyOf": [
+                "export"
+              ],
+              "message": "当前角色没有导出此篇复盘的权限。"
+            }
+          ]
         }
       ],
       "output": {
@@ -254298,6 +254593,27 @@
       ],
       "steps": [
         {
+          "id": "permissions",
+          "operationId": "rsq.86858b69446b",
+          "description": "读取当前公司角色。",
+          "input": {}
+        },
+        {
+          "id": "replayCollections",
+          "operationId": "rsq.7cf148c4e83e",
+          "description": "核对当前可管理的复盘集。",
+          "input": {},
+          "permissions": [
+            {
+              "from": "/permissions",
+              "anyOf": [
+                "replayManage"
+              ],
+              "message": "当前公司角色没有复盘集管理权限。"
+            }
+          ]
+        },
+        {
           "id": "replayCollection",
           "operationId": "rsq.75006cf4d29c",
           "description": "核对所选复盘集。",
@@ -254335,7 +254651,7 @@
               }
             }
           },
-          "prepare": "web-export-replay"
+          "prepare": "web-export-replay-collection"
         }
       ],
       "output": {
@@ -254538,7 +254854,7 @@
               }
             }
           },
-          "prepare": "web-export-replay"
+          "prepare": "web-export-replay-statistics"
         }
       ],
       "output": {
@@ -254680,7 +254996,16 @@
               }
             }
           },
-          "prepare": "web-export-project-task-fields"
+          "prepare": "web-export-project-task-fields",
+          "permissions": [
+            {
+              "from": "/project/editControl",
+              "anyOf": [
+                "exportKanban"
+              ],
+              "message": "项目角色没有导出项目任务权限。"
+            }
+          ]
         },
         {
           "id": "filter",
@@ -254867,7 +255192,16 @@
               }
             }
           },
-          "prepare": "web-export-project-task-fields"
+          "prepare": "web-export-project-task-fields",
+          "permissions": [
+            {
+              "from": "/project/editControl",
+              "anyOf": [
+                "exportKanban"
+              ],
+              "message": "项目角色没有导出项目任务权限。"
+            }
+          ]
         },
         {
           "id": "filter",
@@ -255085,7 +255419,16 @@
               }
             }
           },
-          "prepare": "web-export-project-task-fields"
+          "prepare": "web-export-project-task-fields",
+          "permissions": [
+            {
+              "from": "/project/editControl",
+              "anyOf": [
+                "exportKanban"
+              ],
+              "message": "项目角色没有导出项目任务权限。"
+            }
+          ]
         },
         {
           "id": "filter",

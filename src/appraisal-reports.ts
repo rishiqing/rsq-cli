@@ -1,5 +1,6 @@
 import { isDeepStrictEqual } from 'node:util'
 import { asObject, RsqError, type JsonObject } from './core.js'
+import { requirePermission } from './access.js'
 import { appraisalAssessmentSteps } from './appraisal-assessments.js'
 
 export type AppraisalReportAction = 'report-context' | 'report-list' | 'report-inspect'
@@ -60,7 +61,7 @@ export async function runAppraisalReport(action: AppraisalReportAction, input: J
   call: (step: string, args?: JsonObject) => Promise<unknown>; role: JsonObject; inspect: (appraisalId: string) => Promise<unknown>; resources: Record<string, unknown>;
 }) {
   const { call, role, resources } = context
-  if (asObject(role.authorities).performanceReportView !== true) throw new RsqError('RESOURCE_FORBIDDEN', '当前绩效角色没有报表查看权限。', 4, { permission: 'performanceReportView' })
+  requirePermission(role.authorities, 'performanceReportView', { code: 'RESOURCE_FORBIDDEN', message: '当前绩效角色没有报表查看权限。' })
   const period = range(input), total = String(input.total ?? totals[0]); if (!totals.includes(total)) invalid('报表合计方式无效。')
   const query = { columnType: periods[period.periodType], startDate: period.startDate.replaceAll('-', '.'), endDate: period.endDate.replaceAll('-', '.'), total }
   // Discover through the report's real department-management scope. A company

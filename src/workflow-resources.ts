@@ -1,5 +1,5 @@
 import { RsqError, type JsonObject } from './core.js'
-import { validateCompanyState, validateFeatures, validateWorkflowAvailability } from './access.js'
+import { availableFeatureScopes, isFeatureDenial, validateCompanyState, validateFeatures, workflowScopeFeatures } from './access.js'
 import { projectWorkflowModules } from './workflow-scope.js'
 import { requireUsage, usageData, usageError, usageId, usageList, usageRows, type UsageRuntime } from './usage-runtime.js'
 
@@ -8,9 +8,7 @@ type WorkflowResource = {
   kind: 'application' | 'instance'; id: string; name: string; scope: WorkflowScope
   label?: string; projectName?: string; applicationName?: string; status?: string; dateCreated?: string
 }
-const scopeFeatures = { project: ['PLAN', 'PLAN_WORKFLOW'], standalone: ['WORKFLOW'] }
-const accessDenials = ['FEATURE_DISABLED', 'FEATURE_UPGRADE_REQUIRED', 'FEATURE_FORBIDDEN']
-const unavailable = (error: unknown) => error instanceof RsqError && ['FORBIDDEN', 'NOT_FOUND', ...accessDenials].includes(error.code)
+const unavailable = (error: unknown) => isFeatureDenial(error) || error instanceof RsqError && ['FORBIDDEN', 'NOT_FOUND'].includes(error.code)
 const normalized = (value: string) => value.trim().normalize('NFC').toLowerCase()
 const includes = (value: unknown, name: string) => typeof value === 'string' && normalized(value).includes(normalized(name))
 
@@ -37,15 +35,7 @@ export async function workflowResources(r: UsageRuntime) {
   validateCompanyState(state)
   const features = await r.call('GET', '/task/ordercenter/v2/function/available', { query: { vt: state.vt } })
   const authorities = usageData(await r.call('GET', '/task/authority/v3/authorities/company/current'))
-  validateWorkflowAvailability(features, authorities)
-  const check = (kind: WorkflowScope['kind']) => validateFeatures(scopeFeatures[kind], features, authorities)
-  const enabled = (kind: WorkflowScope['kind']) => {
-    try { check(kind); return true } catch (error) {
-      if (error instanceof RsqError && accessDenials.includes(error.code)) return false
-      throw error
-    }
-  }
-  const scopes = { project: enabled('project'), standalone: enabled('standalone') }
+  const scopes = availableFeatureScopes(workflowScopeFeatures, features, authorities)
   let independent: Promise<JsonObject[]> | undefined, projectList: Promise<JsonObject[]> | undefined
   const standalone = () => independent ??= r.call('GET', '/task/workflow/application/list', {}, 'standaloneApplications').then(usageList)
   const projects = () => projectList ??= r.existing('project list', {}).then(out => usageRows(out.projects))
@@ -74,7 +64,7 @@ export async function workflowResources(r: UsageRuntime) {
     const projectId = owner == null || String(owner) === '0' ? null : String(owner)
     requireUsage(!projectId || /^[1-9][0-9]*$/.test(projectId), '流程实例的项目 ID 无效。')
     const scope: WorkflowScope = projectId ? { kind: 'project', projectId, applicationId } : { kind: 'standalone', applicationId }
-    check(scope.kind)
+    validateFeatures(workflowScopeFeatures[scope.kind], features, authorities)
     let projectName: string | undefined
     if (scope.kind === 'project' && verifyProject) {
       const project = (await projects()).find(item => String(item.id) === scope.projectId)
@@ -99,7 +89,7 @@ export async function workflowResources(r: UsageRuntime) {
     const name = String(input.name ?? '').trim(), applicationId = input.applicationId
     const candidates = selector.filter(item => applicationId === undefined ? includes(item.name, name) : String(item.id) === applicationId)
     if (!candidates.length) return []
-    const independent = new Map(scopes.standalone ? (await standalone()).map(app => [String(app.id), app] as const) : [])
+    const independent = new Map(scopes.has('standalone') ? (await standalone()).map(app => [String(app.id), app] as const) : [])
     const result = new Map<string, WorkflowResource>()
     for (const row of candidates) {
       const actual = independent.get(String(row.id))
@@ -109,7 +99,7 @@ export async function workflowResources(r: UsageRuntime) {
       }
     }
     const embedded = candidates.filter(row => !independent.has(String(row.id)))
-    if (scopes.project && embedded.length) for (const project of await projects()) {
+    if (scopes.has('project') && embedded.length) for (const project of await projects()) {
       if (typeof project.name !== 'string' || !project.name.trim()) continue
       // The picker supplies a display label. Only the actual module proves ownership.
       const prefix = project.name + '-'

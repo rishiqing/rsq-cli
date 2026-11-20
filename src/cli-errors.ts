@@ -32,7 +32,7 @@ export function cliDiagnostic(value: unknown, profile = 'default', command = '')
     } }
   }
   const error = value instanceof RsqError ? value : new RsqError('UNEXPECTED_ERROR', '命令未能完成。')
-  const standaloneUnavailable = error.details?.feature === 'WORKFLOW' && command.startsWith('workflow ') && !['workflow find', 'workflow export'].includes(command)
+  const standaloneUnavailable = error.details?.feature === 'WORKFLOW' && command.startsWith('workflow ')
   const projectSchemas = ['rsq schema "workflow find"', 'rsq schema "project workflow"', 'rsq schema "project workflow modules list"']
   const projectHint = '当前命令需要独立流程功能。用 workflow find 查找实际归属，并按结果使用 workflow 或 project workflow。'
   const networkHint = error.details?.reason === 'proxy_configuration' ? '代理地址须为 http:// 或 https:// URL；检查 HTTP_PROXY、HTTPS_PROXY 或对应小写变量。'

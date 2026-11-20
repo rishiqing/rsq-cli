@@ -32,7 +32,7 @@ function fixture(options = {}) {
     calls.push({ path, query, method: init.method, body })
     if (path.endsWith('/authAjax')) return json({ success: true, id: '81', username: 'fixture', token: 'fixture', team: { id: options.identity ? '8' : '7', name: 'fixture' } })
     if (path.endsWith('/member/state/independent')) return json({ vt: 'fixture', mainApp: 'rsq', deadLine: options.expired ? '2000-01-01 00:00:00' : '2100-01-01 00:00:00', usersCount: 1, userLimit: options.capacity ? 0 : 2 })
-    if (path.endsWith('/function/available')) return json(options.disabled ? [{ funcName: 'PLAN_STATISTICS', status: 'disable' }] : [])
+    if (path.endsWith('/function/available')) return json(options.features ?? (options.disabled ? [{ funcName: 'PLAN_STATISTICS', status: 'disable' }] : []))
     if (path.endsWith('/authorities/company/current')) return json({ useKanban: true })
     if (path === '/task/v1/kanbanCrud') return json({ id: options.projectMismatch ? '7999' : '7001', coverId: options.template ? '1' : null })
     if (path.endsWith('/kanbanChildCrud/list')) return json([{ id: '7101', name: 'stats', type: 'stats' }, { id: '7102', name: 'risk', type: 'risk-module' }, { id: '7103', name: 'table', type: 'datasheet', datasheetInfo: { datasheetId: 'dstOwned', mainProjectId: '7001' } }])
@@ -44,7 +44,7 @@ function fixture(options = {}) {
     if (path.endsWith('/stats/chart')) {
       ++reads
       const metric = options.randomMetrics ? 'stt-' + reads : 'count0'
-      return json({ id: 'chart-1', name: options.drift && reads > 1 ? 'changed' : '图表', creationType, chartType: 'bar',
+      return json({ id: 'chart-1', name: options.drift && reads > 1 ? 'changed' : '图表', creationType, chartType: options.table ? 'table' : 'bar',
         dataSource: { type: kind === 'workflows' ? 'workflow' : 'task', projectId: options.collection ? null : options.wrongSource ? '7999' : '7001', projectCollectionId: options.collection ? '7201' : null, isAll: true, list: [] },
         graphData: { fields: { rows: ['status'], columns: [], values: [metric], valueInCols: true }, meta: [{ field: metric, name: '数量' }], data: [{ status: 'open', [metric]: options.valueDrift && reads > 1 ? 4 : 3, detailId: 'cache-' + reads }] } })
     }
@@ -160,6 +160,23 @@ test('selector, business type, datatype and invalid limits do not become guessed
 test('company expiry, capacity and disabled statistics block business HTTP before module or chart access', async () => {
   for (const options of [{ expired: true }, { capacity: true }, { disabled: true }]) {
     const f = fixture(options); await assert.rejects(run('discover', target, f)); assert.equal(f.calls.some(call => call.path.endsWith('/stats/chart') || call.path.endsWith('/kanbanCrud')), false)
+  }
+})
+test('chart discovery and export use the actual source’s feature and the selected collection entitlement', async () => {
+  const exportFlow = workflows.workflows.find(item => item.command === 'statistics project chart export')
+  const workflowFeature = [{ funcName: 'PLAN_WORKFLOW', status: 'disable' }]
+  for (const command of [flow('discover'), exportFlow]) {
+    const f = fixture({ kind: 'workflows', table: true, features: workflowFeature })
+    await assert.rejects(executeWorkflow(ctx, command, target, session, { transport: f.transport }), error =>
+      error.code === 'FEATURE_DISABLED' && error.details.feature === 'PLAN_WORKFLOW')
+    assert.ok(f.calls.some(call => call.path.endsWith('/stats/chart')))
+    assert.ok(f.calls.every(call => !call.path.endsWith('/export')))
+
+    const collection = fixture({ collection: true, table: true, features: [{ funcName: 'PLAN_COLLECTION', status: 'disable' }] })
+    const { projectId, ...chart } = target
+    await assert.rejects(executeWorkflow(ctx, command, { ...chart, collectionId: '7201' }, session, { transport: collection.transport }),
+      error => error.code === 'FEATURE_DISABLED' && error.details.feature === 'PLAN_COLLECTION')
+    assert.ok(collection.calls.every(call => !call.path.includes('/kanbanCollection') && !call.path.endsWith('/export')))
   }
 })
 test('five commands support zero-network offline plans and four cache transports require business context', async () => {

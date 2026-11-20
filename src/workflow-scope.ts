@@ -1,4 +1,5 @@
 import { asObject, RsqError, type JsonObject } from './core.js'
+import { workflowScopeFeatures } from './access.js'
 import { catalog, type Schema } from './operations.js'
 import type { Workflow } from './workflows.js'
 
@@ -53,21 +54,24 @@ export function scopeWorkflowContracts(definitions: Workflow[]): Workflow[] {
 }
 
 export function workflowScopeSchema(flow: Workflow) {
-  if (['workflow find', 'workflow export', todoWorkflowCommand].includes(flow.command)) return {
-    kind: 'automatic', context: '按实际资源归属解析项目流程或独立流程，再核对当前账号的权限。',
+  if (flow.workflowScope === 'automatic') return {
+    kind: 'automatic', requiredFeaturesByScope: workflowScopeFeatures, context: '按实际资源归属解析项目流程或独立流程，再核对当前账号的权限。',
   }
   if (flow.workflowScope === 'project' || flow.usageProject || flow.workflowTaskProject || flow.workflowDatasheetProject) return {
-    kind: 'project', requiredFeatures: flow.workflowTaskProject || flow.workflowDatasheetProject ? ['PLAN'] : ['PLAN', 'PLAN_WORKFLOW'],
+    kind: 'project', requiredFeatures: flow.workflowTaskProject || flow.workflowDatasheetProject ? ['PLAN'] : workflowScopeFeatures.project,
     discover: projectCatalogue, findByName: 'workflow find',
     context: '先确定普通项目 projectId，从该项目的流程模块取得 applicationId。实例命令核对 processId 的实际项目和应用归属。',
   }
   if (flow.command.startsWith('workflow ')) return {
-    kind: 'standalone', requiredFeatures: ['WORKFLOW'], projectDiscovery: projectCatalogue, findByName: 'workflow find',
+    kind: 'standalone', requiredFeatures: workflowScopeFeatures.standalone, projectDiscovery: projectCatalogue, findByName: 'workflow find',
     context: '从独立流程应用取得 applicationId 或 processId。项目内的同类操作使用 project workflow。',
   }
 }
 
 export function validateWorkflowScope(flow: Workflow) {
+  if (flow.workflowScope === 'automatic' && flow.executor !== 'arms-usage') {
+    throw new RsqError('INVALID_CONTRACT', '自动流程归属需要使用核对实际资源的执行器。', 6)
+  }
   if (flow.workflowScope !== 'project') return
   if (!flow.command.startsWith(projectPrefix) || flow.executor || !flow.inputSchema.required?.includes('projectId') ||
       scopeSteps.some((expected, index) => JSON.stringify(expected) !== JSON.stringify(flow.steps[index]))) {

@@ -1,6 +1,6 @@
 import { asObject, RsqError, type JsonObject } from './core.js'
 import { companyDirectoryUsers } from './contact.js'
-import { validateWorkflowAvailability } from './access.js'
+import { availableFeatureScopes, workflowScopeFeatures } from './access.js'
 import { todoWorkflowCommand, todoWorkflowTarget } from './workflow-scope.js'
 const rows = (value: unknown): JsonObject[] => {
   if (!Array.isArray(value)) throw new RsqError('CONTEXT_MISSING', '协作服务未返回预期列表。', 5)
@@ -15,7 +15,7 @@ export function prepareCooperation(kind: string, input: JsonObject, results: Jso
     results.cooperation = { view, filter, query }
     return { query }
   }
-  validateWorkflowAvailability(results.features, asObject(results.authorities))
+  availableFeatureScopes(workflowScopeFeatures, results.features, asObject(results.authorities))
   if (kind === 'cooperation-workflow-discover') return { body: { todoType: input.queue ?? 'pending', from: 'cooperation', pageNum: 1, pageSize: 1 } }
   if (kind !== 'cooperation-workflow-list') throw new RsqError('INVALID_CONTRACT', '未登记的协作业务适配。')
   const body: JsonObject = { todoType: input.queue ?? 'pending', from: 'cooperation', pageNum: input.pageNum ?? 1, pageSize: input.pageSize ?? 20 }

@@ -2,6 +2,7 @@ import { resolveOwnSignature } from './signature.js'
 import Big from 'big.js'
 import { isDeepStrictEqual } from 'node:util'
 import { asObject, RsqError, type JsonObject } from './core.js'
+import { requirePermission } from './access.js'
 
 const Decimal = Big()
 Decimal.DP = 20
@@ -89,8 +90,9 @@ export function appraisalEntrySnapshot(graph: AssessmentGraph) {
     phases: pendingNodes(graph.flow, ['resultEntry', 'resultEntryTwo']).map(node => ({ stage: node.stage, status: node.status, assignee: list(node.assignee).map(user => ({ id: key(user.id), status: user.status })).sort((a, b) => a.id.localeCompare(b.id)) })) }
 }
 function management(role: JsonObject) {
-  const authority = asObject(role.authorities)
-  if (authority.performanceAppraisalAllDataManage !== true && authority.performanceAppraisalDeptDataManage !== true) forbidden('当前绩效角色没有考核管理权限。')
+  requirePermission(role.authorities, ['performanceAppraisalAllDataManage', 'performanceAppraisalDeptDataManage'], {
+    code: 'RESOURCE_FORBIDDEN', message: '当前绩效角色没有考核管理权限。',
+  })
 }
 function query(input: JsonObject): JsonObject {
   const out: JsonObject = { offset: input.offset ?? 0, max: input.max ?? 20, type: input.type ?? 'all', stage: input.stage ?? 'all' }

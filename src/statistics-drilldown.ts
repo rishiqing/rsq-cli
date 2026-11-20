@@ -1,6 +1,6 @@
 import { asObject, request, RsqError, type Context, type JsonObject, type Transport } from './core.js'
 import { fingerprint } from './fingerprint.js'
-import { checkAccess } from './access.js'
+import { checkBusinessAccess, projectStatisticsSourceFeatures } from './access.js'
 import { catalog, runOperation } from './operations.js'
 import { requireSession, type Session } from './session.js'
 import { datasheetRecordsSteps, runDatasheetRecords } from './datasheet-records.js'
@@ -129,8 +129,8 @@ export async function runStatisticsDrilldown(ctx: Context, flow: Workflow, input
       projectIds = sourceIds
     }
     if (projectId && !source.isAll && sourceIds.some(id => !modules.some(module => numeric(module.id) === id))) invalid('FORBIDDEN', '图表来源模块不属于当前项目。')
-    const kind = kindOf(chart), accessCommand = ({ risks: 'project risk get', workflows: 'project workflow instance task inspect', records: 'datasheet describe', tasks: 'statistics project chart get' })[kind]
-    await checkAccess(ctx, { ...flow, command: accessCommand }, input, session, options.transport)
+    const kind = kindOf(chart), features = projectStatisticsSourceFeatures[kind]
+    if (features.length) await checkBusinessAccess(ctx, { features }, session, options.transport)
     const config = Object.fromEntries(chartMutableFields.filter(key => chart[key] !== undefined).map(key => [key, chart[key]]))
     const contextVersion = fingerprint({ userId: session.identity.userId, teamId: session.identity.teamId, ...target, projectIds, moduleIds: modules.map(module => numeric(module.id)), config, graph: graphContext(chart.graphData, kind) })
     const cells = chartCells(chart.graphData)

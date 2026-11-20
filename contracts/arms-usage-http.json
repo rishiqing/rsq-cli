@@ -7346,7 +7346,8 @@
         "rsq todo workflow inspect --process-id 123 --step-id 456",
         "rsq todo workflow inspect --process-id 123 --dry-run"
       ],
-      "recovery": "无权打开或步骤未找到时，刷新待办并核对当前公司和账号。"
+      "recovery": "无权打开或步骤未找到时，刷新待办并核对当前公司和账号。",
+      "workflowScope": "automatic"
     },
     {
       "id": "closure.arms.project.view.list",
@@ -13394,13 +13395,14 @@
           "description": "核对实际项目、应用和实例。",
           "input": {}
         }
-      ]
+      ],
+      "workflowScope": "automatic"
     },
     {
       "command": "workflow export",
       "id": "closure.workflow.export",
       "usageAction": "workflow-export",
-      "description": "按网页设置发起流程应用的 Excel 导出，返回受理结果。用 export watch 接收原文件。",
+      "description": "按流程实际归属和当前应用角色核对权限，调用网页接口发起 Excel 导出。用 export watch 接收原文件。",
       "capabilities": [
         "workflow/application",
         "workflow/instance",
@@ -13897,7 +13899,8 @@
           "input": {}
         }
       ],
-      "recovery": "先开启 export watch 再发起导出。发起回执代表已受理，文件从当前账号的导出通知单独接收。网络不明确时先核对结果，避免重复提交。"
+      "recovery": "先开启 export watch 再发起导出。发起回执代表已受理，文件从当前账号的导出通知单独接收。网络不明确时先核对结果，避免重复提交。",
+      "workflowScope": "automatic"
     }
   ]
 }

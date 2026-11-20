@@ -58,7 +58,7 @@ import { prepareReplay, verifyReplay, describeReplayTemplate, describeReplayScor
 import { inspectUpload, uploadToStorage, type UploadTransfer, type LocalUpload } from './storage.js'
 import { runOrganization, validateOrganizationWorkflow, type OrganizationAction, type OrganizationStore } from './organization.js'
 import { prepareApplication, verifyApplication, describeApplicationAccess } from './application-context.js'
-import { accessDescription } from './access.js'
+import { accessDescription, requirePermission } from './access.js'
 import { prepareTaskTemplate, verifyTaskTemplate, describeTaskTemplate, describeTaskAttachments } from './task-template.js'
 import { prepareFileItem, verifyFileItem, describeFileItems } from './file-items.js'
 import { prepareTaskBusiness, verifyTaskBusiness } from './task-business.js'
@@ -90,7 +90,7 @@ import { describeProjectWorkflowModules, scopeWorkflowContracts, validateWorkflo
 export type Value = unknown
 export type Workflow = {
   usageAction?: string; usageTemplate?: boolean; usageProject?: boolean
-  workflowScope?: 'project' | 'standalone'
+  workflowScope?: 'project' | 'standalone' | 'automatic'
   statisticsDrilldownAction?: StatisticsDrilldownAction
   workflowTaskAction?: WorkflowTaskAction; workflowTaskProject?: boolean
   projectCardBatchAction?: ProjectCardBatchAction; projectCardBatchTemplate?: boolean
@@ -101,6 +101,7 @@ export type Workflow = {
   workflowDatasheetAction?: WorkflowDatasheetAction; workflowDatasheetProject?: boolean; taskTypeAction?: TaskTypeAction; taskTypeTarget?: TaskTypeTarget; datasheetRecordsAction?: DatasheetRecordsAction; executor?: 'arms-usage' | 'statistics-drilldown' | 'workflow-tasks' | 'datasheet-records' | 'workflow-datasheet' | 'task-type-transition' | 'project-card-batch' | 'replay-navigation' | 'file-library-quit' | 'replay-collection-config' | 'project-excel' | 'project-import' | 'ai-config' | 'automation' | 'developer' | 'okr-indicators' | 'okr-performance' | 'okr-statistics' | 'ai-market' | 'replay-topic' | 'signature' | 'project-schedule' | 'okr-actions' | 'okr-alignment' | 'organization' | 'minder' | 'document' | 'cloud-file' | 'datasheet-admin' | 'appraisal' | 'task-audit'; replayNavigationAction?: ReplayNavigationAction; replayCollectionConfigAction?: ReplayCollectionConfigAction; projectExcelAction?: ProjectExcelAction; projectImportAction?: ProjectImportAction; aiConfigAction?: AiConfigAction; automationAction?: AutomationAction; developerAction?: DeveloperAction; okrIndicatorAction?: OkrIndicatorAction; okrPerformanceAction?: OkrPerformanceAction; okrStatisticsAction?: OkrStatisticsAction; aiMarketAction?: AiMarketAction; replayTopicAction?: ReplayTopicAction; signatureAction?: SignatureAction; projectScheduleAction?: ProjectScheduleAction; projectScheduleTemplate?: boolean; okrAction?: OkrAction; okrAlignmentAction?: OkrAlignmentAction; taskAuditAction?: TaskAuditAction; appraisalAction?: AppraisalAction; datasheetAdminAction?: DatasheetAdminAction; cloudFileAction?: CloudFileAction; docAction?: DocAction; organizationAction?: OrganizationAction; minderAction?: MinderAction
   steps: { id: string; operationId: string; description: string; input: JsonObject;
     authentication?: 'cookie';
+    permissions?: { from: string; anyOf: string[]; message?: string }[];
     resources?: Record<string, string>; assertions?: { path: string; equals?: Value; compare?: 'identifier'; exists?: boolean; whenInput?: string; excludes?: { path: string; equals: Value }; contains?: { match: Record<string, Value> } }[];
     creationVisibility?: TaskCreationVisibility; readback?: { attempts: number; delayMs: number }; collectPages?: CursorPages; expectAbsent?: boolean; waitBeforeMs?: number;
     prepare?: string; transfer?: 'storage-upload'; verify?: 'replay-push-rule' | 'company-usage' | 'okr-views' | 'company-role' | 'identity-settings' | 'archive' | 'project-context' | 'efficiency' | 'task-hours' | 'contact' | 'notification' | 'personal-resource' | 'datasheet' | 'statistics' | 'action' | 'datasheet-import' | 'project-collection' | 'workflow-context' | 'workflow-lifecycle' | 'okr-context' | 'okr-cycles' | 'deliverable' | 'file-library' | 'file-item' | 'replay' | 'application' | 'task-template' | 'task-business' | 'execution'; forEach?: { path: string; limit: number } }[]
@@ -108,6 +109,19 @@ export type Workflow = {
 }
 const workflowDefinitions = JSON.parse(readFileSync(new URL('../contracts/workflows.json', import.meta.url), 'utf8')) as { version: number; workflows: Workflow[] }
 export const workflows = { ...workflowDefinitions, workflows: scopeWorkflowContracts(workflowDefinitions.workflows) }
+export function validateWorkflowPermissions(flow: Workflow, index: number) {
+  const step = flow.steps[index]
+  if (step.permissions === undefined) return
+  if (flow.executor || !Array.isArray(step.permissions) || !step.permissions.length || !step.permissions.every(rule => {
+    if (!rule || typeof rule.from !== 'string' || !/^\/[a-zA-Z][a-zA-Z0-9]*(?:\/[a-zA-Z][a-zA-Z0-9]*)*$/.test(rule.from) ||
+        rule.from.split('/').some(key => blocked.has(key)) || !Array.isArray(rule.anyOf) || !rule.anyOf.length ||
+        rule.anyOf.some(flag => typeof flag !== 'string' || !/^[a-zA-Z][a-zA-Z0-9]*$/.test(flag) || blocked.has(flag)) ||
+        rule.message !== undefined && (typeof rule.message !== 'string' || !rule.message.trim())) return false
+    const source = flow.steps.slice(0, index).find(previous => previous.id === rule.from.split('/')[1])
+    // Some authenticated GETs also initialize user preferences.
+    return source && catalog.operations.some(op => op.id === source.operationId && op.auth !== 'none' && (op.method === 'GET' || op.effect === 'read'))
+  })) throw new RsqError('INVALID_CONTRACT', '业务权限须引用本次命令先前读取的服务端权限。', 6)
+}
 export function validateWorkflowWait(flow: Workflow, index: number) {
   const step = flow.steps[index]
   if (step.waitBeforeMs === undefined) return
@@ -152,7 +166,7 @@ export function workflowSchema(flow: Workflow) {
     ...(workflowScopeSchema(flow) && { scope: workflowScopeSchema(flow) }),
     confirmation: flow.effect === 'destructive' ? 'required' : 'not_required',
     context: flow.steps.map(step => ({ id: step.id, operationId: step.operationId, description: step.description,
-      input: step.input, assertions: step.assertions ?? [], resources: step.resources ?? {}, prepare: step.prepare, transfer: step.transfer, verify: step.verify, forEach: step.forEach, authentication: step.authentication, creationVisibility: step.creationVisibility, readback: step.readback, collectPages: step.collectPages, expectAbsent: step.expectAbsent, waitBeforeMs: step.waitBeforeMs })),
+      input: step.input, assertions: step.assertions ?? [], resources: step.resources ?? {}, permissions: step.permissions, prepare: step.prepare, transfer: step.transfer, verify: step.verify, forEach: step.forEach, authentication: step.authentication, creationVisibility: step.creationVisibility, readback: step.readback, collectPages: step.collectPages, expectAbsent: step.expectAbsent, waitBeforeMs: step.waitBeforeMs })),
     recovery: flow.recovery ?? '逐步执行；失败输出已完成步骤和资源 ID；写入结果未知时先读回核对，不自动重放或回滚。' }
 }
 export async function runWorkflow(ctx: Context, flow: Workflow, input: JsonObject, session: Session | null,
@@ -172,6 +186,7 @@ async function executeWorkflowSteps(ctx: Context, flow: Workflow, input: JsonObj
     issues: validate.errors?.map(e => ({ path: e.instancePath, keyword: e.keyword, message: e.message })),
   })
   for (const step of flow.steps) validateTaskCreationVisibility(flow, step)
+  flow.steps.forEach((_step, index) => validateWorkflowPermissions(flow, index))
   validateWorkflowScope(flow)
   if (flow.steps.some(step => step.prepare?.startsWith('workflow-statistics-'))) validateWorkflowStatisticsInput(input)
   if (flow.steps.some(step => step.prepare?.startsWith('identity-settings-'))) validateIdentitySettingsInput(input)
@@ -231,6 +246,7 @@ async function executeWorkflowSteps(ctx: Context, flow: Workflow, input: JsonObj
     ...(workflowScopeSchema(flow) && { scope: workflowScopeSchema(flow) }),
     inputFields: Object.keys(input), steps: flow.steps.map((step, index) => ({ id: step.id, description: step.description,
       command: step.transfer ? 'HTTP 对象存储字节上传' : operations[index]!.command, effect: step.transfer ? 'write' : operations[index]!.effect,
+      ...(step.permissions && { permissions: step.permissions }),
       ...(step.creationVisibility && { creationVisibility: step.creationVisibility }), ...(step.collectPages && { collectPages: step.collectPages }), ...(step.readback && { readback: step.readback }), ...(step.waitBeforeMs && { waitBeforeMs: step.waitBeforeMs }),
       context: ['arms-usage', 'statistics-drilldown', 'workflow-tasks', 'datasheet-records', 'workflow-datasheet', 'task-type-transition', 'project-card-batch', 'replay-navigation', 'file-library-quit', 'replay-collection-config', 'project-excel', 'project-import', 'ai-config', 'automation', 'developer', 'okr-indicators', 'okr-performance', 'okr-statistics', 'ai-market', 'replay-topic', 'signature', 'project-schedule', 'document', 'cloud-file', 'datasheet-admin', 'appraisal', 'task-audit', 'okr-alignment', 'okr-actions'].includes(flow.executor ?? '') ? 'resolve-from-verified-http-context' : step.forEach ? 'iterate-fetched-context' : step.prepare ? 'build-from-fetched-context' : JSON.stringify(step.input).includes('$result') ? 'resolve-after-previous-step' : 'resolve-from-input',
     })) }
@@ -282,6 +298,7 @@ async function executeWorkflowSteps(ctx: Context, flow: Workflow, input: JsonObj
     const effect = step.transfer ? 'write' : op.effect
     let responseReceived = false, completedIterations = 0
     try {
+      for (const rule of step.permissions ?? []) requirePermission(at(results, rule.from), rule.anyOf, { message: rule.message })
       if (step.waitBeforeMs) await delay(step.waitBeforeMs)
       if (step.transfer) {
         if (step.transfer !== 'storage-upload' || step.prepare || step.forEach || op.route !== '/task/sts/token/oss' || !results.secondPass) throw new RsqError('INVALID_CONTRACT', '上传步骤缺少明确的临时权限和秒传上下文。', 5)

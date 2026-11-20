@@ -33,7 +33,7 @@ export function usageSnapshotPage(items: JsonObject[], input: JsonObject, bindin
 }
 export function validateUsageWorkflow(flow: Workflow) {
   const expected = usageManifest.workflows?.find(item => item.id === flow.id)
-  if (!expected || expected.command !== flow.command || expected.effect !== flow.effect || expected.usageAction !== flow.usageAction || expected.usageTemplate !== flow.usageTemplate || expected.usageProject !== flow.usageProject || !isDeepStrictEqual(expected.steps, flow.steps)) usageError('INVALID_CONTRACT', 'ARMS 业务命令必须保留已经核对的上下文、执行步骤与副作用。')
+  if (!expected || expected.command !== flow.command || expected.effect !== flow.effect || expected.usageAction !== flow.usageAction || expected.usageTemplate !== flow.usageTemplate || expected.usageProject !== flow.usageProject || expected.workflowScope !== flow.workflowScope || !isDeepStrictEqual(expected.steps, flow.steps)) usageError('INVALID_CONTRACT', 'ARMS 业务命令必须保留已经核对的上下文、执行步骤与副作用。')
 }
 export type UsageRuntime = ReturnType<typeof usageRuntime>
 export function usageRuntime(ctx: Context, flow: Workflow, supplied: Session | null, options: { transport?: Transport; approved?: boolean; timeoutMs?: number }) {

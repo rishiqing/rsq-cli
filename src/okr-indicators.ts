@@ -1,4 +1,5 @@
 import { asObject, RsqError, type Context, type JsonObject, type Transport } from './core.js'
+import { requirePermission } from './access.js'
 import { catalog, runOperation } from './operations.js'
 import { fingerprint } from './fingerprint.js'
 import { requireSession, type Session } from './session.js'
@@ -128,7 +129,7 @@ export async function runOkrIndicator(ctx: Context, flow: Workflow, input: JsonO
     const who = asObject(await call('identity'))
     if (id(who.id) !== session.identity.userId || id(asObject(who.team).id) !== session.identity.teamId) fail('当前用户或公司与 profile 不一致。', 'IDENTITY_CHANGED')
     const permissions = asObject(asObject(await call('sidebar')).editControl)
-    if (permissions.viewIndicator !== true) fail('当前角色不能查看指标模块。', 'FORBIDDEN')
+    requirePermission(permissions, 'viewIndicator', { message: '当前角色不能查看指标模块。' })
     const library = await readLibrary(), dimensions = rows(await call('dimensions')), attributions = attributionTree(await call('attributions'))
     unique(ids(dimensions), '指标维度列表存在重复 ID。')
     const publicLibrary = library.map(item => asObject(item.editControl).view === true ? item : { hidden: true, reason: 'view-permission-denied' })

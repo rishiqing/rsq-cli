@@ -1,4 +1,5 @@
 import { asObject, type JsonObject } from './core.js'
+import { requirePermission } from './access.js'
 import { describeWorkflowResource, matchesWorkflowName, workflowResources } from './workflow-resources.js'
 import { workflowInstanceFilters } from './workflow-reads.js'
 import { requireUsage, usageData, usageError, usageId, usageList, usageRows, type UsageRuntime } from './usage-runtime.js'
@@ -42,9 +43,7 @@ export async function exportWorkflow(r: UsageRuntime, input: JsonObject) {
   const subtype = application.workflowModuleSubType
   requireUsage(String(application.id) === applicationId && (scope.kind === 'project' ? subtype == null || subtype === 'projectWorkflow' : subtype == null),
     '实际应用与流程导出目标不一致。')
-  if (asObject(application.editControl).exportFlow !== true) {
-    usageError('FORBIDDEN', '当前身份没有这个流程应用的导出权限。', { applicationId, permission: 'exportFlow' })
-  }
+  requirePermission(application.editControl, 'exportFlow', { message: '当前身份没有这个流程应用的导出权限。', details: { applicationId } })
   r.resources.applicationId = applicationId
   if (scope.kind === 'project') r.resources.projectId = scope.projectId
 
