@@ -14,11 +14,7 @@ const adapters: Record<string, { route: string | RegExp; context: string[] }> = 
   'appraisal-entry': { route: '/task/performance/appraisal/export/entryDownload', context: appraisalContext },
   'appraisal-template': { route: '/task/performance/template/indicator/export', context: appraisalContext },
   'appraisal-assessments': { route: '/task/performance/v4/appraisal/export', context: appraisalContext },
-  'appraisal-monthly': { route: '/task/performance/content/monthlyAppraisalData/detailExport', context: [...appraisalContext, 'assessment', 'content'] },
-  'appraisal-department': { route: '/task/performance/content/departmentAppraisalData/detailExport', context: [...appraisalContext, 'assessment', 'content'] },
   'appraisal-report': { route: '/task/performance/appraisal/report/export', context: appraisalContext },
-  'appraisal-salary-list': { route: '/task/performance/salaryReport/list', context: appraisalContext },
-  'appraisal-salary': { route: /^\/task\/performance\/salaryReport\/(?:template\/)?export$/, context: [...appraisalContext, 'salaryReports'] },
   'replay-collection': { route: '/task/review/replay/collect/export', context: ['replayCollections', 'replayCollection'] },
   'replay-statistics': { route: '/task/review/stat/report/export', context: ['replayCollection'] },
   'project-task-fields': { route: /^\/task\/(?:api\/v3\/template\/projectUsed|v3\/taskTemplate\/kanban(?:Child|Card|Collection)UsedTaskTemplate)$/, context: [] },
@@ -131,20 +127,10 @@ export function prepareWebExport(name: string, input: JsonObject, results: JsonO
   }
   if (kind === 'ai-usage') return { query }
   if (kind.startsWith('appraisal')) {
-    if (kind === 'appraisal-monthly' || kind === 'appraisal-department') {
-      const expectedType = kind === 'appraisal-monthly' ? 'monthlyAppraisalData' : 'departmentAppraisalData'
-      const dimensions = usageRows(usageData(results.content).dimensions ?? [])
-      const indicators = dimensions.filter(dimension => dimension.type === expectedType).flatMap(dimension => usageRows(dimension.indicators ?? []))
-      const selected = indicators.find(indicator => String(indicator.id) === input.indicatorId)
-      if (!selected || !Object.keys(asObject(selected.detail)).length) denied('指标不属于当前考核的可查看明细。')
-    }
     if (kind === 'appraisal-report') {
       for (const key of ['startDate', 'endDate']) body[key] = String(body[key]).replaceAll('-', '.')
       body.max ??= 20
       body.offset ??= 1
-    }
-    if (kind.startsWith('appraisal-salary')) {
-      if (kind === 'appraisal-salary' && !matches(usageList(results.salaryReports), input.salaryReportId)) denied('报表不在当前公司的薪酬报表目录。')
     }
     return args
   }

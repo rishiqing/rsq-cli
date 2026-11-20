@@ -832,24 +832,6 @@
       }
     }
   ],
-  "rsq.d4b28b5804bd": [
-    {
-      "origin": "synthetic-server-model",
-      "input": {
-        "body": {
-          "indicatorId": "123"
-        }
-      },
-      "request": {
-        "method": "POST",
-        "url": "/task/performance/content/departmentAppraisalData/detailExport",
-        "body": {
-          "indicatorId": "123"
-        }
-      },
-      "response": null
-    }
-  ],
   "rsq.5eec427fa424": [
     {
       "origin": "synthetic-server-model",
@@ -966,24 +948,6 @@
         "data": [],
         "msg": "ok"
       }
-    }
-  ],
-  "rsq.98f0aecad227": [
-    {
-      "origin": "synthetic-server-model",
-      "input": {
-        "body": {
-          "indicatorId": "123"
-        }
-      },
-      "request": {
-        "method": "POST",
-        "url": "/task/performance/content/monthlyAppraisalData/detailExport",
-        "body": {
-          "indicatorId": "123"
-        }
-      },
-      "response": null
     }
   ],
   "rsq.b4299fa06c7d": [
@@ -2959,28 +2923,6 @@
       }
     }
   ],
-  "rsq.82ef56128756": [
-    {
-      "origin": "synthetic-server-model",
-      "input": {
-        "body": {
-          "id": "example",
-          "period": "2026-11",
-          "periodType": "monthly"
-        }
-      },
-      "request": {
-        "method": "POST",
-        "url": "/task/performance/salaryReport/export",
-        "body": {
-          "id": "example",
-          "period": "2026-11",
-          "periodType": "monthly"
-        }
-      },
-      "response": null
-    }
-  ],
   "rsq.edfea475ae09": [
     {
       "origin": "independent-handwritten-current-caller-fixture",
@@ -3026,28 +2968,6 @@
           }
         ]
       }
-    }
-  ],
-  "rsq.2a660c28110c": [
-    {
-      "origin": "synthetic-server-model",
-      "input": {
-        "body": {
-          "id": "example",
-          "period": "2026-11",
-          "periodType": "monthly"
-        }
-      },
-      "request": {
-        "method": "POST",
-        "url": "/task/performance/salaryReport/template/export",
-        "body": {
-          "id": "example",
-          "period": "2026-11",
-          "periodType": "monthly"
-        }
-      },
-      "response": null
     }
   ],
   "rsq.bc32554af264": [

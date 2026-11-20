@@ -493,12 +493,12 @@
       }
     ],
     "operationAudit": {
-      "reviewedContracts": 1364,
+      "reviewedContracts": 1360,
       "executable": 740,
-      "requiresBusinessContext": 624,
+      "requiresBusinessContext": 620,
       "verified": 0,
       "pending": 33,
-      "stale": 1323,
+      "stale": 1319,
       "independentlyObserved": 0
     },
     "missingDomains": [],
@@ -111906,118 +111906,6 @@
                   "缺少本轮复核：idempotency"
                 ]
               }
-            },
-            {
-              "operationId": "rsq.98f0aecad227",
-              "context": "appraisal statistics monthly details export",
-              "role": "write",
-              "method": "POST",
-              "route": "/task/performance/content/monthlyAppraisalData/detailExport",
-              "effect": "write",
-              "status": "available",
-              "executableCommands": [
-                "appraisal statistics monthly details export"
-              ]
-            },
-            {
-              "operationId": "rsq.d4b28b5804bd",
-              "context": "appraisal statistics department details export",
-              "role": "write",
-              "method": "POST",
-              "route": "/task/performance/content/departmentAppraisalData/detailExport",
-              "effect": "write",
-              "status": "available",
-              "executableCommands": [
-                "appraisal statistics department details export"
-              ]
-            },
-            {
-              "operationId": "rsq.38255c6775c4",
-              "context": "appraisal assessments inspect",
-              "role": "discover",
-              "catalogMatches": 1,
-              "executableCommands": [
-                "appraisal get"
-              ],
-              "method": "GET",
-              "route": "/task/performance/appraisal",
-              "effect": "read",
-              "status": "available",
-              "contract": {
-                "status": "stale",
-                "verifiedChecks": [],
-                "evidenceStatus": {
-                  "caller": "pending",
-                  "independent-request": "pending"
-                },
-                "missingChecks": [
-                  "caller",
-                  "implementation",
-                  "encoding",
-                  "response",
-                  "permissions",
-                  "effect",
-                  "idempotency"
-                ],
-                "missingEvidence": [
-                  "caller",
-                  "implementation",
-                  "independent-request"
-                ],
-                "issues": [
-                  "缺少本轮复核：caller",
-                  "缺少本轮复核：implementation",
-                  "缺少本轮复核：encoding",
-                  "缺少本轮复核：response",
-                  "缺少本轮复核：permissions",
-                  "缺少本轮复核：effect",
-                  "缺少本轮复核：idempotency"
-                ]
-              }
-            },
-            {
-              "operationId": "rsq.3f8852aa3293",
-              "context": "appraisal assessments inspect",
-              "role": "discover",
-              "catalogMatches": 1,
-              "executableCommands": [
-                "appraisal content get"
-              ],
-              "method": "GET",
-              "route": "/task/performance/v2/content",
-              "effect": "read",
-              "status": "available",
-              "contract": {
-                "status": "stale",
-                "verifiedChecks": [],
-                "evidenceStatus": {
-                  "caller": "pending",
-                  "independent-request": "pending"
-                },
-                "missingChecks": [
-                  "caller",
-                  "implementation",
-                  "encoding",
-                  "response",
-                  "permissions",
-                  "effect",
-                  "idempotency"
-                ],
-                "missingEvidence": [
-                  "caller",
-                  "implementation",
-                  "independent-request"
-                ],
-                "issues": [
-                  "缺少本轮复核：caller",
-                  "缺少本轮复核：implementation",
-                  "缺少本轮复核：encoding",
-                  "缺少本轮复核：response",
-                  "缺少本轮复核：permissions",
-                  "缺少本轮复核：effect",
-                  "缺少本轮复核：idempotency"
-                ]
-              }
             }
           ],
           "prerequisites": [
@@ -112073,9 +111961,7 @@
             }
           ],
           "workflows": [
-            "closure.appraisal.assessments.managed",
-            "closure.export.appraisal-statistics-monthly-details-export",
-            "closure.export.appraisal-statistics-department-details-export"
+            "closure.appraisal.assessments.managed"
           ],
           "contract": "pending",
           "validation": {
@@ -112695,30 +112581,6 @@
                   "缺少本轮复核：independent-request"
                 ]
               }
-            },
-            {
-              "operationId": "rsq.82ef56128756",
-              "context": "appraisal salary reports export",
-              "role": "write",
-              "method": "POST",
-              "route": "/task/performance/salaryReport/export",
-              "effect": "write",
-              "status": "available",
-              "executableCommands": [
-                "appraisal salary reports export"
-              ]
-            },
-            {
-              "operationId": "rsq.2a660c28110c",
-              "context": "appraisal salary template export",
-              "role": "write",
-              "method": "POST",
-              "route": "/task/performance/salaryReport/template/export",
-              "effect": "write",
-              "status": "available",
-              "executableCommands": [
-                "appraisal salary template export"
-              ]
             }
           ],
           "prerequisites": [
@@ -112843,9 +112705,7 @@
             "closure.appraisal.salary.cells.previous",
             "closure.appraisal.salary.cells.copy-previous",
             "closure.appraisal.salary.cells.import.preview",
-            "closure.appraisal.salary.cells.import.save",
-            "closure.export.appraisal-salary-reports-export",
-            "closure.export.appraisal-salary-template-export"
+            "closure.appraisal.salary.cells.import.save"
           ],
           "contract": "pending",
           "validation": {
@@ -174648,32 +174508,6 @@
         "历史 reviewed 仅保留可执行兼容性；需独立请求和业务上下文重新复核"
       ]
     },
-    "rsq.d4b28b5804bd": {
-      "status": "stale",
-      "verifiedChecks": [],
-      "evidenceStatus": {
-        "caller": "pending",
-        "independent-request": "pending"
-      },
-      "missingChecks": [
-        "caller",
-        "implementation",
-        "encoding",
-        "response",
-        "permissions",
-        "effect",
-        "idempotency",
-        "independent-request"
-      ],
-      "missingEvidence": [
-        "caller",
-        "implementation",
-        "independent-request"
-      ],
-      "issues": [
-        "历史 reviewed 仅保留可执行兼容性；需独立请求和业务上下文重新复核"
-      ]
-    },
     "rsq.5eec427fa424": {
       "status": "stale",
       "verifiedChecks": [],
@@ -174815,32 +174649,6 @@
       ]
     },
     "rsq.5b5fbdf23201": {
-      "status": "stale",
-      "verifiedChecks": [],
-      "evidenceStatus": {
-        "caller": "pending",
-        "independent-request": "pending"
-      },
-      "missingChecks": [
-        "caller",
-        "implementation",
-        "encoding",
-        "response",
-        "permissions",
-        "effect",
-        "idempotency",
-        "independent-request"
-      ],
-      "missingEvidence": [
-        "caller",
-        "implementation",
-        "independent-request"
-      ],
-      "issues": [
-        "历史 reviewed 仅保留可执行兼容性；需独立请求和业务上下文重新复核"
-      ]
-    },
-    "rsq.98f0aecad227": {
       "status": "stale",
       "verifiedChecks": [],
       "evidenceStatus": {
@@ -177327,32 +177135,6 @@
         "缺少本轮复核：independent-request"
       ]
     },
-    "rsq.82ef56128756": {
-      "status": "stale",
-      "verifiedChecks": [],
-      "evidenceStatus": {
-        "caller": "pending",
-        "independent-request": "pending"
-      },
-      "missingChecks": [
-        "caller",
-        "implementation",
-        "encoding",
-        "response",
-        "permissions",
-        "effect",
-        "idempotency",
-        "independent-request"
-      ],
-      "missingEvidence": [
-        "caller",
-        "implementation",
-        "independent-request"
-      ],
-      "issues": [
-        "历史 reviewed 仅保留可执行兼容性；需独立请求和业务上下文重新复核"
-      ]
-    },
     "rsq.edfea475ae09": {
       "status": "stale",
       "verifiedChecks": [],
@@ -177389,32 +177171,6 @@
       ],
       "issues": [
         "缺少本轮复核：independent-request"
-      ]
-    },
-    "rsq.2a660c28110c": {
-      "status": "stale",
-      "verifiedChecks": [],
-      "evidenceStatus": {
-        "caller": "pending",
-        "independent-request": "pending"
-      },
-      "missingChecks": [
-        "caller",
-        "implementation",
-        "encoding",
-        "response",
-        "permissions",
-        "effect",
-        "idempotency",
-        "independent-request"
-      ],
-      "missingEvidence": [
-        "caller",
-        "implementation",
-        "independent-request"
-      ],
-      "issues": [
-        "历史 reviewed 仅保留可执行兼容性；需独立请求和业务上下文重新复核"
       ]
     },
     "rsq.bc32554af264": {

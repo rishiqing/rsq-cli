@@ -83,23 +83,6 @@ test('OKR statistics reads and export use the role from the same business contex
   }
 })
 
-test('appraisal detail export must bind the indicator to the actor’s visible assessment', async () => {
-  const command = 'appraisal statistics monthly details export', input = { appraisalId: '123', indicatorId: '456' }
-  const envelope = data => ({ code: 200, data })
-  for (const [assessmentId, indicatorId, exportable] of [[123, 456, true], [999, 456, false], [123, 999, false]]) {
-    const calls = [], transport = projectTransport(calls, { responses: {
-      '/task/performance/init': envelope({ hasInit: true }),
-      '/task/performance/authority/role': envelope({ authorities: {} }),
-      '/task/performance/appraisal': envelope({ id: assessmentId }),
-      '/task/performance/v2/content': envelope({ dimensions: [{ type: 'monthlyAppraisalData', indicators: [{ id: indicatorId, detail: { detailType: 'monthlyAppraisalData' } }] }] }),
-      [trigger(command).route]: { code: 200 },
-    } })
-    if (exportable) assert.equal((await execute(command, input, { transport })).result.status, 'accepted')
-    else await assert.rejects(execute(command, input, { transport }), { code: assessmentId === 123 ? 'FORBIDDEN' : 'BUSINESS_ASSERTION_FAILED' })
-    assert.equal(calls.some(call => call.path === trigger(command).route), exportable)
-  }
-})
-
 test('replay export verifies the document’s actual role before requesting a file', async () => {
   const command = 'replay entry export'
   for (const permission of [true, false, undefined]) {

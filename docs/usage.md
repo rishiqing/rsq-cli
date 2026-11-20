@@ -45,7 +45,7 @@ rsq task get --id '<任务ID>' --profile work
 | 甘特图 | `rsq schema 'project schedule export'` |
 | 公司、项目与流程统计 | `rsq schema statistics`、`rsq schema 'workflow statistics'` |
 | OKR、指标和行动 | `rsq schema 'okr cycles objectives export'`、`rsq schema 'okr statistics'`、`rsq schema 'okr indicator'`、`rsq schema 'action tasks export'` |
-| 绩效和薪酬 | `rsq schema appraisal` |
+| 绩效 | `rsq schema 'appraisal reports export'`、`rsq schema 'appraisal assessments export'` |
 | 复盘 | `rsq schema 'replay entry export'`、`rsq schema 'replay collection entries export'`、`rsq schema 'replay statistics export'` |
 | AI 使用记录 | `rsq schema 'ai usage export'` |
 
