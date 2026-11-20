@@ -102,13 +102,14 @@ export function accessPlan(target: Target, input: JsonObject = {}): AccessPlan {
     if (command.startsWith('statistics project drilldown ')) {
       if (input.collectionId !== undefined) add('PLAN_COLLECTION')
       if (command.endsWith('risks list')) add('PLAN_RISK')
-      if (command.endsWith('workflows list')) add('PLAN_WORKFLOW')
+      if (/workflows (?:list|export)$/.test(command)) add('PLAN_WORKFLOW')
       if (command.endsWith('records list')) add('PLAN_DATASHEET')
     }
     if (command.startsWith('project collection ') || /\/kanbanCollection(?:Kanban)?(?:\/|$)|\/projectCollection\//.test(route)) add('PLAN', 'PLAN_COLLECTION')
     if (root === 'datasheet' || root === 'form-field' || route.startsWith('/task/mt/')) add('PLAN', 'PLAN_DATASHEET')
     if (root === 'deliverable' || command.startsWith('project template deliverable ') || route.startsWith('/task/files/project/') || route.startsWith('/task/files/deliverable/') || route.startsWith('/task/project/plan/deliverable/') || route.startsWith('/task/api/deliverable/')) add('PLAN', 'PLAN_DELIVERABLE')
     if (root === 'workflow' && /statistics|statistic/.test(command)) add('FLOW_STATISTICS')
+    if (command === 'replay statistics export') permissions.add('replayStatistics')
     if (root === 'appraisal' && (/salary/.test(route) || command.startsWith('appraisal salary '))) add('PERFORMANCE_SALARY')
     if (root === 'okr' && /^okr indicator\b/.test(command) || /^\/task\/okr\/(?:indicator(?:\/|$)|import\/(?:optional\/)?indicator(?:\/|$))/.test(route)) add('OKR_INDICATOR')
     if (command === 'okr preferences update') {

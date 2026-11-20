@@ -33,6 +33,22 @@ rsq task get --id '<任务ID>' --profile work
 
 业务编排命令成功时，stdout 的 JSON 顶层包含 `command`、`completedSteps`、`resources` 和 `result`。叶子 Schema 的 `resultSchema` 对应 `.result` 内的业务数据。直接接口命令按自己的响应 Schema 读取。脚本先检查 CLI 的退出码，失败时从 stderr 查看错误。`--dry-run` 的计划由顶层的 `dryRun: true` 标记。
 
+## 原文件导出
+
+先启动 `rsq export watch --output ./exports`。看到 `listening` 后，用同一 profile 在另一终端发起业务导出。
+
+| 业务 | 发起命令示例 |
+| --- | --- |
+| 项目、任务模块、卡片与项目集 | `rsq schema 'project tasks export'`、`rsq schema 'project module tasks export'`、`rsq schema 'project card tasks export'`、`rsq schema 'project collection tasks export'` |
+| 甘特图 | `rsq schema 'project schedule export'` |
+| 公司、项目与流程统计 | `rsq schema statistics`、`rsq schema 'workflow statistics'` |
+| OKR、指标和行动 | `rsq schema 'okr cycles objectives export'`、`rsq schema 'okr statistics'`、`rsq schema 'okr indicator'`、`rsq schema 'action tasks export'` |
+| 绩效和薪酬 | `rsq schema appraisal` |
+| 复盘 | `rsq schema 'replay entry export'`、`rsq schema 'replay collection entries export'`、`rsq schema 'replay statistics export'` |
+| AI 使用记录 | `rsq schema 'ai usage export'` |
+
+各业务命令调用网页使用的导出接口。通过对应 Schema 的关联命令获取项目、报表、视图和其他资源标识。`.result.status` 为 `accepted` 时继续等待接收进程的 `file` 事件，`output` 给出已保存文件的路径。文件按账号接收，同名文件追加编号。
+
 ## 项目流程和独立流程
 
 只有流程名称时，先用 `workflow find`。`.result.items` 中的匹配项分别标出应用和已发起实例，并给出实际归属和 `target`。应用结果包含 `exportTarget`。名称重合时，按项目、应用、实例或创建时间辨认具体对象。查找支持 `--application-id` 和 `--process-id`。

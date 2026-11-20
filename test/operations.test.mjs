@@ -83,7 +83,7 @@ test('each executable contract matches its recorded fixture; DTO fixtures do not
         } else if (sample.request.body) assert.deepEqual(JSON.parse(init.body), sample.request.body, op.command)
         else assert.equal(init.body, undefined, op.command)
         if (op.response === 'binary') return new Response('download fixture')
-        return op.response === 'text' ? new Response(sample.response) : ['empty', 'json-or-empty'].includes(op.response) && sample.response === null ? new Response('') : json(sample.response)
+        return op.response === 'text' ? new Response(sample.response) : ['empty', 'json-or-empty', 'business-or-empty'].includes(op.response) && sample.response === null ? new Response('') : json(sample.response)
       } }).catch(error => { error.message = op.command + ': ' + error.message; throw error })
       assert.equal(calls, 1)
       if (op.response === 'binary') {

@@ -493,11 +493,11 @@
       }
     ],
     "operationAudit": {
-      "reviewedContracts": 1350,
-      "executable": 763,
-      "requiresBusinessContext": 587,
+      "reviewedContracts": 1364,
+      "executable": 740,
+      "requiresBusinessContext": 624,
       "verified": 0,
-      "pending": 27,
+      "pending": 33,
       "stale": 1323,
       "independentlyObserved": 0
     },
@@ -2529,6 +2529,30 @@
                   "缺少本轮复核：idempotency"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.d60c7c05d736",
+              "context": "statistics company table export",
+              "role": "write",
+              "method": "PUT",
+              "route": "/task/api/statistics/list/export",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "statistics company table export"
+              ]
+            },
+            {
+              "operationId": "rsq.9335220c3e03",
+              "context": "statistics company detail export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/api/statistics/detail/export",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "statistics company detail export"
+              ]
             }
           ],
           "prerequisites": [
@@ -2682,7 +2706,9 @@
             "closure.statistics.company.team.children.list",
             "closure.statistics.company.delay-rule.get",
             "closure.statistics.company.delay-rule.set",
-            "closure.statistics.detail.tasks.list"
+            "closure.statistics.detail.tasks.list",
+            "closure.export.statistics-company-table-export",
+            "closure.export.statistics-company-detail-export"
           ],
           "contract": "pending",
           "validation": {
@@ -4016,6 +4042,30 @@
                   "缺少本轮复核：independent-request"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.d7595b6ad188",
+              "context": "statistics company workflow export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/workflow/teamStatistics/exportExecute",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "statistics company workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.9359db657ff4",
+              "context": "statistics company workflow details export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/workflow/teamStatistics/exportDetail",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "statistics company workflow details export"
+              ]
             }
           ],
           "prerequisites": [
@@ -4116,7 +4166,9 @@
           "workflows": [
             "closure.statistics.company.workflow.context",
             "closure.statistics.company.workflow.people.analyze",
-            "closure.statistics.company.workflow.tasks.list"
+            "closure.statistics.company.workflow.tasks.list",
+            "closure.export.statistics-company-workflow-export",
+            "closure.export.statistics-company-workflow-details-export"
           ],
           "contract": "pending",
           "validation": {
@@ -16132,6 +16184,102 @@
                   "尚未核对为可执行契约"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.d04c7521598b",
+              "context": "statistics project chart export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/login/authAjax",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "statistics project chart export"
+              ]
+            },
+            {
+              "operationId": "rsq.87743b1e7fd8",
+              "context": "statistics project chart export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/v1/kanbanCrud",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "statistics project chart export"
+              ]
+            },
+            {
+              "operationId": "rsq.0049502086e1",
+              "context": "statistics project chart export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/v1/kanbanChildCrud/list",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "statistics project chart export"
+              ]
+            },
+            {
+              "operationId": "rsq.f8295a4856c6",
+              "context": "statistics project chart export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/v3/kanbanCollection/list",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "statistics project chart export"
+              ]
+            },
+            {
+              "operationId": "rsq.d20cb647092f",
+              "context": "statistics project chart export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/v3/kanbanCollection",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "statistics project chart export"
+              ]
+            },
+            {
+              "operationId": "rsq.710a9c5c2216",
+              "context": "statistics project chart export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/project/collection/project/list",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "statistics project chart export"
+              ]
+            },
+            {
+              "operationId": "rsq.8aa63553ff72",
+              "context": "statistics project chart export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/v5/kanban/stats/dashboard/list",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "statistics project chart export"
+              ]
+            },
+            {
+              "operationId": "rsq.233059fd1402",
+              "context": "statistics project chart export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/v5/kanban/stats/chart/export",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "statistics project chart export"
+              ]
             }
           ],
           "prerequisites": [
@@ -16228,7 +16376,8 @@
             "closure.statistics.project.options.plans.list",
             "closure.statistics.project.options.projects.list",
             "closure.statistics.project.options.sort-list.list",
-            "closure.statistics.project.options.value-fields.list"
+            "closure.statistics.project.options.value-fields.list",
+            "closure.export.statistics-project-chart-export"
           ],
           "contract": "pending",
           "validation": {
@@ -17015,6 +17164,30 @@
                   "缺少本轮复核：independent-request"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.9335220c3e03",
+              "context": "statistics project drilldown tasks export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/api/statistics/detail/export",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "statistics project drilldown tasks export"
+              ]
+            },
+            {
+              "operationId": "rsq.efd83f9fdf4a",
+              "context": "statistics project drilldown workflows export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/workflow/projectStatistics/exportDetail",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "statistics project drilldown workflows export"
+              ]
             }
           ],
           "prerequisites": [
@@ -17389,7 +17562,9 @@
             "closure.statistics.project.drilldown.tasks.list",
             "closure.statistics.project.drilldown.risks.list",
             "closure.statistics.project.drilldown.workflows.list",
-            "closure.statistics.project.drilldown.records.list"
+            "closure.statistics.project.drilldown.records.list",
+            "closure.export.statistics-project-drilldown-tasks-export",
+            "closure.export.statistics-project-drilldown-workflows-export"
           ],
           "contract": "pending",
           "validation": {
@@ -68438,6 +68613,42 @@
                   "缺少本轮复核：idempotency"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.6beb58993fc5",
+              "context": "project tasks export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/api/v3/template/projectUsed",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "project tasks export"
+              ]
+            },
+            {
+              "operationId": "rsq.5d936a06c939",
+              "context": "project tasks export",
+              "role": "write",
+              "method": "POST",
+              "route": "/task/v1/kanbanExport/setFilterCondition",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "project tasks export"
+              ]
+            },
+            {
+              "operationId": "rsq.2feb0c6d5406",
+              "context": "project tasks export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/v4/kanban/exportExcel",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "project tasks export"
+              ]
             }
           ],
           "prerequisites": [
@@ -68528,7 +68739,8 @@
             "closure.project.update",
             "closure.project.remove",
             "closure.project.recycle.restore",
-            "closure.project.recycle.purge"
+            "closure.project.recycle.purge",
+            "closure.export.project-tasks-export"
           ],
           "contract": "pending",
           "validation": {
@@ -75594,6 +75806,66 @@
               "executableCommands": [
                 "project workflow modules list"
               ]
+            },
+            {
+              "operationId": "rsq.5062ee7ea053",
+              "context": "project module tasks export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/v3/taskTemplate/kanbanChildUsedTaskTemplate",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "project module tasks export"
+              ]
+            },
+            {
+              "operationId": "rsq.5d936a06c939",
+              "context": "project module tasks export",
+              "role": "write",
+              "method": "POST",
+              "route": "/task/v1/kanbanExport/setFilterCondition",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "project module tasks export"
+              ]
+            },
+            {
+              "operationId": "rsq.web-v4-kanbanchild-exportexcel",
+              "context": "project module tasks export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/v4/kanbanChild/exportExcel",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "project module tasks export"
+              ]
+            },
+            {
+              "operationId": "rsq.3323af62b712",
+              "context": "project card tasks export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/v3/taskTemplate/kanbanCardUsedTaskTemplate",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "project card tasks export"
+              ]
+            },
+            {
+              "operationId": "rsq.web-v4-kanbancard-exportexcel",
+              "context": "project card tasks export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/v4/kanbanCard/exportExcel",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "project card tasks export"
+              ]
             }
           ],
           "prerequisites": [
@@ -76266,7 +76538,9 @@
             "closure.project.card.tasks.labels.clear",
             "closure.arms.project.workflow.instances.context",
             "closure.arms.project.workflow.instances.list",
-            "closure.arms.project.workflow.instance.children.list"
+            "closure.arms.project.workflow.instance.children.list",
+            "closure.export.project-module-tasks-export",
+            "closure.export.project-card-tasks-export"
           ],
           "contract": "pending",
           "validation": {
@@ -77649,6 +77923,18 @@
                 ],
                 "issues": []
               }
+            },
+            {
+              "operationId": "rsq.11343b5ecbc7",
+              "context": "project schedule export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/api/v3/projectTask/gantt/excelExport",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "project schedule export"
+              ]
             }
           ],
           "prerequisites": [
@@ -77835,7 +78121,8 @@
             "closure.project.dependency.update",
             "closure.project.dependency.remove",
             "closure.project.dependency.replace",
-            "closure.project.schedule.task.update"
+            "closure.project.schedule.task.update",
+            "closure.export.project-schedule-export"
           ],
           "contract": "pending",
           "validation": {
@@ -82236,6 +82523,42 @@
                 ],
                 "issues": []
               }
+            },
+            {
+              "operationId": "rsq.d20cb647092f",
+              "context": "project collection tasks export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/v3/kanbanCollection",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "project collection tasks export"
+              ]
+            },
+            {
+              "operationId": "rsq.86c6cf62374d",
+              "context": "project collection tasks export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/v3/taskTemplate/kanbanCollectionUsedTaskTemplate",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "project collection tasks export"
+              ]
+            },
+            {
+              "operationId": "rsq.web-v4-kanbancollection-exportexcel",
+              "context": "project collection tasks export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/v4/kanbanCollection/exportExcel",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "project collection tasks export"
+              ]
             }
           ],
           "prerequisites": [
@@ -82320,7 +82643,8 @@
             "closure.project-collection.projects.list",
             "closure.project-collection.projects.available",
             "closure.project-collection.project.add",
-            "closure.project-collection.project.remove"
+            "closure.project-collection.project.remove",
+            "closure.export.project-collection-tasks-export"
           ],
           "contract": "pending",
           "validation": {
@@ -106815,6 +107139,66 @@
                   "缺少本轮复核：independent-request"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.d7595b6ad188",
+              "context": "workflow statistics team export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/workflow/teamStatistics/exportExecute",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow statistics team export"
+              ]
+            },
+            {
+              "operationId": "rsq.e05ba413d85a",
+              "context": "workflow statistics team details export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/teamStatistics/totalInfo",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow statistics team details export"
+              ]
+            },
+            {
+              "operationId": "rsq.9359db657ff4",
+              "context": "workflow statistics team details export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/workflow/teamStatistics/exportDetail",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow statistics team details export"
+              ]
+            },
+            {
+              "operationId": "rsq.46990328306e",
+              "context": "workflow statistics efficiency export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/workflow/statistics/exportEfficiency",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow statistics efficiency export"
+              ]
+            },
+            {
+              "operationId": "rsq.60a3f05f697f",
+              "context": "workflow statistics execute export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/workflow/statistics/exportExecute",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow statistics execute export"
+              ]
             }
           ],
           "prerequisites": [
@@ -107057,7 +107441,11 @@
             "closure.workflow.statistics.efficiency.list",
             "closure.workflow.statistics.execute.list",
             "closure.workflow.instance.step.timing",
-            "closure.workflow.instance.step.tasks.list"
+            "closure.workflow.instance.step.tasks.list",
+            "closure.export.workflow-statistics-team-export",
+            "closure.export.workflow-statistics-team-details-export",
+            "closure.export.workflow-statistics-efficiency-export",
+            "closure.export.workflow-statistics-execute-export"
           ],
           "contract": "pending",
           "validation": {
@@ -109521,6 +109909,18 @@
                   "缺少本轮复核：idempotency"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.40b919381185",
+              "context": "appraisal template indicator-sheet export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/performance/template/indicator/export",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "appraisal template indicator-sheet export"
+              ]
             }
           ],
           "prerequisites": [
@@ -109594,7 +109994,8 @@
             "closure.appraisal.content-templates.remove",
             "closure.appraisal.assessments.launch",
             "closure.appraisal.templates.configure",
-            "closure.appraisal.participants.list"
+            "closure.appraisal.participants.list",
+            "closure.export.appraisal-template-indicator-sheet-export"
           ],
           "contract": "pending",
           "validation": {
@@ -110552,6 +110953,18 @@
                   "缺少本轮复核：idempotency"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.9dd8da18c11d",
+              "context": "appraisal result-entry template export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/performance/appraisal/export/entryDownload",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "appraisal result-entry template export"
+              ]
             }
           ],
           "prerequisites": [
@@ -110643,7 +111056,8 @@
             "closure.appraisal.assessments.entry.save",
             "closure.appraisal.assessments.entry.submit",
             "closure.appraisal.result-entry.import.preview",
-            "closure.appraisal.result-entry.import.save"
+            "closure.appraisal.result-entry.import.save",
+            "closure.export.appraisal-result-entry-template-export"
           ],
           "contract": "pending",
           "validation": {
@@ -111245,6 +111659,18 @@
                   "缺少本轮复核：idempotency"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.bf5e9bdf4804",
+              "context": "appraisal assessments export",
+              "role": "write",
+              "method": "POST",
+              "route": "/task/performance/v4/appraisal/export",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "appraisal assessments export"
+              ]
             }
           ],
           "prerequisites": [
@@ -111307,7 +111733,8 @@
             "closure.appraisal.assessments.score.save",
             "closure.appraisal.assessments.score.submit",
             "closure.appraisal.assessments.reviews.list",
-            "closure.appraisal.assessments.reviews.set"
+            "closure.appraisal.assessments.reviews.set",
+            "closure.export.appraisal-assessments-export"
           ],
           "contract": "pending",
           "validation": {
@@ -111479,6 +111906,30 @@
                   "缺少本轮复核：idempotency"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.98f0aecad227",
+              "context": "appraisal statistics monthly details export",
+              "role": "write",
+              "method": "POST",
+              "route": "/task/performance/content/monthlyAppraisalData/detailExport",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "appraisal statistics monthly details export"
+              ]
+            },
+            {
+              "operationId": "rsq.d4b28b5804bd",
+              "context": "appraisal statistics department details export",
+              "role": "write",
+              "method": "POST",
+              "route": "/task/performance/content/departmentAppraisalData/detailExport",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "appraisal statistics department details export"
+              ]
             }
           ],
           "prerequisites": [
@@ -111534,7 +111985,9 @@
             }
           ],
           "workflows": [
-            "closure.appraisal.assessments.managed"
+            "closure.appraisal.assessments.managed",
+            "closure.export.appraisal-statistics-monthly-details-export",
+            "closure.export.appraisal-statistics-department-details-export"
           ],
           "contract": "pending",
           "validation": {
@@ -112154,6 +112607,30 @@
                   "缺少本轮复核：independent-request"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.82ef56128756",
+              "context": "appraisal salary reports export",
+              "role": "write",
+              "method": "POST",
+              "route": "/task/performance/salaryReport/export",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "appraisal salary reports export"
+              ]
+            },
+            {
+              "operationId": "rsq.2a660c28110c",
+              "context": "appraisal salary template export",
+              "role": "write",
+              "method": "POST",
+              "route": "/task/performance/salaryReport/template/export",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "appraisal salary template export"
+              ]
             }
           ],
           "prerequisites": [
@@ -112278,7 +112755,9 @@
             "closure.appraisal.salary.cells.previous",
             "closure.appraisal.salary.cells.copy-previous",
             "closure.appraisal.salary.cells.import.preview",
-            "closure.appraisal.salary.cells.import.save"
+            "closure.appraisal.salary.cells.import.save",
+            "closure.export.appraisal-salary-reports-export",
+            "closure.export.appraisal-salary-template-export"
           ],
           "contract": "pending",
           "validation": {
@@ -116688,6 +117167,18 @@
                   "缺少本轮复核：idempotency"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.c05c65202f7f",
+              "context": "appraisal reports export",
+              "role": "write",
+              "method": "POST",
+              "route": "/task/performance/appraisal/report/export",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "appraisal reports export"
+              ]
             }
           ],
           "prerequisites": [
@@ -116874,7 +117365,8 @@
           "workflows": [
             "closure.appraisal.reports.context",
             "closure.appraisal.reports.list",
-            "closure.appraisal.reports.inspect"
+            "closure.appraisal.reports.inspect",
+            "closure.export.appraisal-reports-export"
           ],
           "contract": "pending",
           "validation": {
@@ -117672,6 +118164,18 @@
                   "缺少本轮复核：independent-request"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.0bebad8d2cfd",
+              "context": "okr cycles objectives export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/okr/export/objective",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "okr cycles objectives export"
+              ]
             }
           ],
           "prerequisites": [
@@ -117766,7 +118270,8 @@
             "closure.okr.objectives.remove",
             "closure.okr.objectives.results.add",
             "closure.okr.objectives.results.rename",
-            "closure.okr.objectives.results.remove"
+            "closure.okr.objectives.results.remove",
+            "closure.export.okr-cycles-objectives-export"
           ],
           "contract": "pending",
           "validation": {
@@ -119390,6 +119895,42 @@
                   "缺少本轮复核：independent-request"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.707e363e4dfc",
+              "context": "okr indicator data export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/okr/export/optional/indicator/list",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "okr indicator data export"
+              ]
+            },
+            {
+              "operationId": "rsq.2f8783c3e6c5",
+              "context": "okr indicator data export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/okr/export/indicator/data",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "okr indicator data export"
+              ]
+            },
+            {
+              "operationId": "rsq.fe8b043f1748",
+              "context": "okr indicator records export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/okr/indicator/database/export",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "okr indicator records export"
+              ]
             }
           ],
           "prerequisites": [
@@ -119697,7 +120238,9 @@
             "business.okr.indicator.records",
             "business.okr.indicator.record-create",
             "business.okr.indicator.record-update",
-            "business.okr.indicator.record-remove"
+            "business.okr.indicator.record-remove",
+            "closure.export.okr-indicator-data-export",
+            "closure.export.okr-indicator-records-export"
           ],
           "contract": "pending",
           "validation": {
@@ -120897,6 +121440,42 @@
                   "缺少本轮复核：independent-request"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.49a44d9c0422",
+              "context": "okr statistics report export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/okr/export/statistics/reportForms",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "okr statistics report export"
+              ]
+            },
+            {
+              "operationId": "rsq.a1d392d4b35f",
+              "context": "okr statistics report detail export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/okr/export/statistics/reportForms/item",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "okr statistics report detail export"
+              ]
+            },
+            {
+              "operationId": "rsq.4ffe8f6c62c8",
+              "context": "okr statistics chart detail export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/okr/export/statistics/data/item",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "okr statistics chart detail export"
+              ]
             }
           ],
           "prerequisites": [
@@ -121085,7 +121664,10 @@
             "closure.okr.statistics.report.get",
             "closure.okr.statistics.report.details",
             "closure.okr.statistics.overview.get",
-            "closure.okr.statistics.overview.recent"
+            "closure.okr.statistics.overview.recent",
+            "closure.export.okr-statistics-report-export",
+            "closure.export.okr-statistics-report-detail-export",
+            "closure.export.okr-statistics-chart-detail-export"
           ],
           "contract": "pending",
           "validation": {
@@ -124599,6 +125181,18 @@
                   "缺少本轮复核：independent-request"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.785a7d7ce7e4",
+              "context": "action tasks export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/okr/action/task/export",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "action tasks export"
+              ]
             }
           ],
           "prerequisites": [
@@ -124679,7 +125273,8 @@
           "workflows": [
             "closure.action.group.count",
             "closure.action.group.tasks",
-            "closure.action.task.create"
+            "closure.action.task.create",
+            "closure.export.action-tasks-export"
           ],
           "contract": "pending",
           "validation": {
@@ -128091,6 +128686,18 @@
                   "缺少本轮复核：independent-request"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.21ce03363cbb",
+              "context": "replay collection entries export",
+              "role": "write",
+              "method": "POST",
+              "route": "/task/review/replay/collect/export",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "replay collection entries export"
+              ]
             }
           ],
           "prerequisites": [
@@ -128441,7 +129048,8 @@
             "closure.replay.sidebar.reorder",
             "closure.replay.sidebar.star.set",
             "closure.replay.collection.order.context",
-            "closure.replay.collection.order.set"
+            "closure.replay.collection.order.set",
+            "closure.export.replay-collection-entries-export"
           ],
           "contract": "pending",
           "validation": {
@@ -129532,6 +130140,18 @@
                   "缺少本轮复核：independent-request"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.de7bf533712b",
+              "context": "replay entry export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/review/replay/export",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "replay entry export"
+              ]
             }
           ],
           "prerequisites": [
@@ -129702,7 +130322,8 @@
             "closure.replay.report.approve",
             "closure.replay.report.reject",
             "closure.replay.report.reopen",
-            "closure.replay.report.score.evaluate"
+            "closure.replay.report.score.evaluate",
+            "closure.export.replay-entry-export"
           ],
           "contract": "pending",
           "validation": {
@@ -133196,6 +133817,18 @@
                   "缺少本轮复核：independent-request"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.web-review-stat-report-export",
+              "context": "replay statistics export",
+              "role": "write",
+              "method": "POST",
+              "route": "/task/review/stat/report/export",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "replay statistics export"
+              ]
             }
           ],
           "prerequisites": [
@@ -133445,7 +134078,8 @@
             "closure.replay.statistics.report",
             "closure.replay.statistics.rankings",
             "closure.replay.statistics.cell.get",
-            "closure.replay.statistics.remind"
+            "closure.replay.statistics.remind",
+            "closure.export.replay-statistics-export"
           ],
           "contract": "pending",
           "validation": {
@@ -156667,6 +157301,18 @@
                   "缺少本轮复核：independent-request"
                 ]
               }
+            },
+            {
+              "operationId": "rsq.83e6ffcc17a4",
+              "context": "ai usage export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/okr/export/ai/record",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "ai usage export"
+              ]
             }
           ],
           "prerequisites": [
@@ -156871,7 +157517,8 @@
             "closure.ai.api-key.permissions",
             "closure.ai.api-key.list",
             "closure.ai.api-key.create",
-            "closure.ai.api-key.revoke"
+            "closure.ai.api-key.revoke",
+            "closure.export.ai-usage-export"
           ],
           "contract": "pending",
           "validation": {
@@ -215079,6 +215726,74 @@
       ],
       "issues": [
         "本地契约验证，端到端证据单独记录。"
+      ]
+    },
+    "rsq.web-review-stat-report-export": {
+      "status": "pending",
+      "verifiedChecks": [],
+      "evidenceStatus": {
+        "caller": "pending",
+        "independent-request": "pending"
+      },
+      "missingChecks": [
+        "independent-request"
+      ],
+      "missingEvidence": [
+        "independent-request"
+      ],
+      "issues": [
+        "网页调用和服务端文件接收分别核对。"
+      ]
+    },
+    "rsq.web-v4-kanbanchild-exportexcel": {
+      "status": "pending",
+      "verifiedChecks": [],
+      "evidenceStatus": {
+        "caller": "pending",
+        "independent-request": "pending"
+      },
+      "missingChecks": [
+        "independent-request"
+      ],
+      "missingEvidence": [
+        "independent-request"
+      ],
+      "issues": [
+        "网页调用和服务端文件接收分别核对。"
+      ]
+    },
+    "rsq.web-v4-kanbancard-exportexcel": {
+      "status": "pending",
+      "verifiedChecks": [],
+      "evidenceStatus": {
+        "caller": "pending",
+        "independent-request": "pending"
+      },
+      "missingChecks": [
+        "independent-request"
+      ],
+      "missingEvidence": [
+        "independent-request"
+      ],
+      "issues": [
+        "网页调用和服务端文件接收分别核对。"
+      ]
+    },
+    "rsq.web-v4-kanbancollection-exportexcel": {
+      "status": "pending",
+      "verifiedChecks": [],
+      "evidenceStatus": {
+        "caller": "pending",
+        "independent-request": "pending"
+      },
+      "missingChecks": [
+        "independent-request"
+      ],
+      "missingEvidence": [
+        "independent-request"
+      ],
+      "issues": [
+        "网页调用和服务端文件接收分别核对。"
       ]
     }
   }

@@ -75,13 +75,15 @@ export function prepareWorkflowStatistics(kind: string, input: JsonObject, resul
   if (input.efficiencyUserId !== undefined && !available.some(user => same(user.id, input.efficiencyUserId))) throw new RsqError('FORBIDDEN', '执行人不在流程应用的实际可见范围内。', 4)
   if (input.stepId !== undefined && !steps(results).some(step => same(step.id, input.stepId))) throw new RsqError('FORBIDDEN', '步骤不属于所选流程应用的当前步骤目录。', 4)
   if (kind === 'workflow-statistics-indicator') return { query: { applicationId: input.applicationId } }
-  if (!['workflow-statistics-efficiency', 'workflow-statistics-execute'].includes(kind)) throw new RsqError('INVALID_CONTRACT', '未知流程统计上下文适配。', 6)
-  const keys = kind.endsWith('-efficiency') ? efficiencyKeys : executeKeys
+  const exporting = kind.endsWith('-export')
+  const statistic = exporting ? kind.slice(0, -'-export'.length) : kind
+  if (!['workflow-statistics-efficiency', 'workflow-statistics-execute'].includes(statistic)) throw new RsqError('INVALID_CONTRACT', '未知流程统计上下文适配。', 6)
+  const keys = statistic.endsWith('-efficiency') ? efficiencyKeys : executeKeys
   if (input.sortKey !== undefined && !keys.includes(String(input.sortKey))) invalid('排序字段不属于当前流程统计表。')
-  const query: JsonObject = { applicationId: input.applicationId, pageNum: input.pageNum ?? 1, pageSize: input.pageSize ?? 50 }
+  const query: JsonObject = { applicationId: input.applicationId, ...(!exporting && { pageNum: input.pageNum ?? 1, pageSize: input.pageSize ?? 50 }) }
   for (const key of ['sortKey', 'sortValue', 'efficiencyUserId', 'stepId']) if (input[key] !== undefined) query[key] = input[key]
   for (const key of ['startDate', 'endDate']) if (input[key] !== undefined) query[key] = String(input[key]).replaceAll('-', '.')
-  results.prepared = { kind: kind.endsWith('-efficiency') ? 'efficiency' : 'execute', query }
+  results.prepared = { kind: statistic.endsWith('-efficiency') ? 'efficiency' : 'execute', query }
   return { query }
 }
 function page(input: JsonObject, results: JsonObject) {

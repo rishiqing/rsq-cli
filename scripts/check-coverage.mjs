@@ -9,6 +9,7 @@ import { validateReplayCollectionConfigWorkflow } from '../dist/replay-collectio
 import { validateProjectExcelWorkflow } from '../dist/project-excel-import.js'
 import { validateProjectImportWorkflow } from '../dist/project-import.js'
 import { builtinCommands } from '../dist/builtins.js'
+import { isWebExportAdapter } from '../dist/web-export.js'
 import { validateAiConfigWorkflow } from '../dist/ai-config.js'
 import { validateOkrPerformanceWorkflow } from '../dist/okr-performance.js'
 import { validateOkrIndicatorWorkflow } from '../dist/okr-indicators.js'
@@ -261,6 +262,8 @@ export function auditWorkflows(definition, catalog, businessScope) {
           'workflow-statistics-indicator': ['GET', '/task/workflow/statistics/indicator', ['user', 'source', 'steps', 'directory', 'range']],
           'workflow-statistics-efficiency': ['GET', '/task/workflow/statistics/efficiency', ['user', 'source', 'steps', 'directory', 'range']],
           'workflow-statistics-execute': ['GET', '/task/workflow/statistics/execute', ['user', 'source', 'steps', 'directory', 'range']],
+          'workflow-statistics-efficiency-export': ['GET', '/task/workflow/statistics/exportEfficiency', ['user', 'source', 'steps', 'directory', 'range']],
+          'workflow-statistics-execute-export': ['GET', '/task/workflow/statistics/exportExecute', ['user', 'source', 'steps', 'directory', 'range']],
           'workflow-template-apply': ['POST', '/task/workflow/application', ['templates', 'groups', 'covers']],
           'workflow-application-clone': ['POST', '/task/workflow/application/copy', ['source', 'groups']],
           'workflow-application-rename': ['PUT', '/task/workflow/application', ['source']],
@@ -653,7 +656,7 @@ export function auditWorkflows(definition, catalog, businessScope) {
           'project-context-template-verify-catalogue': ['GET','/task/v4/template/detailList',['identity','created','template']],
         }
         const projectContextRoute = projectContextRoutes[step.prepare],projectContext = projectContextRoute?.[0] === op?.method && projectContextRoute?.[1] === op?.route && projectContextRoute[2].every(id => steps.has(id))
-        if (!workspaceTask && !archive && !datasheet && !statistics && !cooperation && !action && !collection && !workflow && !okr && !deliverable && !library && !replay && !replayStatistics && !replayCreatedTask && !replayOkr && !replayRelations && !application && !task && !execution && !notice && !contact && !taskHours && !efficiency && !search && !projectContext) issues.push('invalid workflow adapter: ' + flow.id)
+        if (!isWebExportAdapter(step.prepare, op, steps) && !workspaceTask && !archive && !datasheet && !statistics && !cooperation && !action && !collection && !workflow && !okr && !deliverable && !library && !replay && !replayStatistics && !replayCreatedTask && !replayOkr && !replayRelations && !application && !task && !execution && !notice && !contact && !taskHours && !efficiency && !search && !projectContext) issues.push('invalid workflow adapter: ' + flow.id)
         steps.add('prepared')
       }
       if (!step.id || steps.has(step.id)) issues.push('duplicate workflow step: ' + flow.id)

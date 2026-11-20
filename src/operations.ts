@@ -20,7 +20,7 @@ export type Operation = {
   service: 'account' | 'wecom' | 'site'
   auth: 'token' | 'cookie' | 'both' | 'none'; methods: LoginMethod[]
   effect: 'read' | 'write' | 'destructive'; idempotency: 'idempotent' | 'unknown'
-  response: 'json' | 'json-or-empty' | 'business' | 'empty' | 'text' | 'binary' | 'ndjson' | 'sse'; responseSchema: Schema
+  response: 'json' | 'json-or-empty' | 'business' | 'business-or-empty' | 'empty' | 'text' | 'binary' | 'ndjson' | 'sse'; responseSchema: Schema
   encoding?: 'json' | 'form' | 'multipart' | 'text'
   queryArray?: 'brackets' | 'repeat'
   fields: Field[]; inputSchema: Schema; defaults?: JsonObject; examples: string[]
@@ -306,13 +306,14 @@ export async function runOperation(ctx: Context, op: Operation, raw: unknown, se
   }
   if (response.status === 204 || op.method === 'HEAD') return null
   let value: unknown
-  if (op.response === 'empty' || op.response === 'json-or-empty') {
+  if (op.response === 'empty' || op.response === 'json-or-empty' || op.response === 'business-or-empty') {
     const text = await response.text()
     try { value = text.trim() ? parseJson(text) : null } catch { throw new RsqError('UNEXPECTED_RESPONSE', '服务返回了无法解析的响应。', 5) }
   } else if (op.response === 'text') value = await response.text()
   else value = await responseJson(response)
   const data = asObject(value)
-  if (data.success === false || data.loginStatus === 'fail' || (data.errcode !== undefined && data.errcode !== 0 && data.errcode !== '0') || (op.response === 'business' && data.code !== undefined && ![0, '0', 200, '200', 200000, '200000'].includes(data.code as never))) throw businessError(data, undefined, errorDomain)
+  const businessResponse = op.response === 'business' || op.response === 'business-or-empty'
+  if (data.success === false || data.loginStatus === 'fail' || (data.errcode !== undefined && data.errcode !== 0 && data.errcode !== '0') || (businessResponse && data.code !== undefined && ![0, '0', 200, '200', 200000, '200000'].includes(data.code as never))) throw businessError(data, undefined, errorDomain)
   if (!ajv.validate(op.responseSchema as AnySchema, value)) throw new RsqError('RESPONSE_SCHEMA_MISMATCH', '服务响应与已核对契约不符；写操作请先核对结果，勿自动重试。', 5, {
     issues: ajv.errors?.map(error => ({ path: error.instancePath, keyword: error.keyword, message: error.message })),
   })

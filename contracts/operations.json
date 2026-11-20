@@ -6369,24 +6369,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "json",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "additionalProperties": true
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -6396,164 +6386,200 @@
             "properties": {
               "type": {
                 "type": "string",
-                "description": "类型：my|person|dept|all|group",
-                "pattern": "^(?:my|person|dept|all|group)$",
                 "enum": [
                   "my",
                   "person",
                   "dept",
-                  "all",
-                  "group"
-                ]
+                  "group",
+                  "all"
+                ],
+                "description": "行动侧栏范围。"
               },
               "typeId": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "行动查询类型相关id：userId或者deptId"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "人员、部门、小组范围对应的 ID。",
+                "pattern": "^[1-9][0-9]*$"
               },
               "viewId": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "视图id"
-              },
-              "startDate": {
                 "type": "string",
-                "description": "开始日期"
-              },
-              "endDate": {
-                "type": "string",
-                "description": "结束日期"
-              },
-              "filterDeptType": {
-                "type": "string",
-                "description": "筛选部门类型：dept|deptAndChildDept",
-                "pattern": "^(?:dept|deptAndChildDept)$",
-                "enum": [
-                  "dept",
-                  "deptAndChildDept"
-                ]
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "行动视图 ID。省略时采用当前唯一选中视图。",
+                "pattern": "^[1-9][0-9]*$"
               },
               "range": {
                 "type": "string",
-                "description": "导出范围：view|temp",
-                "pattern": "view|temp"
+                "enum": [
+                  "view",
+                  "temp"
+                ],
+                "description": "按视图或当前临时任务导出。"
+              },
+              "startDate": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 10,
+                "description": "视图开始日期，格式 YYYY.MM.DD。",
+                "pattern": "^\\d{4}\\.\\d{2}\\.\\d{2}$"
+              },
+              "endDate": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 10,
+                "description": "视图结束日期，格式 YYYY.MM.DD。",
+                "pattern": "^\\d{4}\\.\\d{2}\\.\\d{2}$"
+              },
+              "filterMyType": {
+                "type": "string",
+                "enum": [
+                  "executive",
+                  "participant",
+                  "create"
+                ],
+                "description": "我的行动成员角色。"
+              },
+              "filterDeptType": {
+                "type": "string",
+                "enum": [
+                  "dept",
+                  "deptAndChildDept"
+                ],
+                "description": "部门筛选是否含下级部门。"
               }
             },
-            "additionalProperties": false,
             "required": [
               "type",
               "viewId",
+              "range",
               "startDate",
-              "endDate",
-              "range"
-            ]
+              "endDate"
+            ],
+            "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "query"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "action task export get",
-      "description": "任务导出",
+      "description": "导出行动视图任务或临时任务",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"query\":{\"type\":\"my\",\"viewId\":1,\"startDate\":\"2026.11.07\",\"endDate\":\"2026.11.07\",\"range\":\"view\"}}' | rsq action task export get --input - --dry-run"
+        "rsq schema \"action tasks export\""
       ],
       "fields": [
         {
+          "name": "type",
           "option": "type",
           "in": "query",
-          "name": "type",
           "schema": {
             "type": "string",
-            "description": "类型：my|person|dept|all|group",
-            "pattern": "^(?:my|person|dept|all|group)$",
             "enum": [
               "my",
               "person",
               "dept",
-              "all",
-              "group"
-            ]
+              "group",
+              "all"
+            ],
+            "description": "行动侧栏范围。"
           }
         },
         {
+          "name": "typeId",
           "option": "type-id",
           "in": "query",
-          "name": "typeId",
           "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "行动查询类型相关id：userId或者deptId"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "人员、部门、小组范围对应的 ID。",
+            "pattern": "^[1-9][0-9]*$"
           }
         },
         {
+          "name": "viewId",
           "option": "view-id",
           "in": "query",
-          "name": "viewId",
           "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "视图id"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "行动视图 ID。省略时采用当前唯一选中视图。",
+            "pattern": "^[1-9][0-9]*$"
           }
         },
         {
+          "name": "range",
+          "option": "range",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "view",
+              "temp"
+            ],
+            "description": "按视图或当前临时任务导出。"
+          }
+        },
+        {
+          "name": "startDate",
           "option": "start-date",
           "in": "query",
-          "name": "startDate",
           "schema": {
             "type": "string",
-            "description": "开始日期"
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "视图开始日期，格式 YYYY.MM.DD。",
+            "pattern": "^\\d{4}\\.\\d{2}\\.\\d{2}$"
           }
         },
         {
+          "name": "endDate",
           "option": "end-date",
           "in": "query",
-          "name": "endDate",
           "schema": {
             "type": "string",
-            "description": "结束日期"
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "视图结束日期，格式 YYYY.MM.DD。",
+            "pattern": "^\\d{4}\\.\\d{2}\\.\\d{2}$"
           }
         },
         {
-          "option": "filter-dept-type",
+          "name": "filterMyType",
+          "option": "filter-my-type",
           "in": "query",
-          "name": "filterDeptType",
           "schema": {
             "type": "string",
-            "description": "筛选部门类型：dept|deptAndChildDept",
-            "pattern": "^(?:dept|deptAndChildDept)$",
+            "enum": [
+              "executive",
+              "participant",
+              "create"
+            ],
+            "description": "我的行动成员角色。"
+          }
+        },
+        {
+          "name": "filterDeptType",
+          "option": "filter-dept-type",
+          "in": "query",
+          "schema": {
+            "type": "string",
             "enum": [
               "dept",
               "deptAndChildDept"
-            ]
-          }
-        },
-        {
-          "option": "range",
-          "in": "query",
-          "name": "range",
-          "schema": {
-            "type": "string",
-            "description": "导出范围：view|temp",
-            "pattern": "view|temp"
+            ],
+            "description": "部门筛选是否含下级部门。"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "action tasks export"
       ]
     },
     {
@@ -23378,54 +23404,63 @@
       ],
       "effect": "write",
       "idempotency": "unknown",
-      "response": "business",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": [
-              "integer",
-              "string"
-            ]
-          },
-          "msg": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "data": {
-            "type": "null"
-          }
-        },
-        "required": [
-          "code",
-          "data"
-        ],
-        "additionalProperties": true
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
         "properties": {
           "body": {
             "type": "object",
-            "additionalProperties": true
+            "properties": {
+              "indicatorId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "从绩效详情的系统指标取得的指标项 ID。",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            },
+            "required": [
+              "indicatorId"
+            ],
+            "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "body"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "appraisal content department-appraisal-data-detail-export create",
-      "description": "departmentAppraisalDataDetailExport",
+      "description": "导出绩效系统指标的部门考核数据明细",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"body\":{}}' | rsq appraisal content department-appraisal-data-detail-export create --input - --dry-run"
+        "rsq schema \"appraisal statistics department details export\""
       ],
-      "fields": []
+      "fields": [
+        {
+          "name": "indicatorId",
+          "option": "indicator-id",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从绩效详情的系统指标取得的指标项 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        }
+      ],
+      "requiresBusinessContext": [
+        "appraisal statistics department details export"
+      ]
     },
     {
       "id": "rsq.5eec427fa424",
@@ -27433,54 +27468,63 @@
       ],
       "effect": "write",
       "idempotency": "unknown",
-      "response": "business",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": [
-              "integer",
-              "string"
-            ]
-          },
-          "msg": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "data": {
-            "type": "null"
-          }
-        },
-        "required": [
-          "code",
-          "data"
-        ],
-        "additionalProperties": true
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
         "properties": {
           "body": {
             "type": "object",
-            "additionalProperties": true
+            "properties": {
+              "indicatorId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "从绩效详情的系统指标取得的指标项 ID。",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            },
+            "required": [
+              "indicatorId"
+            ],
+            "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "body"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "appraisal content monthly-appraisal-data-detail-export create",
-      "description": "monthlyAppraisalDataDetailExport",
+      "description": "导出绩效系统指标的月度考核数据明细",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"body\":{}}' | rsq appraisal content monthly-appraisal-data-detail-export create --input - --dry-run"
+        "rsq schema \"appraisal statistics monthly details export\""
       ],
-      "fields": []
+      "fields": [
+        {
+          "name": "indicatorId",
+          "option": "indicator-id",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从绩效详情的系统指标取得的指标项 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        }
+      ],
+      "requiresBusinessContext": [
+        "appraisal statistics monthly details export"
+      ]
     },
     {
       "id": "rsq.b4299fa06c7d",
@@ -32561,31 +32605,12 @@
       ],
       "effect": "write",
       "idempotency": "unknown",
-      "response": "business",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": [
-              "integer",
-              "string"
-            ]
-          },
-          "msg": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "data": {
-            "type": "null"
-          }
-        },
-        "required": [
-          "code",
-          "data"
-        ],
-        "additionalProperties": true
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -32595,113 +32620,99 @@
             "properties": {
               "period": {
                 "type": "string",
-                "description": "导出的考核周期"
-              },
-              "userIds": {
-                "type": "string",
-                "description": "导出的用户id 这个校验在id特别多的时候会栈溢出, 先注释调"
-              },
-              "deptId": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "导出的部门id",
-                "minimum": 0
+                "minLength": 1,
+                "maxLength": 32,
+                "description": "网页考核周期代码。",
+                "pattern": "^\\d{4}(?:-\\d{1,2}|-[A-Za-z0-9]{1,12})?$"
               },
               "isExportContent": {
                 "type": "boolean",
-                "description": "是否导出考核内容"
+                "description": "包含考核内容。"
               },
-              "startDate": {
+              "userIds": {
                 "type": "string",
-                "description": "自定义周期开始时间（yyyy.MM.dd）"
+                "minLength": 1,
+                "maxLength": 20000,
+                "description": "按可见成员 ID 筛选，逗号分隔。",
+                "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
               },
-              "endDate": {
+              "deptId": {
                 "type": "string",
-                "description": "自定义周期结束时间（yyyy.MM.dd）"
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "按部门筛选考核对象。",
+                "pattern": "^[1-9][0-9]*$"
               }
             },
-            "additionalProperties": false,
             "required": [
-              "period"
-            ]
+              "period",
+              "isExportContent"
+            ],
+            "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "body"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "appraisal export create",
-      "description": "异步导出",
+      "description": "导出考核管理列表和所选考核内容",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"body\":{\"period\":\"rsq-cli-example\"}}' | rsq appraisal export create --input - --dry-run"
+        "rsq schema \"appraisal assessments export\""
       ],
       "fields": [
         {
+          "name": "period",
           "option": "period",
           "in": "body",
-          "name": "period",
           "schema": {
             "type": "string",
-            "description": "导出的考核周期"
+            "minLength": 1,
+            "maxLength": 32,
+            "description": "网页考核周期代码。",
+            "pattern": "^\\d{4}(?:-\\d{1,2}|-[A-Za-z0-9]{1,12})?$"
           }
         },
         {
-          "option": "user-ids",
-          "in": "body",
-          "name": "userIds",
-          "schema": {
-            "type": "string",
-            "description": "导出的用户id 这个校验在id特别多的时候会栈溢出, 先注释调"
-          }
-        },
-        {
-          "option": "dept-id",
-          "in": "body",
-          "name": "deptId",
-          "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "导出的部门id",
-            "minimum": 0
-          }
-        },
-        {
+          "name": "isExportContent",
           "option": "is-export-content",
           "in": "body",
-          "name": "isExportContent",
           "schema": {
             "type": "boolean",
-            "description": "是否导出考核内容"
+            "description": "包含考核内容。"
           }
         },
         {
-          "option": "start-date",
+          "name": "userIds",
+          "option": "user-ids",
           "in": "body",
-          "name": "startDate",
           "schema": {
             "type": "string",
-            "description": "自定义周期开始时间（yyyy.MM.dd）"
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
           }
         },
         {
-          "option": "end-date",
+          "name": "deptId",
+          "option": "dept-id",
           "in": "body",
-          "name": "endDate",
           "schema": {
             "type": "string",
-            "description": "自定义周期结束时间（yyyy.MM.dd）"
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "按部门筛选考核对象。",
+            "pattern": "^[1-9][0-9]*$"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "appraisal assessments export"
       ]
     },
     {
@@ -32718,33 +32729,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "business",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": [
-              "integer",
-              "string"
-            ]
-          },
-          "msg": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "data": {
-            "type": "null"
-          }
-        },
-        "required": [
-          "code",
-          "data"
-        ],
-        "additionalProperties": true
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -32753,13 +32745,16 @@
       },
       "review": "reviewed",
       "command": "appraisal export entry-download get",
-      "description": "导出结果值录入模板",
+      "description": "生成绩效结果值批量录入模板",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "rsq appraisal export entry-download get --dry-run"
+        "rsq schema \"appraisal result-entry template export\""
       ],
-      "fields": []
+      "fields": [],
+      "requiresBusinessContext": [
+        "appraisal result-entry template export"
+      ]
     },
     {
       "id": "rsq.91fd8ecd2272",
@@ -42224,33 +42219,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "business",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": [
-              "integer",
-              "string"
-            ]
-          },
-          "msg": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "data": {
-            "type": "null"
-          }
-        },
-        "required": [
-          "code",
-          "data"
-        ],
-        "additionalProperties": true
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -42258,175 +42234,243 @@
           "body": {
             "type": "object",
             "properties": {
-              "columnType": {
-                "type": "string",
-                "description": "周期类型",
-                "pattern": "^(monthly|quarter|semester|yearly)$"
-              },
               "startDate": {
                 "type": "string",
-                "description": "开始日期"
+                "minLength": 1,
+                "maxLength": 10,
+                "description": "网页开始日期。",
+                "pattern": "^\\d{4}\\.\\d{2}\\.\\d{2}$"
               },
               "endDate": {
                 "type": "string",
-                "description": "结束日期"
+                "minLength": 1,
+                "maxLength": 10,
+                "description": "网页结束日期。",
+                "pattern": "^\\d{4}\\.\\d{2}\\.\\d{2}$"
               },
-              "sortKey": {
+              "columnType": {
                 "type": "string",
-                "description": "排序key"
-              },
-              "sortValue": {
-                "type": "string",
-                "description": "asc|desc"
-              },
-              "filterUser": {
-                "type": "string",
-                "description": "筛选的用户id",
-                "pattern": "^[1-9]\\d*(,[1-9]\\d*)*$"
-              },
-              "filterDept": {
-                "type": "string",
-                "description": "筛选的部门",
-                "pattern": "^[1-9]\\d*(,[1-9]\\d*)*$"
+                "enum": [
+                  "monthly",
+                  "quarter",
+                  "semester",
+                  "yearly"
+                ],
+                "description": "网页报表的周期类型。"
               },
               "total": {
                 "type": "string",
-                "description": "合计方式",
-                "pattern": "^(cumulativeScore|averageScoreWithScoreCycle|averageScoreAllCycle)$"
+                "enum": [
+                  "averageScoreWithScoreCycle",
+                  "averageScoreAllCycle",
+                  "cumulativeScore"
+                ],
+                "description": "报表总计方式。"
               },
-              "max": {
-                "type": "integer",
-                "description": "每页最大"
+              "filterUser": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20000,
+                "description": "绩效可见成员 ID。",
+                "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
               },
-              "offset": {
-                "type": "integer",
-                "description": "第几页"
+              "filterDept": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20000,
+                "description": "绩效可见部门 ID。",
+                "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+              },
+              "sortKey": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 400,
+                "description": "网页统计表中的排序字段。"
+              },
+              "sortValue": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ],
+                "description": "排序方向。"
               },
               "isShowLevel": {
                 "type": "boolean",
-                "description": "是否显示等级（导出需要）"
+                "description": "同时导出等级。"
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100,
+                "description": "按当前报表页大小。"
+              },
+              "offset": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1000000,
+                "description": "按当前报表页码。"
               }
             },
+            "required": [
+              "startDate",
+              "endDate",
+              "columnType",
+              "total",
+              "isShowLevel"
+            ],
             "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "body"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "appraisal report export get",
-      "description": "导出",
+      "description": "导出绩效统计报表",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"body\":{}}' | rsq appraisal report export get --input - --dry-run"
+        "rsq schema \"appraisal reports export\""
       ],
       "fields": [
         {
-          "option": "column-type",
-          "in": "body",
-          "name": "columnType",
-          "schema": {
-            "type": "string",
-            "description": "周期类型",
-            "pattern": "^(monthly|quarter|semester|yearly)$"
-          }
-        },
-        {
+          "name": "startDate",
           "option": "start-date",
           "in": "body",
-          "name": "startDate",
           "schema": {
             "type": "string",
-            "description": "开始日期"
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "网页开始日期。",
+            "pattern": "^\\d{4}\\.\\d{2}\\.\\d{2}$"
           }
         },
         {
+          "name": "endDate",
           "option": "end-date",
           "in": "body",
-          "name": "endDate",
           "schema": {
             "type": "string",
-            "description": "结束日期"
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "网页结束日期。",
+            "pattern": "^\\d{4}\\.\\d{2}\\.\\d{2}$"
           }
         },
         {
-          "option": "sort-key",
+          "name": "columnType",
+          "option": "column-type",
           "in": "body",
-          "name": "sortKey",
           "schema": {
             "type": "string",
-            "description": "排序key"
+            "enum": [
+              "monthly",
+              "quarter",
+              "semester",
+              "yearly"
+            ],
+            "description": "网页报表的周期类型。"
           }
         },
         {
-          "option": "sort-value",
-          "in": "body",
-          "name": "sortValue",
-          "schema": {
-            "type": "string",
-            "description": "asc|desc"
-          }
-        },
-        {
-          "option": "filter-user",
-          "in": "body",
-          "name": "filterUser",
-          "schema": {
-            "type": "string",
-            "description": "筛选的用户id",
-            "pattern": "^[1-9]\\d*(,[1-9]\\d*)*$"
-          }
-        },
-        {
-          "option": "filter-dept",
-          "in": "body",
-          "name": "filterDept",
-          "schema": {
-            "type": "string",
-            "description": "筛选的部门",
-            "pattern": "^[1-9]\\d*(,[1-9]\\d*)*$"
-          }
-        },
-        {
+          "name": "total",
           "option": "total",
           "in": "body",
-          "name": "total",
           "schema": {
             "type": "string",
-            "description": "合计方式",
-            "pattern": "^(cumulativeScore|averageScoreWithScoreCycle|averageScoreAllCycle)$"
+            "enum": [
+              "averageScoreWithScoreCycle",
+              "averageScoreAllCycle",
+              "cumulativeScore"
+            ],
+            "description": "报表总计方式。"
           }
         },
         {
-          "option": "max",
+          "name": "filterUser",
+          "option": "filter-user",
           "in": "body",
-          "name": "max",
           "schema": {
-            "type": "integer",
-            "description": "每页最大"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "绩效可见成员 ID。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
           }
         },
         {
-          "option": "offset",
+          "name": "filterDept",
+          "option": "filter-dept",
           "in": "body",
-          "name": "offset",
           "schema": {
-            "type": "integer",
-            "description": "第几页"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "绩效可见部门 ID。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
           }
         },
         {
+          "name": "sortKey",
+          "option": "sort-key",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          }
+        },
+        {
+          "name": "sortValue",
+          "option": "sort-value",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
+          }
+        },
+        {
+          "name": "isShowLevel",
           "option": "is-show-level",
           "in": "body",
-          "name": "isShowLevel",
           "schema": {
             "type": "boolean",
-            "description": "是否显示等级（导出需要）"
+            "description": "同时导出等级。"
+          }
+        },
+        {
+          "name": "max",
+          "option": "max",
+          "in": "body",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "按当前报表页大小。"
+          }
+        },
+        {
+          "name": "offset",
+          "option": "offset",
+          "in": "body",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000,
+            "description": "按当前报表页码。"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "appraisal reports export"
       ]
     },
     {
@@ -47945,33 +47989,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "business",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": [
-              "integer",
-              "string"
-            ]
-          },
-          "msg": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "data": {
-            "type": "null"
-          }
-        },
-        "required": [
-          "code",
-          "data"
-        ],
-        "additionalProperties": true
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -47980,45 +48005,94 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160,
+                "description": "从 appraisal salary reports list 取得的报表 ID。",
+                "pattern": "^[a-zA-Z0-9_-]+$"
               },
               "period": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 7,
+                "description": "网页薪酬周期代码，如 2026-11。",
+                "pattern": "^\\d{4}(?:-\\d{2})?$"
+              },
+              "periodType": {
+                "type": "string",
+                "enum": [
+                  "monthly",
+                  "quarter",
+                  "semiAnnual",
+                  "annual"
+                ],
+                "description": "网页薪酬周期类型。"
               }
             },
+            "required": [
+              "id",
+              "period",
+              "periodType"
+            ],
             "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "body"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "appraisal salary-report export get",
-      "description": "异步导出",
+      "description": "导出选定薪酬报表和周期",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"body\":{}}' | rsq appraisal salary-report export get --input - --dry-run"
+        "rsq schema \"appraisal salary reports export\""
       ],
       "fields": [
         {
+          "name": "id",
           "option": "id",
           "in": "body",
-          "name": "id",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从 appraisal salary reports list 取得的报表 ID。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
           }
         },
         {
+          "name": "period",
           "option": "period",
           "in": "body",
-          "name": "period",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 7,
+            "description": "网页薪酬周期代码，如 2026-11。",
+            "pattern": "^\\d{4}(?:-\\d{2})?$"
+          }
+        },
+        {
+          "name": "periodType",
+          "option": "period-type",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "quarter",
+              "semiAnnual",
+              "annual"
+            ],
+            "description": "网页薪酬周期类型。"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "appraisal salary reports export"
       ]
     },
     {
@@ -48446,33 +48520,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "business",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": [
-              "integer",
-              "string"
-            ]
-          },
-          "msg": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "data": {
-            "type": "null"
-          }
-        },
-        "required": [
-          "code",
-          "data"
-        ],
-        "additionalProperties": true
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -48481,45 +48536,94 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160,
+                "description": "从 appraisal salary reports list 取得的报表 ID。",
+                "pattern": "^[a-zA-Z0-9_-]+$"
               },
               "period": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 7,
+                "description": "网页薪酬周期代码，如 2026-11。",
+                "pattern": "^\\d{4}(?:-\\d{2})?$"
+              },
+              "periodType": {
+                "type": "string",
+                "enum": [
+                  "monthly",
+                  "quarter",
+                  "semiAnnual",
+                  "annual"
+                ],
+                "description": "网页薪酬周期类型。"
               }
             },
+            "required": [
+              "id",
+              "period",
+              "periodType"
+            ],
             "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "body"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "appraisal salary-report template-export get",
-      "description": "异步导出下载模板",
+      "description": "生成所选薪酬报表和周期的导入模板",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"body\":{}}' | rsq appraisal salary-report template-export get --input - --dry-run"
+        "rsq schema \"appraisal salary template export\""
       ],
       "fields": [
         {
+          "name": "id",
           "option": "id",
           "in": "body",
-          "name": "id",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从 appraisal salary reports list 取得的报表 ID。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
           }
         },
         {
+          "name": "period",
           "option": "period",
           "in": "body",
-          "name": "period",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 7,
+            "description": "网页薪酬周期代码，如 2026-11。",
+            "pattern": "^\\d{4}(?:-\\d{2})?$"
+          }
+        },
+        {
+          "name": "periodType",
+          "option": "period-type",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "quarter",
+              "semiAnnual",
+              "annual"
+            ],
+            "description": "网页薪酬周期类型。"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "appraisal salary template export"
       ]
     },
     {
@@ -65088,33 +65192,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "business",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": [
-              "integer",
-              "string"
-            ]
-          },
-          "msg": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "data": {
-            "type": "null"
-          }
-        },
-        "required": [
-          "code",
-          "data"
-        ],
-        "additionalProperties": true
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -65123,13 +65208,16 @@
       },
       "review": "reviewed",
       "command": "appraisal template indicator-export get",
-      "description": "export",
+      "description": "生成绩效模板指标导入表",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "rsq appraisal template indicator-export get --dry-run"
+        "rsq schema \"appraisal template indicator-sheet export\""
       ],
-      "fields": []
+      "fields": [],
+      "requiresBusinessContext": [
+        "appraisal template indicator-sheet export"
+      ]
     },
     {
       "id": "rsq.97633789ac18",
@@ -105392,14 +105480,104 @@
       ],
       "effect": "write",
       "idempotency": "unknown",
-      "response": "json",
-      "responseSchema": {},
+      "response": "business-or-empty",
+      "responseSchema": {
+        "type": [
+          "object",
+          "null"
+        ]
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
           "body": {
             "type": "object",
-            "additionalProperties": true
+            "properties": {
+              "statisticsType": {
+                "type": "string",
+                "enum": [
+                  "task-all",
+                  "task-person",
+                  "task-team",
+                  "plan-task",
+                  "plan-hour"
+                ],
+                "description": "网页的统计页签。"
+              },
+              "deptIds": {
+                "type": "string",
+                "description": "筛选的部门id列表",
+                "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+              },
+              "endDate": {
+                "type": "string",
+                "description": "筛选的结束日期",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "groupIds": {
+                "type": "string",
+                "description": "筛选的小组id列表",
+                "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+              },
+              "memberIds": {
+                "type": "string",
+                "description": "筛选的执行人id列表",
+                "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+              },
+              "planIds": {
+                "type": "string",
+                "description": "筛选的所属计划id列表",
+                "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+              },
+              "projectIds": {
+                "type": "string",
+                "description": "筛选的所属项目id列表",
+                "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+              },
+              "projectGroupIds": {
+                "type": "string",
+                "description": "筛选的所属项目分组id列表"
+              },
+              "startDate": {
+                "type": "string",
+                "description": "筛选的开始日期",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "hourFilterOption": {
+                "type": "string",
+                "description": "数据分析的类型（工时分析类型）"
+              },
+              "projectResponsibilityIds": {
+                "type": "string",
+                "description": "筛选的项目负责人id"
+              },
+              "projectStateIds": {
+                "type": "string",
+                "description": "筛选的项目状态id"
+              },
+              "projectOrProjectGroupType": {
+                "type": "string",
+                "enum": [
+                  "project",
+                  "projectGroup"
+                ],
+                "description": "按项目或项目分组筛选。"
+              },
+              "filter": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 100,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                },
+                "description": "按网页视图的字段、操作符和值筛选。"
+              }
+            },
+            "required": [
+              "statisticsType"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -105407,13 +105585,168 @@
         ],
         "additionalProperties": false
       },
-      "review": "inferred",
+      "review": "reviewed",
       "command": "enterprise-statistics statistics-task-export",
-      "description": "统计列表导出，接口告诉后端配置",
-      "fields": [],
+      "description": "导出公司任务汇总、个人／团队分析或项目工时分析",
+      "fields": [
+        {
+          "name": "statisticsType",
+          "option": "statistics-type",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "task-all",
+              "task-person",
+              "task-team",
+              "plan-task",
+              "plan-hour"
+            ],
+            "description": "网页的统计页签。"
+          }
+        },
+        {
+          "name": "deptIds",
+          "option": "dept-ids",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "description": "筛选的部门id列表",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          }
+        },
+        {
+          "name": "endDate",
+          "option": "end-date",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "description": "筛选的结束日期",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "groupIds",
+          "option": "group-ids",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "description": "筛选的小组id列表",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          }
+        },
+        {
+          "name": "memberIds",
+          "option": "member-ids",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "description": "筛选的执行人id列表",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          }
+        },
+        {
+          "name": "planIds",
+          "option": "plan-ids",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "description": "筛选的所属计划id列表",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          }
+        },
+        {
+          "name": "projectIds",
+          "option": "project-ids",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "description": "筛选的所属项目id列表",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          }
+        },
+        {
+          "name": "projectGroupIds",
+          "option": "project-group-ids",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "description": "筛选的所属项目分组id列表"
+          }
+        },
+        {
+          "name": "startDate",
+          "option": "start-date",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "description": "筛选的开始日期",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "hourFilterOption",
+          "option": "hour-filter-option",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "description": "数据分析的类型（工时分析类型）"
+          }
+        },
+        {
+          "name": "projectResponsibilityIds",
+          "option": "project-responsibility-ids",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "description": "筛选的项目负责人id"
+          }
+        },
+        {
+          "name": "projectStateIds",
+          "option": "project-state-ids",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "description": "筛选的项目状态id"
+          }
+        },
+        {
+          "name": "projectOrProjectGroupType",
+          "option": "project-or-project-group-type",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "project",
+              "projectGroup"
+            ],
+            "description": "按项目或项目分组筛选。"
+          }
+        },
+        {
+          "name": "filter",
+          "option": "filter",
+          "in": "body",
+          "schema": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "按网页视图的字段、操作符和值筛选。"
+          }
+        }
+      ],
       "examples": [
-        "printf '%s\\n' '{\"body\":{}}' | rsq enterprise-statistics statistics-task-export --input - --dry-run"
-      ]
+        "rsq schema \"statistics company table export\""
+      ],
+      "requiresBusinessContext": [
+        "statistics company table export"
+      ],
+      "encoding": "json"
     },
     {
       "id": "rsq.55eeba0021b6",
@@ -142428,11 +142761,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "empty",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "null"
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -142442,11 +142778,17 @@
             "properties": {
               "startDate": {
                 "type": "string",
-                "description": "日期格式以参数说明为准"
+                "minLength": 1,
+                "maxLength": 10,
+                "description": "开始日期，按 GMT+8，格式 YYYY-MM-DD。",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
               },
               "endDate": {
                 "type": "string",
-                "description": "日期格式以参数说明为准"
+                "minLength": 1,
+                "maxLength": 10,
+                "description": "结束日期，按 GMT+8，格式 YYYY-MM-DD。",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
               }
             },
             "additionalProperties": false
@@ -142456,31 +142798,40 @@
       },
       "review": "reviewed",
       "command": "okr export ai-record get",
-      "description": "导出AI生成记录",
+      "description": "导出 AI 生成使用记录",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "rsq okr export ai-record get --dry-run"
+        "rsq schema \"ai usage export\""
       ],
       "fields": [
         {
+          "name": "startDate",
           "option": "start-date",
           "in": "query",
-          "name": "startDate",
           "schema": {
             "type": "string",
-            "description": "日期格式以参数说明为准"
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "开始日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
           }
         },
         {
+          "name": "endDate",
           "option": "end-date",
           "in": "query",
-          "name": "endDate",
           "schema": {
             "type": "string",
-            "description": "日期格式以参数说明为准"
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "结束日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "ai usage export"
       ]
     },
     {
@@ -142497,11 +142848,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "empty",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "null"
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -142511,87 +142865,139 @@
             "properties": {
               "indicatorIds": {
                 "type": "string",
-                "description": "指标定义ids"
+                "minLength": 1,
+                "maxLength": 20000,
+                "description": "可选指标定义 ID，逗号分隔。",
+                "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
               },
               "timeType": {
-                "type": "string"
+                "type": "string",
+                "enum": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "semiannual",
+                  "year"
+                ],
+                "description": "选择网页统计时间粒度。"
               },
               "startTime": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 16,
+                "description": "开始周期，按所选粒度格式。"
               },
               "endTime": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 16,
+                "description": "结束周期，按所选粒度格式。"
               },
               "dataType": {
-                "type": "string"
-              },
-              "token": {
-                "type": "string"
+                "type": "string",
+                "enum": [
+                  "done",
+                  "target",
+                  "done,target",
+                  "target,done"
+                ],
+                "description": "选择完成值、目标值或两者。"
               }
             },
+            "required": [
+              "indicatorIds",
+              "timeType",
+              "startTime",
+              "endTime",
+              "dataType"
+            ],
             "additionalProperties": false
           }
         },
+        "required": [
+          "query"
+        ],
         "additionalProperties": false
       },
       "review": "reviewed",
       "command": "okr export indicator-data get",
-      "description": "导出指标数据",
+      "description": "按指标及时间导出指标数值",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "rsq okr export indicator-data get --dry-run"
+        "rsq schema \"okr indicator data export\""
       ],
       "fields": [
         {
+          "name": "indicatorIds",
           "option": "indicator-ids",
           "in": "query",
-          "name": "indicatorIds",
           "schema": {
             "type": "string",
-            "description": "指标定义ids"
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "可选指标定义 ID，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
           }
         },
         {
+          "name": "timeType",
           "option": "time-type",
           "in": "query",
-          "name": "timeType",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "quarter",
+              "semiannual",
+              "year"
+            ],
+            "description": "选择网页统计时间粒度。"
           }
         },
         {
+          "name": "startTime",
           "option": "start-time",
           "in": "query",
-          "name": "startTime",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "description": "开始周期，按所选粒度格式。"
           }
         },
         {
+          "name": "endTime",
           "option": "end-time",
           "in": "query",
-          "name": "endTime",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "description": "结束周期，按所选粒度格式。"
           }
         },
         {
+          "name": "dataType",
           "option": "data-type",
           "in": "query",
-          "name": "dataType",
           "schema": {
-            "type": "string"
-          }
-        },
-        {
-          "option": "token",
-          "in": "query",
-          "name": "token",
-          "schema": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "done",
+              "target",
+              "done,target",
+              "target,done"
+            ],
+            "description": "选择完成值、目标值或两者。"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "okr indicator data export"
       ]
     },
     {
@@ -142608,11 +143014,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "empty",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "null"
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -142622,79 +143031,85 @@
             "properties": {
               "cycleIds": {
                 "type": "string",
-                "description": "周期id",
-                "minLength": 1
-              },
-              "type": {
-                "type": "string",
-                "description": "目标类型"
+                "minLength": 1,
+                "maxLength": 20000,
+                "description": "一个或多个可见目标周期 ID，逗号分隔。",
+                "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
               },
               "typeIds": {
                 "type": "string",
-                "description": "目标类型id"
+                "minLength": 1,
+                "maxLength": 20000,
+                "description": "目标类型 ID，逗号分隔。",
+                "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
               },
               "userIds": {
                 "type": "string",
-                "description": "负责人id"
+                "minLength": 1,
+                "maxLength": 20000,
+                "description": "按可见成员 ID 筛选，逗号分隔。",
+                "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
               }
             },
-            "additionalProperties": false,
             "required": [
               "cycleIds"
-            ]
+            ],
+            "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "query"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "okr export objective get",
-      "description": "导出目标",
+      "description": "按周期导出目标和关键结果",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"query\":{\"cycleIds\":\"rsq-cli-example\"}}' | rsq okr export objective get --input - --dry-run"
+        "rsq schema \"okr cycles objectives export\""
       ],
       "fields": [
         {
+          "name": "cycleIds",
           "option": "cycle-ids",
           "in": "query",
-          "name": "cycleIds",
           "schema": {
             "type": "string",
-            "description": "周期id",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "一个或多个可见目标周期 ID，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
           }
         },
         {
-          "option": "type",
-          "in": "query",
-          "name": "type",
-          "schema": {
-            "type": "string",
-            "description": "目标类型"
-          }
-        },
-        {
+          "name": "typeIds",
           "option": "type-ids",
           "in": "query",
-          "name": "typeIds",
           "schema": {
             "type": "string",
-            "description": "目标类型id"
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "目标类型 ID，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
           }
         },
         {
+          "name": "userIds",
           "option": "user-ids",
           "in": "query",
-          "name": "userIds",
           "schema": {
             "type": "string",
-            "description": "负责人id"
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "okr cycles objectives export"
       ]
     },
     {
@@ -142792,11 +143207,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "empty",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "null"
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -142804,111 +143222,150 @@
           "query": {
             "type": "object",
             "properties": {
-              "sortKey": {
-                "type": "string",
-                "description": "排序名称"
-              },
-              "sortValue": {
-                "type": "string",
-                "description": "排序规则"
-              },
               "cycleId": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "64 位整数可用十进制字符串，避免精度丢失"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "从 okr cycles context 选择的周期 ID。",
+                "pattern": "^[1-9][0-9]*$"
               },
               "objectiveType": {
                 "type": "string",
-                "pattern": "my|dept|company|person|all"
+                "enum": [
+                  "all",
+                  "company",
+                  "dept",
+                  "person"
+                ],
+                "description": "图表统计对象。"
               },
               "id": {
                 "type": "string",
-                "description": "图表指标项id"
+                "minLength": 1,
+                "maxLength": 160,
+                "description": "从 okr statistics charts get 取得的 drilldownIds 项。",
+                "pattern": "^[a-zA-Z0-9_-]+$"
               },
               "name": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 400,
+                "description": "按名字筛选明细。"
+              },
+              "sortKey": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 400,
+                "description": "网页统计表中的排序字段。"
+              },
+              "sortValue": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ],
+                "description": "排序方向。"
               }
             },
-            "additionalProperties": false,
             "required": [
-              "cycleId"
-            ]
+              "cycleId",
+              "objectiveType",
+              "id"
+            ],
+            "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "query"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "okr export statistics-data-item get",
-      "description": "导出统计数据-详情",
+      "description": "导出 OKR 图表实际统计项明细",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"query\":{\"cycleId\":1}}' | rsq okr export statistics-data-item get --input - --dry-run"
+        "rsq schema \"okr statistics chart detail export\""
       ],
       "fields": [
         {
-          "option": "sort-key",
-          "in": "query",
-          "name": "sortKey",
-          "schema": {
-            "type": "string",
-            "description": "排序名称"
-          }
-        },
-        {
-          "option": "sort-value",
-          "in": "query",
-          "name": "sortValue",
-          "schema": {
-            "type": "string",
-            "description": "排序规则"
-          }
-        },
-        {
+          "name": "cycleId",
           "option": "cycle-id",
           "in": "query",
-          "name": "cycleId",
           "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "64 位整数可用十进制字符串，避免精度丢失"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 okr cycles context 选择的周期 ID。",
+            "pattern": "^[1-9][0-9]*$"
           }
         },
         {
+          "name": "objectiveType",
           "option": "objective-type",
           "in": "query",
-          "name": "objectiveType",
           "schema": {
             "type": "string",
-            "pattern": "my|dept|company|person|all"
+            "enum": [
+              "all",
+              "company",
+              "dept",
+              "person"
+            ],
+            "description": "图表统计对象。"
           }
         },
         {
+          "name": "id",
           "option": "id",
           "in": "query",
-          "name": "id",
           "schema": {
             "type": "string",
-            "description": "图表指标项id"
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从 okr statistics charts get 取得的 drilldownIds 项。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
           }
         },
         {
+          "name": "name",
           "option": "name",
           "in": "query",
-          "name": "name",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "按名字筛选明细。"
+          }
+        },
+        {
+          "name": "sortKey",
+          "option": "sort-key",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          }
+        },
+        {
+          "name": "sortValue",
+          "option": "sort-value",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "okr statistics chart detail export"
       ]
     },
     {
@@ -142925,11 +143382,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "empty",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "null"
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -142937,181 +143397,170 @@
           "query": {
             "type": "object",
             "properties": {
-              "sortKey": {
-                "type": "string",
-                "description": "排序名称"
-              },
-              "sortValue": {
-                "type": "string",
-                "description": "排序规则"
-              },
-              "pageSize": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "每页条数"
-              },
-              "pageNum": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "页数"
-              },
               "cycleId": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "周期id"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "从 okr cycles context 选择的周期 ID。",
+                "pattern": "^[1-9][0-9]*$"
               },
               "objectiveType": {
                 "type": "string",
-                "description": "报表类型",
-                "pattern": "dept|person"
+                "enum": [
+                  "dept",
+                  "person"
+                ],
+                "description": "部门或人员报表。"
               },
               "deptType": {
                 "type": "string",
-                "description": "筛选类型",
-                "pattern": "dept|deptAndChildDept|deptUser|deptAndChildDeptUser"
+                "enum": [
+                  "dept",
+                  "deptAndChildDept",
+                  "deptUser",
+                  "deptAndChildDeptUser"
+                ],
+                "description": "部门报表的部门展开方式。"
               },
               "name": {
                 "type": "string",
-                "description": "部门或个人的名称"
+                "minLength": 1,
+                "maxLength": 400,
+                "description": "按报表名称过滤。"
+              },
+              "sortKey": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 400,
+                "description": "网页统计表中的排序字段。"
+              },
+              "sortValue": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ],
+                "description": "排序方向。"
               },
               "deptId": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "部门id"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "人员报表的部门筛选。",
+                "pattern": "^[1-9][0-9]*$"
               }
             },
-            "additionalProperties": false,
             "required": [
               "cycleId",
               "objectiveType"
-            ]
+            ],
+            "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "query"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "okr export statistics-report-forms get",
-      "description": "导出部门/个人报表",
+      "description": "导出 OKR 部门或人员统计报表",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"query\":{\"cycleId\":1,\"objectiveType\":\"dept\"}}' | rsq okr export statistics-report-forms get --input - --dry-run"
+        "rsq schema \"okr statistics report export\""
       ],
       "fields": [
         {
-          "option": "sort-key",
-          "in": "query",
-          "name": "sortKey",
-          "schema": {
-            "type": "string",
-            "description": "排序名称"
-          }
-        },
-        {
-          "option": "sort-value",
-          "in": "query",
-          "name": "sortValue",
-          "schema": {
-            "type": "string",
-            "description": "排序规则"
-          }
-        },
-        {
-          "option": "page-size",
-          "in": "query",
-          "name": "pageSize",
-          "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "每页条数"
-          }
-        },
-        {
-          "option": "page-num",
-          "in": "query",
-          "name": "pageNum",
-          "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "页数"
-          }
-        },
-        {
+          "name": "cycleId",
           "option": "cycle-id",
           "in": "query",
-          "name": "cycleId",
           "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "周期id"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 okr cycles context 选择的周期 ID。",
+            "pattern": "^[1-9][0-9]*$"
           }
         },
         {
+          "name": "objectiveType",
           "option": "objective-type",
           "in": "query",
-          "name": "objectiveType",
           "schema": {
             "type": "string",
-            "description": "报表类型",
-            "pattern": "dept|person"
+            "enum": [
+              "dept",
+              "person"
+            ],
+            "description": "部门或人员报表。"
           }
         },
         {
+          "name": "deptType",
           "option": "dept-type",
           "in": "query",
-          "name": "deptType",
           "schema": {
             "type": "string",
-            "description": "筛选类型",
-            "pattern": "dept|deptAndChildDept|deptUser|deptAndChildDeptUser"
+            "enum": [
+              "dept",
+              "deptAndChildDept",
+              "deptUser",
+              "deptAndChildDeptUser"
+            ],
+            "description": "部门报表的部门展开方式。"
           }
         },
         {
+          "name": "name",
           "option": "name",
           "in": "query",
-          "name": "name",
           "schema": {
             "type": "string",
-            "description": "部门或个人的名称"
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "按报表名称过滤。"
           }
         },
         {
+          "name": "sortKey",
+          "option": "sort-key",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          }
+        },
+        {
+          "name": "sortValue",
+          "option": "sort-value",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
+          }
+        },
+        {
+          "name": "deptId",
           "option": "dept-id",
           "in": "query",
-          "name": "deptId",
           "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "部门id"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "人员报表的部门筛选。",
+            "pattern": "^[1-9][0-9]*$"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "okr statistics report export"
       ]
     },
     {
@@ -143128,11 +143577,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "empty",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "null"
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -143140,151 +143592,197 @@
           "query": {
             "type": "object",
             "properties": {
-              "sortKey": {
-                "type": "string",
-                "description": "排序名称"
-              },
-              "sortValue": {
-                "type": "string",
-                "description": "排序规则"
-              },
-              "id": {
-                "type": "string",
-                "pattern": "report_objNum|report_objAlignNum|report_objUnAlignNum|report_krNum"
-              },
               "cycleId": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "周期id"
-              },
-              "objectiveTypeDataId": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "部门或者用户id"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "从 okr cycles context 选择的周期 ID。",
+                "pattern": "^[1-9][0-9]*$"
               },
               "objectiveType": {
                 "type": "string",
-                "description": "报表类型：person|dept",
-                "pattern": "dept|person"
+                "enum": [
+                  "dept",
+                  "person"
+                ],
+                "description": "部门或人员报表。"
               },
               "deptType": {
                 "type": "string",
-                "description": "筛选类型",
-                "pattern": "dept|deptAndChildDept|deptUser|deptAndChildDeptUser"
+                "enum": [
+                  "dept",
+                  "deptAndChildDept",
+                  "deptUser",
+                  "deptAndChildDeptUser"
+                ],
+                "description": "部门报表的部门展开方式。"
               },
               "name": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 400,
+                "description": "按报表名称过滤。"
+              },
+              "sortKey": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 400,
+                "description": "网页统计表中的排序字段。"
+              },
+              "sortValue": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ],
+                "description": "排序方向。"
+              },
+              "objectiveTypeDataId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "从同一 OKR 报表选择的行 ID。",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "id": {
+                "type": "string",
+                "enum": [
+                  "report_objNum",
+                  "report_objAlignNum",
+                  "report_objUnAlignNum",
+                  "report_krNum"
+                ],
+                "description": "目标或 KR 统计项。"
               }
             },
-            "additionalProperties": false,
             "required": [
               "cycleId",
+              "objectiveType",
               "objectiveTypeDataId",
-              "objectiveType"
-            ]
+              "id"
+            ],
+            "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "query"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "okr export statistics-report-forms-item get",
-      "description": "导出部门/个人报表-详情",
+      "description": "导出 OKR 统计报表的指标明细",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"query\":{\"cycleId\":1,\"objectiveTypeDataId\":1,\"objectiveType\":\"dept\"}}' | rsq okr export statistics-report-forms-item get --input - --dry-run"
+        "rsq schema \"okr statistics report detail export\""
       ],
       "fields": [
         {
-          "option": "sort-key",
-          "in": "query",
-          "name": "sortKey",
-          "schema": {
-            "type": "string",
-            "description": "排序名称"
-          }
-        },
-        {
-          "option": "sort-value",
-          "in": "query",
-          "name": "sortValue",
-          "schema": {
-            "type": "string",
-            "description": "排序规则"
-          }
-        },
-        {
-          "option": "id",
-          "in": "query",
-          "name": "id",
-          "schema": {
-            "type": "string",
-            "pattern": "report_objNum|report_objAlignNum|report_objUnAlignNum|report_krNum"
-          }
-        },
-        {
+          "name": "cycleId",
           "option": "cycle-id",
           "in": "query",
-          "name": "cycleId",
           "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "周期id"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 okr cycles context 选择的周期 ID。",
+            "pattern": "^[1-9][0-9]*$"
           }
         },
         {
-          "option": "objective-type-data-id",
-          "in": "query",
-          "name": "objectiveTypeDataId",
-          "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "部门或者用户id"
-          }
-        },
-        {
+          "name": "objectiveType",
           "option": "objective-type",
           "in": "query",
-          "name": "objectiveType",
           "schema": {
             "type": "string",
-            "description": "报表类型：person|dept",
-            "pattern": "dept|person"
+            "enum": [
+              "dept",
+              "person"
+            ],
+            "description": "部门或人员报表。"
           }
         },
         {
+          "name": "deptType",
           "option": "dept-type",
           "in": "query",
-          "name": "deptType",
           "schema": {
             "type": "string",
-            "description": "筛选类型",
-            "pattern": "dept|deptAndChildDept|deptUser|deptAndChildDeptUser"
+            "enum": [
+              "dept",
+              "deptAndChildDept",
+              "deptUser",
+              "deptAndChildDeptUser"
+            ],
+            "description": "部门报表的部门展开方式。"
           }
         },
         {
+          "name": "name",
           "option": "name",
           "in": "query",
-          "name": "name",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "按报表名称过滤。"
+          }
+        },
+        {
+          "name": "sortKey",
+          "option": "sort-key",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          }
+        },
+        {
+          "name": "sortValue",
+          "option": "sort-value",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
+          }
+        },
+        {
+          "name": "objectiveTypeDataId",
+          "option": "objective-type-data-id",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从同一 OKR 报表选择的行 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "id",
+          "option": "id",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "report_objNum",
+              "report_objAlignNum",
+              "report_objUnAlignNum",
+              "report_krNum"
+            ],
+            "description": "目标或 KR 统计项。"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "okr statistics report detail export"
       ]
     },
     {
@@ -150774,7 +151272,7 @@
       "route": "/task/okr/indicator/database/export",
       "method": "GET",
       "service": "account",
-      "auth": "token",
+      "auth": "both",
       "coverageScope": "download",
       "methods": [
         "password",
@@ -150783,11 +151281,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "empty",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "null"
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -150796,47 +151297,48 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "64 位整数可用十进制字符串，避免精度丢失"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "指标详情页的指标定义 ID。",
+                "pattern": "^[1-9][0-9]*$"
               }
             },
-            "additionalProperties": false,
             "required": [
               "id"
-            ]
+            ],
+            "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "query"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "okr indicator database-export get",
-      "description": "导出-数据底表",
+      "description": "导出指标数据底表",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"query\":{\"id\":1}}' | rsq okr indicator database-export get --input - --dry-run"
+        "rsq schema \"okr indicator records export\""
       ],
       "fields": [
         {
+          "name": "id",
           "option": "id",
           "in": "query",
-          "name": "id",
           "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "64 位整数可用十进制字符串，避免精度丢失"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "指标详情页的指标定义 ID。",
+            "pattern": "^[1-9][0-9]*$"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "okr indicator records export"
       ]
     },
     {
@@ -263186,8 +263688,13 @@
       ],
       "effect": "write",
       "idempotency": "unknown",
-      "response": "json",
-      "responseSchema": {},
+      "response": "business-or-empty",
+      "responseSchema": {
+        "type": [
+          "object",
+          "null"
+        ]
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -263195,29 +263702,47 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160,
+                "description": "从同一统计结果实际下钻得到的 detailId。",
+                "pattern": "^[a-zA-Z0-9_-]+$"
               }
             },
+            "required": [
+              "id"
+            ],
             "additionalProperties": false
           }
         },
+        "required": [
+          "query"
+        ],
         "additionalProperties": false
       },
-      "review": "inferred",
+      "review": "reviewed",
       "command": "plan-statistics-v2 get-detail-export",
-      "description": "GET /task/api/statistics/detail/export",
+      "description": "导出公司任务和项目统计的下钻明细",
       "fields": [
         {
+          "name": "id",
           "option": "id",
           "in": "query",
-          "name": "id",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从同一统计结果实际下钻得到的 detailId。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
           }
         }
       ],
       "examples": [
-        "rsq plan-statistics-v2 get-detail-export --dry-run"
+        "rsq schema \"statistics company detail export\""
+      ],
+      "requiresBusinessContext": [
+        "statistics company detail export",
+        "statistics project drilldown tasks export"
       ]
     },
     {
@@ -266273,10 +266798,15 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "json",
-      "responseSchema": {},
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
+      "responseSchema": {
+        "type": [
+          "object",
+          "null"
+        ]
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -266284,29 +266814,46 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160,
+                "description": "当前图表或下钻的服务端标识。",
+                "pattern": "^[a-zA-Z0-9_-]+$"
               }
             },
+            "required": [
+              "id"
+            ],
             "additionalProperties": false
           }
         },
+        "required": [
+          "query"
+        ],
         "additionalProperties": false
       },
-      "review": "inferred",
+      "review": "reviewed",
       "command": "plan-statistics-v2 get-table-export",
-      "description": "GET /task/v5/kanban/stats/chart/export",
+      "description": "导出项目统计图表",
       "fields": [
         {
+          "name": "id",
           "option": "id",
           "in": "query",
-          "name": "id",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "当前图表或下钻的服务端标识。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
           }
         }
       ],
       "examples": [
-        "rsq plan-statistics-v2 get-table-export"
+        "rsq schema \"statistics project chart export\""
+      ],
+      "requiresBusinessContext": [
+        "statistics project chart export"
       ]
     },
     {
@@ -275587,26 +276134,82 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "json",
-      "responseSchema": {},
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
+      "responseSchema": {
+        "type": [
+          "object",
+          "null"
+        ]
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
           "query": {
             "type": "object",
-            "additionalProperties": true
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "实际导出范围 ID。",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "fieldIds": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 20000,
+                "description": "网页可导出的字段 ID。",
+                "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+              }
+            },
+            "required": [
+              "id",
+              "fieldIds"
+            ],
+            "additionalProperties": false
           }
         },
+        "required": [
+          "query"
+        ],
         "additionalProperties": false
       },
-      "review": "inferred",
+      "review": "reviewed",
       "command": "project export-data",
-      "description": "GET /task/v4/kanban/exportExcel",
-      "fields": [],
+      "description": "导出项目任务表格",
+      "fields": [
+        {
+          "name": "id",
+          "option": "id",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "实际导出范围 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "fieldIds",
+          "option": "field-ids",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000,
+            "description": "网页可导出的字段 ID。",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          }
+        }
+      ],
       "examples": [
-        "rsq project export-data"
+        "rsq schema \"project tasks export\""
+      ],
+      "requiresBusinessContext": [
+        "project tasks export"
       ]
     },
     {
@@ -275624,14 +276227,43 @@
       ],
       "effect": "write",
       "idempotency": "unknown",
-      "response": "json",
-      "responseSchema": {},
+      "response": "business-or-empty",
+      "responseSchema": {
+        "type": [
+          "object",
+          "null"
+        ]
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
           "body": {
             "type": "object",
-            "additionalProperties": true
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "实际导出范围 ID。",
+                "pattern": "^[1-9][0-9]*$",
+                "x-rsq-wire-integer": true
+              },
+              "filter": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 100,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                },
+                "description": "按网页视图的字段、操作符和值筛选。"
+              }
+            },
+            "required": [
+              "id",
+              "filter"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -275639,13 +276271,48 @@
         ],
         "additionalProperties": false
       },
-      "review": "inferred",
+      "review": "reviewed",
       "command": "project export-set-filter-condition",
-      "description": "项目导出前保存筛选条件",
-      "fields": [],
+      "description": "保存当前任务导出筛选",
+      "fields": [
+        {
+          "name": "id",
+          "option": "id",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "实际导出范围 ID。",
+            "pattern": "^[1-9][0-9]*$",
+            "x-rsq-wire-integer": true
+          }
+        },
+        {
+          "name": "filter",
+          "option": "filter",
+          "in": "body",
+          "schema": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "按网页视图的字段、操作符和值筛选。"
+          }
+        }
+      ],
       "examples": [
-        "printf '%s\\n' '{\"body\":{}}' | rsq project export-set-filter-condition --input - --dry-run"
-      ]
+        "rsq schema \"project tasks export\""
+      ],
+      "requiresBusinessContext": [
+        "project tasks export",
+        "project module tasks export",
+        "project card tasks export"
+      ],
+      "encoding": "json"
     },
     {
       "id": "rsq.f8295a4856c6",
@@ -277561,33 +278228,60 @@
       "effect": "read",
       "idempotency": "idempotent",
       "response": "json",
-      "responseSchema": {},
+      "responseSchema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
           "query": {
             "type": "object",
             "properties": {
-              "kanbanCardId": {}
+              "kanbanCardId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "当前导出范围的 ID。",
+                "pattern": "^[1-9][0-9]*$"
+              }
             },
+            "required": [
+              "kanbanCardId"
+            ],
             "additionalProperties": false
           }
         },
+        "required": [
+          "query"
+        ],
         "additionalProperties": false
       },
-      "review": "inferred",
+      "review": "reviewed",
       "command": "project get-card-export-config",
-      "description": "获取卡片导出配置信息",
+      "description": "读取网页任务导出字段",
       "fields": [
         {
+          "name": "kanbanCardId",
           "option": "kanban-card-id",
           "in": "query",
-          "name": "kanbanCardId",
-          "schema": {}
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "当前导出范围的 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
         }
       ],
       "examples": [
-        "rsq project get-card-export-config"
+        "rsq schema \"project card tasks export\""
+      ],
+      "requiresBusinessContext": [
+        "project card tasks export"
       ]
     },
     {
@@ -277636,33 +278330,60 @@
       "effect": "read",
       "idempotency": "idempotent",
       "response": "json",
-      "responseSchema": {},
+      "responseSchema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
           "query": {
             "type": "object",
             "properties": {
-              "collectionId": {}
+              "collectionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "当前导出范围的 ID。",
+                "pattern": "^[1-9][0-9]*$"
+              }
             },
+            "required": [
+              "collectionId"
+            ],
             "additionalProperties": false
           }
         },
+        "required": [
+          "query"
+        ],
         "additionalProperties": false
       },
-      "review": "inferred",
+      "review": "reviewed",
       "command": "project get-collection-export-config",
-      "description": "获取项目集导出配置信息",
+      "description": "读取网页任务导出字段",
       "fields": [
         {
+          "name": "collectionId",
           "option": "collection-id",
           "in": "query",
-          "name": "collectionId",
-          "schema": {}
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "当前导出范围的 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
         }
       ],
       "examples": [
-        "rsq project get-collection-export-config"
+        "rsq schema \"project collection tasks export\""
+      ],
+      "requiresBusinessContext": [
+        "project collection tasks export"
       ]
     },
     {
@@ -278420,33 +279141,60 @@
       "effect": "read",
       "idempotency": "idempotent",
       "response": "json",
-      "responseSchema": {},
+      "responseSchema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
           "query": {
             "type": "object",
             "properties": {
-              "kanbanChildId": {}
+              "kanbanChildId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "当前导出范围的 ID。",
+                "pattern": "^[1-9][0-9]*$"
+              }
             },
+            "required": [
+              "kanbanChildId"
+            ],
             "additionalProperties": false
           }
         },
+        "required": [
+          "query"
+        ],
         "additionalProperties": false
       },
-      "review": "inferred",
+      "review": "reviewed",
       "command": "project get-module-export-config",
-      "description": "获取模块导出配置信息",
+      "description": "读取网页任务导出字段",
       "fields": [
         {
+          "name": "kanbanChildId",
           "option": "kanban-child-id",
           "in": "query",
-          "name": "kanbanChildId",
-          "schema": {}
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "当前导出范围的 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
         }
       ],
       "examples": [
-        "rsq project get-module-export-config"
+        "rsq schema \"project module tasks export\""
+      ],
+      "requiresBusinessContext": [
+        "project module tasks export"
       ]
     },
     {
@@ -278590,33 +279338,60 @@
       "effect": "read",
       "idempotency": "idempotent",
       "response": "json",
-      "responseSchema": {},
+      "responseSchema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
           "query": {
             "type": "object",
             "properties": {
-              "kanbanId": {}
+              "kanbanId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "当前导出范围的 ID。",
+                "pattern": "^[1-9][0-9]*$"
+              }
             },
+            "required": [
+              "kanbanId"
+            ],
             "additionalProperties": false
           }
         },
+        "required": [
+          "query"
+        ],
         "additionalProperties": false
       },
-      "review": "inferred",
+      "review": "reviewed",
       "command": "project get-plan-export-config",
-      "description": "获取项目导出配置信息",
+      "description": "读取网页任务导出字段",
       "fields": [
         {
+          "name": "kanbanId",
           "option": "kanban-id",
           "in": "query",
-          "name": "kanbanId",
-          "schema": {}
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "当前导出范围的 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
         }
       ],
       "examples": [
-        "rsq project get-plan-export-config"
+        "rsq schema \"project tasks export\""
+      ],
+      "requiresBusinessContext": [
+        "project tasks export"
       ]
     },
     {
@@ -286521,34 +287296,60 @@
       ],
       "effect": "write",
       "idempotency": "unknown",
-      "response": "json",
-      "responseSchema": {},
+      "response": "business-or-empty",
+      "responseSchema": {
+        "type": [
+          "object",
+          "null"
+        ]
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
           "query": {
             "type": "object",
             "properties": {
-              "planId": {}
+              "planId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "从 project schedule context 取得的模块 ID。",
+                "pattern": "^[1-9][0-9]*$"
+              }
             },
+            "required": [
+              "planId"
+            ],
             "additionalProperties": false
           }
         },
+        "required": [
+          "query"
+        ],
         "additionalProperties": false
       },
-      "review": "inferred",
+      "review": "reviewed",
       "command": "project send-export",
-      "description": "GET /task/api/v3/projectTask/gantt/excelExport",
+      "description": "导出项目模块的甘特图 Excel",
       "fields": [
         {
+          "name": "planId",
           "option": "plan-id",
           "in": "query",
-          "name": "planId",
-          "schema": {}
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 project schedule context 取得的模块 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
         }
       ],
       "examples": [
-        "rsq project send-export --dry-run"
+        "rsq schema \"project schedule export\""
+      ],
+      "requiresBusinessContext": [
+        "project schedule export"
       ]
     },
     {
@@ -295227,11 +296028,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "empty",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "null"
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -295240,171 +296044,147 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "64 位整数可用十进制字符串，避免精度丢失"
-              },
-              "userId": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "64 位整数可用十进制字符串，避免精度丢失"
-              },
-              "deptId": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "64 位整数可用十进制字符串，避免精度丢失"
-              },
-              "groupId": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "64 位整数可用十进制字符串，避免精度丢失"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "从复盘集上下文取得的 ID。",
+                "pattern": "^[1-9][0-9]*$",
+                "x-rsq-wire-integer": true
               },
               "startDate": {
                 "type": "string",
-                "description": "日期格式以参数说明为准"
+                "minLength": 1,
+                "maxLength": 10,
+                "description": "开始日期，按 GMT+8，格式 YYYY-MM-DD。",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
               },
               "endDate": {
                 "type": "string",
-                "description": "日期格式以参数说明为准"
-              },
-              "deptIds": {
-                "type": "string"
+                "minLength": 1,
+                "maxLength": 10,
+                "description": "结束日期，按 GMT+8，格式 YYYY-MM-DD。",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
               },
               "userIds": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20000,
+                "description": "按可见成员 ID 筛选，逗号分隔。",
+                "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+              },
+              "deptIds": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20000,
+                "description": "按可见部门 ID 筛选，逗号分隔。",
+                "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
               },
               "groupIds": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20000,
+                "description": "按可见小组 ID 筛选，逗号分隔。",
+                "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
               }
             },
-            "additionalProperties": false,
             "required": [
               "id",
               "startDate",
               "endDate"
-            ]
+            ],
+            "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "body"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "replay collection export get",
-      "description": "exportReplayCollect",
+      "description": "按日期和成员导出复盘集",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"body\":{\"id\":1,\"startDate\":\"2026.11.07\",\"endDate\":\"2026.11.07\"}}' | rsq replay collection export get --input - --dry-run"
+        "rsq schema \"replay collection entries export\""
       ],
       "fields": [
         {
+          "name": "id",
           "option": "id",
           "in": "body",
-          "name": "id",
           "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "64 位整数可用十进制字符串，避免精度丢失"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从复盘集上下文取得的 ID。",
+            "pattern": "^[1-9][0-9]*$",
+            "x-rsq-wire-integer": true
           }
         },
         {
-          "option": "user-id",
-          "in": "body",
-          "name": "userId",
-          "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "64 位整数可用十进制字符串，避免精度丢失"
-          }
-        },
-        {
-          "option": "dept-id",
-          "in": "body",
-          "name": "deptId",
-          "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "64 位整数可用十进制字符串，避免精度丢失"
-          }
-        },
-        {
-          "option": "group-id",
-          "in": "body",
-          "name": "groupId",
-          "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "64 位整数可用十进制字符串，避免精度丢失"
-          }
-        },
-        {
+          "name": "startDate",
           "option": "start-date",
           "in": "body",
-          "name": "startDate",
           "schema": {
             "type": "string",
-            "description": "日期格式以参数说明为准"
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "开始日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
           }
         },
         {
+          "name": "endDate",
           "option": "end-date",
           "in": "body",
-          "name": "endDate",
           "schema": {
             "type": "string",
-            "description": "日期格式以参数说明为准"
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "结束日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
           }
         },
         {
-          "option": "dept-ids",
-          "in": "body",
-          "name": "deptIds",
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
+          "name": "userIds",
           "option": "user-ids",
           "in": "body",
-          "name": "userIds",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
           }
         },
         {
+          "name": "deptIds",
+          "option": "dept-ids",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见部门 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "groupIds",
           "option": "group-ids",
           "in": "body",
-          "name": "groupIds",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见小组 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "replay collection entries export"
       ]
     },
     {
@@ -307323,11 +308103,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "empty",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "null"
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -307336,47 +308119,48 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "64 位整数可用十进制字符串，避免精度丢失"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "从 replay report get 或 replay topic list 取得的复盘 ID。",
+                "pattern": "^[1-9][0-9]*$"
               }
             },
-            "additionalProperties": false,
             "required": [
               "id"
-            ]
+            ],
+            "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "query"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "replay export get",
-      "description": "exportReplay",
+      "description": "导出一篇复盘正文",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"query\":{\"id\":1}}' | rsq replay export get --input - --dry-run"
+        "rsq schema \"replay entry export\""
       ],
       "fields": [
         {
+          "name": "id",
           "option": "id",
           "in": "query",
-          "name": "id",
           "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "64 位整数可用十进制字符串，避免精度丢失"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 replay report get 或 replay topic list 取得的复盘 ID。",
+            "pattern": "^[1-9][0-9]*$"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "replay entry export"
       ]
     },
     {
@@ -557606,33 +558390,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "business",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": [
-              "integer",
-              "string"
-            ]
-          },
-          "msg": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "data": {
-            "type": "null"
-          }
-        },
-        "required": [
-          "code",
-          "data"
-        ],
-        "additionalProperties": true
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -557641,37 +558406,48 @@
             "type": "object",
             "properties": {
               "detailId": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160,
+                "description": "当前图表或下钻的服务端标识。",
+                "pattern": "^[a-zA-Z0-9_-]+$"
               }
             },
-            "additionalProperties": false,
             "required": [
               "detailId"
-            ]
+            ],
+            "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "query"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "workflow project-statistics export-detail get",
-      "description": "获取统计详情-列表",
+      "description": "导出项目统计流程明细",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"query\":{\"detailId\":\"1\"}}' | rsq workflow project-statistics export-detail get --input - --dry-run"
+        "rsq schema \"statistics project drilldown workflows export\""
       ],
       "fields": [
         {
+          "name": "detailId",
           "option": "detail-id",
           "in": "query",
-          "name": "detailId",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "当前图表或下钻的服务端标识。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "statistics project drilldown workflows export"
       ]
     },
     {
@@ -560088,33 +560864,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "business",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": [
-              "integer",
-              "string"
-            ]
-          },
-          "msg": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "data": {
-            "type": "null"
-          }
-        },
-        "required": [
-          "code",
-          "data"
-        ],
-        "additionalProperties": true
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -560123,112 +560880,133 @@
             "type": "object",
             "properties": {
               "applicationId": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "64 位整数可用十进制字符串，避免精度丢失"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "从 workflow statistics context 获取的当前独立流程应用 ID。",
+                "pattern": "^[1-9][0-9]*$"
               },
               "efficiencyUserId": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "64 位整数可用十进制字符串，避免精度丢失"
-              },
-              "sortKey": {
-                "type": "string"
-              },
-              "sortValue": {
-                "type": "string"
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
               },
               "startDate": {
-                "type": "string"
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
               },
               "endDate": {
-                "type": "string"
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "sortKey": {
+                "type": "string",
+                "enum": [
+                  "name",
+                  "minTime",
+                  "maxTime",
+                  "avgTime",
+                  "delayRate",
+                  "oneShotRate"
+                ]
+              },
+              "sortValue": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ]
               }
             },
-            "additionalProperties": false,
             "required": [
               "applicationId"
-            ]
+            ],
+            "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "query"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "workflow statistics export-efficiency get",
-      "description": "效率统计导出",
+      "description": "导出流程单个应用的效率统计",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"query\":{\"applicationId\":1}}' | rsq workflow statistics export-efficiency get --input - --dry-run"
+        "rsq schema \"workflow statistics efficiency export\""
       ],
       "fields": [
         {
+          "name": "applicationId",
           "option": "application-id",
           "in": "query",
-          "name": "applicationId",
           "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "64 位整数可用十进制字符串，避免精度丢失"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 workflow statistics context 获取的当前独立流程应用 ID。",
+            "pattern": "^[1-9][0-9]*$"
           }
         },
         {
+          "name": "efficiencyUserId",
           "option": "efficiency-user-id",
           "in": "query",
-          "name": "efficiencyUserId",
           "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "64 位整数可用十进制字符串，避免精度丢失"
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
           }
         },
         {
-          "option": "sort-key",
-          "in": "query",
-          "name": "sortKey",
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
-          "option": "sort-value",
-          "in": "query",
-          "name": "sortValue",
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
+          "name": "startDate",
           "option": "start-date",
           "in": "query",
-          "name": "startDate",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
           }
         },
         {
+          "name": "endDate",
           "option": "end-date",
           "in": "query",
-          "name": "endDate",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "sortKey",
+          "option": "sort-key",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "name",
+              "minTime",
+              "maxTime",
+              "avgTime",
+              "delayRate",
+              "oneShotRate"
+            ]
+          }
+        },
+        {
+          "name": "sortValue",
+          "option": "sort-value",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ]
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "workflow statistics efficiency export"
       ]
     },
     {
@@ -560244,33 +561022,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "business",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": [
-              "integer",
-              "string"
-            ]
-          },
-          "msg": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "data": {
-            "type": "null"
-          }
-        },
-        "required": [
-          "code",
-          "data"
-        ],
-        "additionalProperties": true
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -560279,112 +561038,133 @@
             "type": "object",
             "properties": {
               "applicationId": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "64 位整数可用十进制字符串，避免精度丢失"
-              },
-              "sortKey": {
-                "type": "string"
-              },
-              "sortValue": {
-                "type": "string"
-              },
-              "startDate": {
-                "type": "string"
-              },
-              "endDate": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "从 workflow statistics context 获取的当前独立流程应用 ID。",
+                "pattern": "^[1-9][0-9]*$"
               },
               "stepId": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "pattern": "^-?[0-9]+$",
-                "description": "64 位整数可用十进制字符串，避免精度丢失"
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "startDate": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "endDate": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "sortKey": {
+                "type": "string",
+                "enum": [
+                  "assignee",
+                  "stepCount",
+                  "delayRate",
+                  "delayDuration",
+                  "delayCommitRate",
+                  "delayCommitDuration"
+                ]
+              },
+              "sortValue": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ]
               }
             },
-            "additionalProperties": false,
             "required": [
               "applicationId"
-            ]
+            ],
+            "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "query"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "workflow statistics export-execute get",
-      "description": "执行统计导出",
+      "description": "导出流程单个应用的执行统计",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"query\":{\"applicationId\":1}}' | rsq workflow statistics export-execute get --input - --dry-run"
+        "rsq schema \"workflow statistics execute export\""
       ],
       "fields": [
         {
+          "name": "applicationId",
           "option": "application-id",
           "in": "query",
-          "name": "applicationId",
           "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "64 位整数可用十进制字符串，避免精度丢失"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 workflow statistics context 获取的当前独立流程应用 ID。",
+            "pattern": "^[1-9][0-9]*$"
           }
         },
         {
-          "option": "sort-key",
-          "in": "query",
-          "name": "sortKey",
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
-          "option": "sort-value",
-          "in": "query",
-          "name": "sortValue",
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
-          "option": "start-date",
-          "in": "query",
-          "name": "startDate",
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
-          "option": "end-date",
-          "in": "query",
-          "name": "endDate",
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
+          "name": "stepId",
           "option": "step-id",
           "in": "query",
-          "name": "stepId",
           "schema": {
-            "type": [
-              "integer",
-              "string"
-            ],
-            "pattern": "^-?[0-9]+$",
-            "description": "64 位整数可用十进制字符串，避免精度丢失"
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "startDate",
+          "option": "start-date",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "endDate",
+          "option": "end-date",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "sortKey",
+          "option": "sort-key",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "assignee",
+              "stepCount",
+              "delayRate",
+              "delayDuration",
+              "delayCommitRate",
+              "delayCommitDuration"
+            ]
+          }
+        },
+        {
+          "name": "sortValue",
+          "option": "sort-value",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ]
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "workflow statistics execute export"
       ]
     },
     {
@@ -608597,33 +609377,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "business",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": [
-              "integer",
-              "string"
-            ]
-          },
-          "msg": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "data": {
-            "type": "null"
-          }
-        },
-        "required": [
-          "code",
-          "data"
-        ],
-        "additionalProperties": true
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -608632,37 +609393,49 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160,
+                "description": "从同一统计结果实际下钻得到的 detailId。",
+                "pattern": "^[a-zA-Z0-9_-]+$"
               }
             },
-            "additionalProperties": false,
             "required": [
               "id"
-            ]
+            ],
+            "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "query"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "workflow team-statistics export-detail get",
-      "description": "exportDetail",
+      "description": "导出流程执行统计下钻明细",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"query\":{\"id\":\"1\"}}' | rsq workflow team-statistics export-detail get --input - --dry-run"
+        "rsq schema \"statistics company workflow details export\""
       ],
       "fields": [
         {
+          "name": "id",
           "option": "id",
           "in": "query",
-          "name": "id",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从同一统计结果实际下钻得到的 detailId。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "statistics company workflow details export",
+        "workflow statistics team details export"
       ]
     },
     {
@@ -608678,11 +609451,14 @@
         "feishu",
         "wps"
       ],
-      "effect": "read",
-      "idempotency": "idempotent",
-      "response": "empty",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business-or-empty",
       "responseSchema": {
-        "type": "null"
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "inputSchema": {
         "type": "object",
@@ -608690,126 +609466,200 @@
           "query": {
             "type": "object",
             "properties": {
-              "sortKey": {
-                "type": "string"
-              },
-              "sortValue": {
-                "type": "string"
-              },
               "startDate": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 10,
+                "description": "开始日期，按 GMT+8，格式 YYYY-MM-DD。",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
               },
               "endDate": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 10,
+                "description": "结束日期，按 GMT+8，格式 YYYY-MM-DD。",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "sortKey": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 400,
+                "description": "网页统计表中的排序字段。"
+              },
+              "sortValue": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ],
+                "description": "排序方向。"
               },
               "userIds": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20000,
+                "description": "按可见成员 ID 筛选，逗号分隔。",
+                "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
               },
               "deptIds": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20000,
+                "description": "按可见部门 ID 筛选，逗号分隔。",
+                "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
               },
               "groupIds": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20000,
+                "description": "按可见小组 ID 筛选，逗号分隔。",
+                "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
               },
               "applicationIds": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20000,
+                "description": "可用流程应用 ID，逗号分隔。",
+                "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
               },
               "statisticsFrom": {
-                "type": "string"
+                "enum": [
+                  "team",
+                  "workflow"
+                ]
               }
             },
-            "additionalProperties": false,
             "required": [
               "statisticsFrom"
-            ]
+            ],
+            "additionalProperties": false
           }
         },
-        "additionalProperties": false,
         "required": [
           "query"
-        ]
+        ],
+        "additionalProperties": false
       },
       "review": "reviewed",
       "command": "workflow team-statistics export-execute get",
-      "description": "执行统计导出",
+      "description": "导出公司流程执行统计",
       "encoding": "json",
       "queryArray": "repeat",
       "examples": [
-        "printf '%s\\n' '{\"query\":{\"statisticsFrom\":\"rsq-cli-example\"}}' | rsq workflow team-statistics export-execute get --input - --dry-run"
+        "rsq schema \"statistics company workflow export\""
       ],
       "fields": [
         {
-          "option": "sort-key",
-          "in": "query",
-          "name": "sortKey",
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
-          "option": "sort-value",
-          "in": "query",
-          "name": "sortValue",
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
+          "name": "startDate",
           "option": "start-date",
           "in": "query",
-          "name": "startDate",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "开始日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
           }
         },
         {
+          "name": "endDate",
           "option": "end-date",
           "in": "query",
-          "name": "endDate",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "结束日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
           }
         },
         {
+          "name": "sortKey",
+          "option": "sort-key",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          }
+        },
+        {
+          "name": "sortValue",
+          "option": "sort-value",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
+          }
+        },
+        {
+          "name": "userIds",
           "option": "user-ids",
           "in": "query",
-          "name": "userIds",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
           }
         },
         {
+          "name": "deptIds",
           "option": "dept-ids",
           "in": "query",
-          "name": "deptIds",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见部门 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
           }
         },
         {
+          "name": "groupIds",
           "option": "group-ids",
           "in": "query",
-          "name": "groupIds",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见小组 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
           }
         },
         {
+          "name": "applicationIds",
           "option": "application-ids",
           "in": "query",
-          "name": "applicationIds",
           "schema": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "可用流程应用 ID，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
           }
         },
         {
+          "name": "statisticsFrom",
           "option": "statistics-from",
           "in": "query",
-          "name": "statisticsFrom",
           "schema": {
-            "type": "string"
+            "enum": [
+              "team",
+              "workflow"
+            ]
           }
         }
+      ],
+      "requiresBusinessContext": [
+        "statistics company workflow export",
+        "workflow statistics team export"
       ]
     },
     {
@@ -611081,6 +611931,469 @@
       ],
       "examples": [
         "rsq schema \"export watch\""
+      ]
+    },
+    {
+      "id": "rsq.web-review-stat-report-export",
+      "command": "replay transport review-stat-report-export",
+      "method": "POST",
+      "route": "/task/review/stat/report/export",
+      "service": "account",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "description": "导出复盘统计报表",
+      "effect": "write",
+      "idempotency": "unknown",
+      "review": "reviewed",
+      "response": "business-or-empty",
+      "responseSchema": {
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "object",
+            "properties": {
+              "replayCollectId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "从 replay statistics list 获取复盘集 ID。",
+                "pattern": "^[1-9][0-9]*$",
+                "x-rsq-wire-integer": true
+              },
+              "year": {
+                "type": "integer",
+                "minimum": 2000,
+                "maximum": 2100,
+                "description": "报表年度。"
+              },
+              "month": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 12,
+                "description": "日复盘报表的月份。"
+              },
+              "deptId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "按可见组织范围筛选。",
+                "pattern": "^[1-9][0-9]*$",
+                "x-rsq-wire-integer": true
+              },
+              "groupId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "按可见组织范围筛选。",
+                "pattern": "^[1-9][0-9]*$",
+                "x-rsq-wire-integer": true
+              },
+              "userIds": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20000,
+                "description": "按可见成员 ID 筛选，逗号分隔。",
+                "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+              }
+            },
+            "required": [
+              "replayCollectId",
+              "year"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "fields": [
+        {
+          "name": "replayCollectId",
+          "option": "replay-collect-id",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 replay statistics list 获取复盘集 ID。",
+            "pattern": "^[1-9][0-9]*$",
+            "x-rsq-wire-integer": true
+          }
+        },
+        {
+          "name": "year",
+          "option": "year",
+          "in": "body",
+          "schema": {
+            "type": "integer",
+            "minimum": 2000,
+            "maximum": 2100,
+            "description": "报表年度。"
+          }
+        },
+        {
+          "name": "month",
+          "option": "month",
+          "in": "body",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12,
+            "description": "日复盘报表的月份。"
+          }
+        },
+        {
+          "name": "deptId",
+          "option": "dept-id",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "按可见组织范围筛选。",
+            "pattern": "^[1-9][0-9]*$",
+            "x-rsq-wire-integer": true
+          }
+        },
+        {
+          "name": "groupId",
+          "option": "group-id",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "按可见组织范围筛选。",
+            "pattern": "^[1-9][0-9]*$",
+            "x-rsq-wire-integer": true
+          }
+        },
+        {
+          "name": "userIds",
+          "option": "user-ids",
+          "in": "body",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        }
+      ],
+      "examples": [
+        "rsq schema \"replay statistics export\""
+      ],
+      "requiresBusinessContext": [
+        "replay statistics export"
+      ],
+      "encoding": "json"
+    },
+    {
+      "id": "rsq.web-v4-kanbanchild-exportexcel",
+      "command": "project transport v4-kanbanchild-exportexcel",
+      "method": "GET",
+      "route": "/task/v4/kanbanChild/exportExcel",
+      "service": "account",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "description": "导出项目任务模块任务表格",
+      "effect": "write",
+      "idempotency": "unknown",
+      "review": "reviewed",
+      "response": "business-or-empty",
+      "responseSchema": {
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "实际导出范围 ID。",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "fieldIds": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 20000,
+                "description": "网页可导出的字段 ID。",
+                "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+              }
+            },
+            "required": [
+              "id",
+              "fieldIds"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "fields": [
+        {
+          "name": "id",
+          "option": "id",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "实际导出范围 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "fieldIds",
+          "option": "field-ids",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000,
+            "description": "网页可导出的字段 ID。",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          }
+        }
+      ],
+      "examples": [
+        "rsq schema \"project module tasks export\""
+      ],
+      "requiresBusinessContext": [
+        "project module tasks export"
+      ]
+    },
+    {
+      "id": "rsq.web-v4-kanbancard-exportexcel",
+      "command": "project transport v4-kanbancard-exportexcel",
+      "method": "GET",
+      "route": "/task/v4/kanbanCard/exportExcel",
+      "service": "account",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "description": "导出项目卡片任务表格",
+      "effect": "write",
+      "idempotency": "unknown",
+      "review": "reviewed",
+      "response": "business-or-empty",
+      "responseSchema": {
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "实际导出范围 ID。",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "fieldIds": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 20000,
+                "description": "网页可导出的字段 ID。",
+                "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+              }
+            },
+            "required": [
+              "id",
+              "fieldIds"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "fields": [
+        {
+          "name": "id",
+          "option": "id",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "实际导出范围 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "fieldIds",
+          "option": "field-ids",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000,
+            "description": "网页可导出的字段 ID。",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          }
+        }
+      ],
+      "examples": [
+        "rsq schema \"project card tasks export\""
+      ],
+      "requiresBusinessContext": [
+        "project card tasks export"
+      ]
+    },
+    {
+      "id": "rsq.web-v4-kanbancollection-exportexcel",
+      "command": "project transport v4-kanbancollection-exportexcel",
+      "method": "GET",
+      "route": "/task/v4/kanbanCollection/exportExcel",
+      "service": "account",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "description": "导出项目集任务表格",
+      "effect": "write",
+      "idempotency": "unknown",
+      "review": "reviewed",
+      "response": "business-or-empty",
+      "responseSchema": {
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 19,
+                "description": "实际导出范围 ID。",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "fieldIds": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 20000,
+                "description": "网页可导出的字段 ID。",
+                "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+              },
+              "sessionKey": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160,
+                "description": "本次项目集导出的会话标识。",
+                "pattern": "^[a-zA-Z0-9_-]+$"
+              }
+            },
+            "required": [
+              "id",
+              "fieldIds",
+              "sessionKey"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "fields": [
+        {
+          "name": "id",
+          "option": "id",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "实际导出范围 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "fieldIds",
+          "option": "field-ids",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000,
+            "description": "网页可导出的字段 ID。",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          }
+        },
+        {
+          "name": "sessionKey",
+          "option": "session-key",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "本次项目集导出的会话标识。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          }
+        }
+      ],
+      "examples": [
+        "rsq schema \"project collection tasks export\""
+      ],
+      "requiresBusinessContext": [
+        "project collection tasks export"
       ]
     }
   ]

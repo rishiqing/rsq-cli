@@ -26,6 +26,8 @@ description: 使用 rsq CLI 查询或修改日事清流程、绩效、OKR、行�
 
 接收进程用 HTTP 长轮询收取当前账号的在线导出通知，原样保存服务器文件。同名文件追加编号。保存后从该进程的 `file` 事件读取 `output` 和 `bytes`，每个账号使用一个接收进程。文件按账号接收，可能由网页或其他命令发起，不能用受理标识匹配某个文件。停止或断线期间的通知无法补收。
 
+项目任务、甘特图、统计、OKR、行动、绩效、复盘和 AI 使用记录的业务导出也由同一个 `export watch` 进程接收。用 `rsq schema <业务模块>` 查找导出命令，再按关联命令获取实际资源。项目统计下钻先调用 `statistics project drilldown discover`，传入返回的 `selector`。单项自动化可在同一账号依次发起，等收到对应业务的文件后再开始下一项。
+
 已知项目时可用 `project workflow modules list --project-id <项目ID>` 直接发现模块。项目命令按 `PLAN` + `PLAN_WORKFLOW` 及实际模块校验，独立流程命令按 `WORKFLOW` 校验。
 
 `form describe` 返回表单定义，`form records list` 返回实际值。项目表单记录从可见流程实例和步骤读取，按 `pagination.nextPage` 翻页；本页没有匹配表单时也要看 `nextPage`。实例列表的 `target` 保留相应入口和实际 ID。沿该入口调用 `instance inspect` 获取步骤、表单值及可用动作，再按需 `fill`、`act` 或 `transfer`。实例列表按 `nextOffset` 翻页，`finished` 筛选包括已完成及已关闭，详情的 `status` 区分终态。

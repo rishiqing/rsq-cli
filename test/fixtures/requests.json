@@ -226,17 +226,17 @@
       "input": {
         "query": {
           "type": "my",
-          "viewId": 1,
-          "startDate": "2026.11.07",
-          "endDate": "2026.11.07",
-          "range": "view"
+          "viewId": "123",
+          "range": "view",
+          "startDate": "2026.11.01",
+          "endDate": "2026.11.30"
         }
       },
       "request": {
         "method": "GET",
-        "url": "/task/okr/action/task/export?type=my&viewId=1&startDate=2026.11.07&endDate=2026.11.07&range=view"
+        "url": "/task/okr/action/task/export?type=my&viewId=123&range=view&startDate=2026.11.01&endDate=2026.11.30"
       },
-      "response": {}
+      "response": null
     }
   ],
   "rsq.b01c1440b589": [
@@ -836,18 +836,18 @@
     {
       "origin": "synthetic-server-model",
       "input": {
-        "body": {}
+        "body": {
+          "indicatorId": "123"
+        }
       },
       "request": {
         "method": "POST",
         "url": "/task/performance/content/departmentAppraisalData/detailExport",
-        "body": {}
+        "body": {
+          "indicatorId": "123"
+        }
       },
-      "response": {
-        "code": 200,
-        "data": null,
-        "msg": "ok"
-      }
+      "response": null
     }
   ],
   "rsq.5eec427fa424": [
@@ -972,18 +972,18 @@
     {
       "origin": "synthetic-server-model",
       "input": {
-        "body": {}
+        "body": {
+          "indicatorId": "123"
+        }
       },
       "request": {
         "method": "POST",
         "url": "/task/performance/content/monthlyAppraisalData/detailExport",
-        "body": {}
+        "body": {
+          "indicatorId": "123"
+        }
       },
-      "response": {
-        "code": 200,
-        "data": null,
-        "msg": "ok"
-      }
+      "response": null
     }
   ],
   "rsq.b4299fa06c7d": [
@@ -1273,21 +1273,19 @@
       "origin": "synthetic-server-model",
       "input": {
         "body": {
-          "period": "rsq-cli-example"
+          "period": "2026-10",
+          "isExportContent": false
         }
       },
       "request": {
         "method": "POST",
         "url": "/task/performance/v4/appraisal/export",
         "body": {
-          "period": "rsq-cli-example"
+          "period": "2026-10",
+          "isExportContent": false
         }
       },
-      "response": {
-        "code": 200,
-        "data": null,
-        "msg": "ok"
-      }
+      "response": null
     }
   ],
   "rsq.9dd8da18c11d": [
@@ -1298,11 +1296,7 @@
         "method": "GET",
         "url": "/task/performance/appraisal/export/entryDownload"
       },
-      "response": {
-        "code": 200,
-        "data": null,
-        "msg": "ok"
-      }
+      "response": null
     }
   ],
   "rsq.91fd8ecd2272": [
@@ -2311,18 +2305,26 @@
     {
       "origin": "synthetic-server-model",
       "input": {
-        "body": {}
+        "body": {
+          "startDate": "2026.10.01",
+          "endDate": "2026.11.30",
+          "columnType": "monthly",
+          "total": "averageScoreWithScoreCycle",
+          "isShowLevel": true
+        }
       },
       "request": {
         "method": "POST",
         "url": "/task/performance/appraisal/report/export",
-        "body": {}
+        "body": {
+          "startDate": "2026.10.01",
+          "endDate": "2026.11.30",
+          "columnType": "monthly",
+          "total": "averageScoreWithScoreCycle",
+          "isShowLevel": true
+        }
       },
-      "response": {
-        "code": 200,
-        "data": null,
-        "msg": "ok"
-      }
+      "response": null
     }
   ],
   "rsq.aeb69adc6531": [
@@ -2961,18 +2963,22 @@
     {
       "origin": "synthetic-server-model",
       "input": {
-        "body": {}
+        "body": {
+          "id": "example",
+          "period": "2026-11",
+          "periodType": "monthly"
+        }
       },
       "request": {
         "method": "POST",
         "url": "/task/performance/salaryReport/export",
-        "body": {}
+        "body": {
+          "id": "example",
+          "period": "2026-11",
+          "periodType": "monthly"
+        }
       },
-      "response": {
-        "code": 200,
-        "data": null,
-        "msg": "ok"
-      }
+      "response": null
     }
   ],
   "rsq.edfea475ae09": [
@@ -3026,18 +3032,22 @@
     {
       "origin": "synthetic-server-model",
       "input": {
-        "body": {}
+        "body": {
+          "id": "example",
+          "period": "2026-11",
+          "periodType": "monthly"
+        }
       },
       "request": {
         "method": "POST",
         "url": "/task/performance/salaryReport/template/export",
-        "body": {}
+        "body": {
+          "id": "example",
+          "period": "2026-11",
+          "periodType": "monthly"
+        }
       },
-      "response": {
-        "code": 200,
-        "data": null,
-        "msg": "ok"
-      }
+      "response": null
     }
   ],
   "rsq.bc32554af264": [
@@ -3920,11 +3930,7 @@
         "method": "GET",
         "url": "/task/performance/template/indicator/export"
       },
-      "response": {
-        "code": 200,
-        "data": null,
-        "msg": "ok"
-      }
+      "response": null
     }
   ],
   "rsq.97633789ac18": [
@@ -5693,7 +5699,9 @@
   "rsq.83e6ffcc17a4": [
     {
       "origin": "synthetic-server-model",
-      "input": {},
+      "input": {
+        "query": {}
+      },
       "request": {
         "method": "GET",
         "url": "/task/okr/export/ai/record"
@@ -5704,10 +5712,18 @@
   "rsq.2f8783c3e6c5": [
     {
       "origin": "synthetic-server-model",
-      "input": {},
+      "input": {
+        "query": {
+          "indicatorIds": "123",
+          "timeType": "month",
+          "startTime": "2026-10",
+          "endTime": "2026-11",
+          "dataType": "done"
+        }
+      },
       "request": {
         "method": "GET",
-        "url": "/task/okr/export/indicator/data"
+        "url": "/task/okr/export/indicator/data?indicatorIds=123&timeType=month&startTime=2026-10&endTime=2026-11&dataType=done"
       },
       "response": null
     }
@@ -5717,12 +5733,12 @@
       "origin": "synthetic-server-model",
       "input": {
         "query": {
-          "cycleIds": "rsq-cli-example"
+          "cycleIds": "123"
         }
       },
       "request": {
         "method": "GET",
-        "url": "/task/okr/export/objective?cycleIds=rsq-cli-example"
+        "url": "/task/okr/export/objective?cycleIds=123"
       },
       "response": null
     }
@@ -5743,12 +5759,14 @@
       "origin": "synthetic-server-model",
       "input": {
         "query": {
-          "cycleId": 1
+          "cycleId": "123",
+          "objectiveType": "all",
+          "id": "example"
         }
       },
       "request": {
         "method": "GET",
-        "url": "/task/okr/export/statistics/data/item?cycleId=1"
+        "url": "/task/okr/export/statistics/data/item?cycleId=123&objectiveType=all&id=example"
       },
       "response": null
     }
@@ -5758,13 +5776,13 @@
       "origin": "synthetic-server-model",
       "input": {
         "query": {
-          "cycleId": 1,
-          "objectiveType": "dept"
+          "cycleId": "123",
+          "objectiveType": "person"
         }
       },
       "request": {
         "method": "GET",
-        "url": "/task/okr/export/statistics/reportForms?cycleId=1&objectiveType=dept"
+        "url": "/task/okr/export/statistics/reportForms?cycleId=123&objectiveType=person"
       },
       "response": null
     }
@@ -5774,14 +5792,15 @@
       "origin": "synthetic-server-model",
       "input": {
         "query": {
-          "cycleId": 1,
-          "objectiveTypeDataId": 1,
-          "objectiveType": "dept"
+          "cycleId": "123",
+          "objectiveType": "person",
+          "objectiveTypeDataId": "456",
+          "id": "report_objNum"
         }
       },
       "request": {
         "method": "GET",
-        "url": "/task/okr/export/statistics/reportForms/item?cycleId=1&objectiveTypeDataId=1&objectiveType=dept"
+        "url": "/task/okr/export/statistics/reportForms/item?cycleId=123&objectiveType=person&objectiveTypeDataId=456&id=report_objNum"
       },
       "response": null
     }
@@ -6115,12 +6134,12 @@
       "origin": "synthetic-server-model",
       "input": {
         "query": {
-          "id": 1
+          "id": "123"
         }
       },
       "request": {
         "method": "GET",
-        "url": "/task/okr/indicator/database/export?id=1"
+        "url": "/task/okr/indicator/database/export?id=123"
       },
       "response": null
     }
@@ -10759,18 +10778,18 @@
       "origin": "synthetic-server-model",
       "input": {
         "body": {
-          "id": 1,
-          "startDate": "2026.11.07",
-          "endDate": "2026.11.07"
+          "id": "123",
+          "startDate": "2026-11-01",
+          "endDate": "2026-11-30"
         }
       },
       "request": {
         "method": "POST",
         "url": "/task/review/replay/collect/export",
         "body": {
-          "id": 1,
-          "startDate": "2026.11.07",
-          "endDate": "2026.11.07"
+          "id": 123,
+          "startDate": "2026-11-01",
+          "endDate": "2026-11-30"
         }
       },
       "response": null
@@ -11449,12 +11468,12 @@
       "origin": "synthetic-server-model",
       "input": {
         "query": {
-          "id": 1
+          "id": "123"
         }
       },
       "request": {
         "method": "GET",
-        "url": "/task/review/replay/export?id=1"
+        "url": "/task/review/replay/export?id=123"
       },
       "response": null
     }
@@ -15808,18 +15827,14 @@
       "origin": "synthetic-server-model",
       "input": {
         "query": {
-          "detailId": "1"
+          "detailId": "example"
         }
       },
       "request": {
         "method": "GET",
-        "url": "/task/workflow/projectStatistics/exportDetail?detailId=1"
+        "url": "/task/workflow/projectStatistics/exportDetail?detailId=example"
       },
-      "response": {
-        "code": 200,
-        "data": null,
-        "msg": "ok"
-      }
+      "response": null
     }
   ],
   "rsq.4592e589649e": [
@@ -15985,18 +16000,14 @@
       "origin": "synthetic-server-model",
       "input": {
         "query": {
-          "applicationId": 1
+          "applicationId": "123"
         }
       },
       "request": {
         "method": "GET",
-        "url": "/task/workflow/statistics/exportEfficiency?applicationId=1"
+        "url": "/task/workflow/statistics/exportEfficiency?applicationId=123"
       },
-      "response": {
-        "code": 200,
-        "data": null,
-        "msg": "ok"
-      }
+      "response": null
     }
   ],
   "rsq.60a3f05f697f": [
@@ -16004,18 +16015,14 @@
       "origin": "synthetic-server-model",
       "input": {
         "query": {
-          "applicationId": 1
+          "applicationId": "123"
         }
       },
       "request": {
         "method": "GET",
-        "url": "/task/workflow/statistics/exportExecute?applicationId=1"
+        "url": "/task/workflow/statistics/exportExecute?applicationId=123"
       },
-      "response": {
-        "code": 200,
-        "data": null,
-        "msg": "ok"
-      }
+      "response": null
     }
   ],
   "rsq.3d137e511c59": [
@@ -16698,18 +16705,14 @@
       "origin": "synthetic-server-model",
       "input": {
         "query": {
-          "id": "1"
+          "id": "example"
         }
       },
       "request": {
         "method": "GET",
-        "url": "/task/workflow/teamStatistics/exportDetail?id=1"
+        "url": "/task/workflow/teamStatistics/exportDetail?id=example"
       },
-      "response": {
-        "code": 200,
-        "data": null,
-        "msg": "ok"
-      }
+      "response": null
     }
   ],
   "rsq.d7595b6ad188": [
@@ -16717,12 +16720,12 @@
       "origin": "synthetic-server-model",
       "input": {
         "query": {
-          "statisticsFrom": "rsq-cli-example"
+          "statisticsFrom": "team"
         }
       },
       "request": {
         "method": "GET",
-        "url": "/task/workflow/teamStatistics/exportExecute?statisticsFrom=rsq-cli-example"
+        "url": "/task/workflow/teamStatistics/exportExecute?statisticsFrom=team"
       },
       "response": null
     }
@@ -29565,6 +29568,252 @@
         "enabled": true,
         "onlineOnly": true
       }
+    }
+  ],
+  "rsq.web-review-stat-report-export": [
+    {
+      "origin": "synthetic-server-model",
+      "input": {
+        "body": {
+          "replayCollectId": "123",
+          "year": 2026,
+          "month": 11
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "/task/review/stat/report/export",
+        "body": {
+          "replayCollectId": 123,
+          "year": 2026,
+          "month": 11
+        }
+      },
+      "response": null
+    }
+  ],
+  "rsq.6beb58993fc5": [
+    {
+      "origin": "synthetic-server-model",
+      "input": {
+        "query": {
+          "kanbanId": "123"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "/task/api/v3/template/projectUsed?kanbanId=123"
+      },
+      "response": []
+    }
+  ],
+  "rsq.5d936a06c939": [
+    {
+      "origin": "synthetic-server-model",
+      "input": {
+        "body": {
+          "id": "123",
+          "filter": [
+            {
+              "key": "name",
+              "operators": [
+                "包含"
+              ],
+              "contentValue": "示例"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "/task/v1/kanbanExport/setFilterCondition",
+        "body": {
+          "id": 123,
+          "filter": [
+            {
+              "key": "name",
+              "operators": [
+                "包含"
+              ],
+              "contentValue": "示例"
+            }
+          ]
+        }
+      },
+      "response": null
+    }
+  ],
+  "rsq.2feb0c6d5406": [
+    {
+      "origin": "synthetic-server-model",
+      "input": {
+        "query": {
+          "id": "123",
+          "fieldIds": "1,2"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "/task/v4/kanban/exportExcel?id=123&fieldIds=1%2C2"
+      },
+      "response": null
+    }
+  ],
+  "rsq.5062ee7ea053": [
+    {
+      "origin": "synthetic-server-model",
+      "input": {
+        "query": {
+          "kanbanChildId": "123"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "/task/v3/taskTemplate/kanbanChildUsedTaskTemplate?kanbanChildId=123"
+      },
+      "response": []
+    }
+  ],
+  "rsq.web-v4-kanbanchild-exportexcel": [
+    {
+      "origin": "synthetic-server-model",
+      "input": {
+        "query": {
+          "id": "123",
+          "fieldIds": "1,2"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "/task/v4/kanbanChild/exportExcel?id=123&fieldIds=1%2C2"
+      },
+      "response": null
+    }
+  ],
+  "rsq.3323af62b712": [
+    {
+      "origin": "synthetic-server-model",
+      "input": {
+        "query": {
+          "kanbanCardId": "123"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "/task/v3/taskTemplate/kanbanCardUsedTaskTemplate?kanbanCardId=123"
+      },
+      "response": []
+    }
+  ],
+  "rsq.web-v4-kanbancard-exportexcel": [
+    {
+      "origin": "synthetic-server-model",
+      "input": {
+        "query": {
+          "id": "123",
+          "fieldIds": "1,2"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "/task/v4/kanbanCard/exportExcel?id=123&fieldIds=1%2C2"
+      },
+      "response": null
+    }
+  ],
+  "rsq.86c6cf62374d": [
+    {
+      "origin": "synthetic-server-model",
+      "input": {
+        "query": {
+          "collectionId": "123"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "/task/v3/taskTemplate/kanbanCollectionUsedTaskTemplate?collectionId=123"
+      },
+      "response": []
+    }
+  ],
+  "rsq.web-v4-kanbancollection-exportexcel": [
+    {
+      "origin": "synthetic-server-model",
+      "input": {
+        "query": {
+          "id": "123",
+          "fieldIds": "1,2",
+          "sessionKey": "fixture-session-key"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "/task/v4/kanbanCollection/exportExcel?id=123&fieldIds=1%2C2&sessionKey=fixture-session-key"
+      },
+      "response": null
+    }
+  ],
+  "rsq.11343b5ecbc7": [
+    {
+      "origin": "synthetic-server-model",
+      "input": {
+        "query": {
+          "planId": "456"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "/task/api/v3/projectTask/gantt/excelExport?planId=456"
+      },
+      "response": null
+    }
+  ],
+  "rsq.d60c7c05d736": [
+    {
+      "origin": "synthetic-server-model",
+      "input": {
+        "body": {
+          "statisticsType": "task-all"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "/task/api/statistics/list/export",
+        "body": {
+          "statisticsType": "task-all"
+        }
+      },
+      "response": null
+    }
+  ],
+  "rsq.9335220c3e03": [
+    {
+      "origin": "synthetic-server-model",
+      "input": {
+        "query": {
+          "id": "example"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "/task/api/statistics/detail/export?id=example"
+      },
+      "response": null
+    }
+  ],
+  "rsq.233059fd1402": [
+    {
+      "origin": "synthetic-server-model",
+      "input": {
+        "query": {
+          "id": "example"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "/task/v5/kanban/stats/chart/export?id=example"
+      },
+      "response": null
     }
   ]
 }

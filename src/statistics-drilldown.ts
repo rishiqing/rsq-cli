@@ -7,9 +7,18 @@ import { datasheetRecordsSteps, runDatasheetRecords } from './datasheet-records.
 import { chartMutableFields } from './statistics.js'
 import type { Workflow } from './workflows.js'
 
-export type StatisticsDrilldownAction = 'discover' | 'tasks' | 'risks' | 'workflows' | 'records'
+type StatisticsDrilldownKind = 'tasks' | 'risks' | 'workflows' | 'records'
+const exportActions = {
+  'chart-export': { command: 'statistics project chart export', route: '/task/v5/kanban/stats/chart/export', argument: 'id', kind: null },
+  'tasks-export': { command: 'statistics project drilldown tasks export', route: '/task/api/statistics/detail/export', argument: 'id', kind: 'tasks' },
+  'workflows-export': { command: 'statistics project drilldown workflows export', route: '/task/workflow/projectStatistics/exportDetail', argument: 'detailId', kind: 'workflows' },
+} as const
+export type StatisticsDrilldownAction = 'discover' | StatisticsDrilldownKind | keyof typeof exportActions
 type Route = readonly [string, string, string]
-const actions: StatisticsDrilldownAction[] = ['discover', 'tasks', 'risks', 'workflows', 'records']
+const actions: StatisticsDrilldownAction[] = ['discover', 'tasks', 'risks', 'workflows', 'records', 'chart-export', 'tasks-export', 'workflows-export']
+function exportAction(action: StatisticsDrilldownAction) {
+  return Object.hasOwn(exportActions, action) ? exportActions[action as keyof typeof exportActions] : undefined
+}
 const chartBase = '/task/v5/kanban/stats/'
 const riskTypes = new Set(['riskStatusDistribution', 'riskLevelDistribution', 'riskImpactRangeDistribution', 'riskPrincipalDistribution'])
 const workflowTypes = new Set(['workflowOverview', 'workflowProcessInfoStart', 'workflowStepTakeTime', 'workflowStepDelay', 'workflowExecutorEfficiency', 'workflowAuditorEfficiency'])
@@ -18,7 +27,7 @@ const numeric = (value: unknown): string => typeof value === 'string' && /^[1-9]
 const opaque = (value: unknown): string => typeof value === 'string' && /^[A-Za-z0-9_-]{1,200}$/.test(value) ? value : invalid('CONTEXT_MISSING', '统计上下文缺少实际资源 ID。')
 const rows = (value: unknown, limit = 10000): JsonObject[] => Array.isArray(value) && value.length <= limit ? value.map(asObject) : invalid('CONTEXT_INCOMPLETE', '统计上下文列表缺失或超过遍历上限。')
 const data = (value: unknown): unknown => value && typeof value === 'object' && Object.hasOwn(value, 'data') ? asObject(value).data : value
-const kindOf = (chart: JsonObject): Exclude<StatisticsDrilldownAction, 'discover'> => riskTypes.has(String(chart.creationType)) ? 'risks' : workflowTypes.has(String(chart.creationType)) ? 'workflows' : chart.creationType === 'customDatasheet' ? 'records' : 'tasks'
+const kindOf = (chart: JsonObject): StatisticsDrilldownKind => riskTypes.has(String(chart.creationType)) ? 'risks' : workflowTypes.has(String(chart.creationType)) ? 'workflows' : chart.creationType === 'customDatasheet' ? 'records' : 'tasks'
 function withoutDetailIds(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(withoutDetailIds)
   if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).filter(([key]) => key !== 'detailId').map(([key, child]) => [key, withoutDetailIds(child)]))
@@ -52,9 +61,12 @@ function chartCells(value: unknown) {
   visit(value, '', 0); return found
 }
 export function statisticsDrilldownSteps(action: StatisticsDrilldownAction): Route[] {
+  const requestExport = exportAction(action)
   return [['identity', 'GET', '/task/login/authAjax'], ['project', 'GET', '/task/v1/kanbanCrud'], ['modules', 'GET', '/task/v1/kanbanChildCrud/list'],
     ['collections', 'GET', '/task/v3/kanbanCollection/list'], ['collection', 'GET', '/task/v3/kanbanCollection'], ['collectionProjects', 'GET', '/task/project/collection/project/list'],
     ['dashboards', 'GET', chartBase + 'dashboard/list'], ['charts', 'GET', chartBase + 'chart/list'], ['chart', 'GET', chartBase + 'chart'],
+    ...(action === 'tasks-export' ? [['details', 'GET', '/task/api/statistics/detail/task/list'], ['permissions', 'GET', '/task/api/statistics/detail/totalInfo']] as Route[] : []),
+    ...(requestExport ? [['requestExport', 'GET', requestExport.route] as Route] : []),
     ...(action === 'tasks' ? [['details', 'GET', '/task/api/statistics/detail/task/list'], ['permissions', 'GET', '/task/api/statistics/detail/totalInfo'], ['nativeTask', 'GET', '/task/api/v3/task']] as Route[] : []),
     ...(action === 'risks' ? [['details', 'GET', '/task/v3/kanban/risk/detail/list'], ['permissions', 'GET', '/task/v3/kanban/risk/detail/totalInfo'], ['nativeRisk', 'GET', '/task/v3/kanban/risk']] as Route[] : []),
     ...(action === 'workflows' ? [['details', 'GET', '/task/workflow/projectStatistics/statisticsDetail'], ['nativeProcess', 'GET', '/task/workflow/process/info/details'], ['nativeStep', 'GET', '/task/workflow/process/info/step']] as Route[] : []),
@@ -62,7 +74,8 @@ export function statisticsDrilldownSteps(action: StatisticsDrilldownAction): Rou
 }
 export function validateStatisticsDrilldownWorkflow(flow: Workflow) {
   const action = flow.statisticsDrilldownAction
-  if (!action || !actions.includes(action) || flow.executor !== 'statistics-drilldown' || flow.effect !== 'write' || flow.command !== 'statistics project drilldown ' + (action === 'discover' ? 'discover' : action + ' list')) invalid('INVALID_CONTRACT', '统计下钻动作、命令和读取副作用不一致。')
+  if (!action || !actions.includes(action) || flow.executor !== 'statistics-drilldown' || flow.effect !== 'write' ||
+    flow.command !== (exportAction(action)?.command ?? 'statistics project drilldown ' + (action === 'discover' ? 'discover' : action + ' list'))) invalid('INVALID_CONTRACT', '统计下钻动作、命令和副作用不一致。')
   const expected = statisticsDrilldownSteps(action!)
   if (!flow.inputSchema.required?.includes('chartId') || !flow.inputSchema.required?.includes('dashboardId') || flow.steps.length !== expected.length || flow.steps.some((step, index) => {
     const [id, method, route] = expected[index], operation = catalog.operations.find(operation => operation.id === step.operationId)
@@ -129,6 +142,23 @@ export async function runStatisticsDrilldown(ctx: Context, flow: Workflow, input
     if (action === 'discover') return { workflow: flow.id, resources, completedSteps: completed, result: { ...resources, kind: context.kind, creationType: context.chart.creationType, contextVersion: context.contextVersion,
       fields: asObject(context.chart.graphData).fields, meta: asObject(context.chart.graphData).meta, cells: context.cells.map(({ selector, values }) => ({ selector, values })),
       nextCommand: 'statistics project drilldown ' + context.kind + ' list', proof: { sourceAndDashboardBound: true, detailCacheIsAuthorization: false } } }
+    const exportRequest = exportAction(action)
+    if (exportRequest) {
+      let targetId = chartId
+      if (exportRequest.kind) {
+        if (context.kind !== exportRequest.kind) invalid('CONTEXT_MISMATCH', '导出类型与图表明细类型不一致。')
+        const cell = context.cells.find(item => item.selector === input.selector)
+        if (!cell) invalid('CONTEXT_MISSING', '当前统计值缺少可导出的明细。请先运行 drilldown discover。')
+        targetId = cell!.detailId
+        if (exportRequest.kind === 'tasks') {
+          const detail = asObject(await call('details', { query: { id: targetId, max: 1, dataType: 'numerator' } }))
+          const permissions = asObject(await call('permissions', { query: { id: targetId, dataType: 'numerator' } }))
+          if (!Object.keys(detail).length || !Object.keys(permissions).length) invalid('STATISTICS_EXPIRED', '任务明细的统计结果已失效，请刷新图表后重试。')
+        }
+      } else if (context.chart.chartType !== 'table') invalid('INVALID_INPUT', '网页图表导出适用于表格图。')
+      await call('requestExport', { query: { [exportRequest.argument]: targetId } })
+      return { command: flow.command, completedSteps: completed, resources, result: { status: 'accepted', receiver: 'export watch' } }
+    }
     if (context.kind !== action) invalid('CONTEXT_MISMATCH', '下钻命令与当前图表业务类型不同，请使用 discover 返回的 nextCommand。')
     const cell = context.cells.find(cell => cell.selector === input.selector)
     if (!cell) invalid('CONTEXT_MISSING', '所选单元格没有当前有效的下钻上下文。请先 discover，不要提交 detailId。')
@@ -202,6 +232,6 @@ export async function runStatisticsDrilldown(ctx: Context, flow: Workflow, input
     const cause = error instanceof RsqError ? error : new RsqError('UNEXPECTED_ERROR', '统计下钻失败。', 1)
     throw new RsqError(cause.code, cause.message, cause.exit, { ...cause.details, resources: { ...resources, ...asObject(cause.details?.resources) }, completedSteps: completed, failedStep: phase,
       ...(phase === 'native-record-selection' && { innerFailedStep: cause.details?.failedStep, innerCompletedSteps: cause.details?.completedSteps }),
-      writeOutcome: contextAttempted ? 'context-reads-may-initialize-module-or-permission-state' : 'business-mutation-not-sent', automaticReplay: false })
+      writeOutcome: phase === 'requestExport' ? 'check-export-receiver' : contextAttempted ? 'context-reads-may-initialize-module-or-permission-state' : 'business-mutation-not-sent', automaticReplay: false })
   }
 }

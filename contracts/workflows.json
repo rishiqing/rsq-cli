@@ -251371,6 +251371,6292 @@
         }
       ],
       "recovery": "先开启 export watch 再发起导出。发起回执代表已受理，文件从当前账号的导出通知单独接收。网络不明确时先核对结果，避免重复提交。"
+    },
+    {
+      "id": "closure.export.okr-statistics-report-export",
+      "command": "okr statistics report export",
+      "description": "导出 OKR 部门或人员统计报表。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "okr/statistics"
+      ],
+      "examples": [
+        "rsq okr statistics report export --cycle-id 123 --objective-type person"
+      ],
+      "relatedCommands": [
+        "okr statistics context",
+        "okr statistics report get",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cycleId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 okr cycles context 选择的周期 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "objectiveType": {
+            "type": "string",
+            "enum": [
+              "dept",
+              "person"
+            ],
+            "description": "部门或人员报表。"
+          },
+          "deptType": {
+            "type": "string",
+            "enum": [
+              "dept",
+              "deptAndChildDept",
+              "deptUser",
+              "deptAndChildDeptUser"
+            ],
+            "description": "部门报表的部门展开方式。"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "按报表名称过滤。"
+          },
+          "sortKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          },
+          "sortValue": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
+          },
+          "departmentId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "人员报表的部门筛选。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        "required": [
+          "cycleId",
+          "objectiveType"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "cycleId",
+          "option": "cycle-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 okr cycles context 选择的周期 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "objectiveType",
+          "option": "objective-type",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "dept",
+              "person"
+            ],
+            "description": "部门或人员报表。"
+          }
+        },
+        {
+          "name": "deptType",
+          "option": "dept-type",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "dept",
+              "deptAndChildDept",
+              "deptUser",
+              "deptAndChildDeptUser"
+            ],
+            "description": "部门报表的部门展开方式。"
+          }
+        },
+        {
+          "name": "name",
+          "option": "name",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "按报表名称过滤。"
+          }
+        },
+        {
+          "name": "sortKey",
+          "option": "sort-key",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          }
+        },
+        {
+          "name": "sortValue",
+          "option": "sort-value",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
+          }
+        },
+        {
+          "name": "departmentId",
+          "option": "department-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "人员报表的部门筛选。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "sidebar",
+          "operationId": "rsq.f4a02b17a086",
+          "description": "读取 OKR 菜单和当前角色权限。",
+          "input": {}
+        },
+        {
+          "id": "cycles",
+          "operationId": "rsq.9f150c681d78",
+          "description": "读取当前公司可见的 OKR 周期。",
+          "input": {}
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.49a44d9c0422",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "cycleId": {
+                "$input": "/cycleId"
+              },
+              "objectiveType": {
+                "$input": "/objectiveType"
+              },
+              "deptType": {
+                "$input": "/deptType"
+              },
+              "name": {
+                "$input": "/name"
+              },
+              "sortKey": {
+                "$input": "/sortKey"
+              },
+              "sortValue": {
+                "$input": "/sortValue"
+              },
+              "deptId": {
+                "$input": "/departmentId"
+              }
+            }
+          },
+          "prepare": "web-export-okr-report"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.okr-statistics-report-detail-export",
+      "command": "okr statistics report detail export",
+      "description": "导出 OKR 统计报表的指标明细。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "okr/statistics"
+      ],
+      "examples": [
+        "rsq okr statistics report detail export --cycle-id 123 --objective-type person --row-id 456 --metric report_objNum"
+      ],
+      "relatedCommands": [
+        "okr statistics context",
+        "okr statistics report get",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cycleId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 okr cycles context 选择的周期 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "objectiveType": {
+            "type": "string",
+            "enum": [
+              "dept",
+              "person"
+            ],
+            "description": "部门或人员报表。"
+          },
+          "deptType": {
+            "type": "string",
+            "enum": [
+              "dept",
+              "deptAndChildDept",
+              "deptUser",
+              "deptAndChildDeptUser"
+            ],
+            "description": "部门报表的部门展开方式。"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "按报表名称过滤。"
+          },
+          "sortKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          },
+          "sortValue": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
+          },
+          "rowId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从同一 OKR 报表选择的行 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "metric": {
+            "type": "string",
+            "enum": [
+              "report_objNum",
+              "report_objAlignNum",
+              "report_objUnAlignNum",
+              "report_krNum"
+            ],
+            "description": "目标或 KR 统计项。"
+          }
+        },
+        "required": [
+          "cycleId",
+          "objectiveType",
+          "rowId",
+          "metric"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "cycleId",
+          "option": "cycle-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 okr cycles context 选择的周期 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "objectiveType",
+          "option": "objective-type",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "dept",
+              "person"
+            ],
+            "description": "部门或人员报表。"
+          }
+        },
+        {
+          "name": "deptType",
+          "option": "dept-type",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "dept",
+              "deptAndChildDept",
+              "deptUser",
+              "deptAndChildDeptUser"
+            ],
+            "description": "部门报表的部门展开方式。"
+          }
+        },
+        {
+          "name": "name",
+          "option": "name",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "按报表名称过滤。"
+          }
+        },
+        {
+          "name": "sortKey",
+          "option": "sort-key",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          }
+        },
+        {
+          "name": "sortValue",
+          "option": "sort-value",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
+          }
+        },
+        {
+          "name": "rowId",
+          "option": "row-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从同一 OKR 报表选择的行 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "metric",
+          "option": "metric",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "report_objNum",
+              "report_objAlignNum",
+              "report_objUnAlignNum",
+              "report_krNum"
+            ],
+            "description": "目标或 KR 统计项。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "sidebar",
+          "operationId": "rsq.f4a02b17a086",
+          "description": "读取 OKR 菜单和当前角色权限。",
+          "input": {}
+        },
+        {
+          "id": "cycles",
+          "operationId": "rsq.9f150c681d78",
+          "description": "读取当前公司可见的 OKR 周期。",
+          "input": {}
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.a1d392d4b35f",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "cycleId": {
+                "$input": "/cycleId"
+              },
+              "objectiveType": {
+                "$input": "/objectiveType"
+              },
+              "deptType": {
+                "$input": "/deptType"
+              },
+              "name": {
+                "$input": "/name"
+              },
+              "sortKey": {
+                "$input": "/sortKey"
+              },
+              "sortValue": {
+                "$input": "/sortValue"
+              },
+              "objectiveTypeDataId": {
+                "$input": "/rowId"
+              },
+              "id": {
+                "$input": "/metric"
+              }
+            }
+          },
+          "prepare": "web-export-okr-report"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.okr-statistics-chart-detail-export",
+      "command": "okr statistics chart detail export",
+      "description": "导出 OKR 图表实际统计项明细。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "okr/statistics"
+      ],
+      "examples": [
+        "rsq okr statistics chart detail export --cycle-id 123 --objective-type all --point-id example"
+      ],
+      "relatedCommands": [
+        "okr statistics charts get",
+        "okr statistics chart details",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cycleId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 okr cycles context 选择的周期 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "objectiveType": {
+            "type": "string",
+            "enum": [
+              "all",
+              "company",
+              "dept",
+              "person"
+            ],
+            "description": "图表统计对象。"
+          },
+          "pointId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从 okr statistics charts get 取得的 drilldownIds 项。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "按名字筛选明细。"
+          },
+          "sortKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          },
+          "sortValue": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
+          }
+        },
+        "required": [
+          "cycleId",
+          "objectiveType",
+          "pointId"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "cycleId",
+          "option": "cycle-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 okr cycles context 选择的周期 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "objectiveType",
+          "option": "objective-type",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "all",
+              "company",
+              "dept",
+              "person"
+            ],
+            "description": "图表统计对象。"
+          }
+        },
+        {
+          "name": "pointId",
+          "option": "point-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从 okr statistics charts get 取得的 drilldownIds 项。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          }
+        },
+        {
+          "name": "name",
+          "option": "name",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "按名字筛选明细。"
+          }
+        },
+        {
+          "name": "sortKey",
+          "option": "sort-key",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          }
+        },
+        {
+          "name": "sortValue",
+          "option": "sort-value",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "sidebar",
+          "operationId": "rsq.f4a02b17a086",
+          "description": "读取 OKR 菜单和当前角色权限。",
+          "input": {}
+        },
+        {
+          "id": "cycles",
+          "operationId": "rsq.9f150c681d78",
+          "description": "读取当前公司可见的 OKR 周期。",
+          "input": {}
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.4ffe8f6c62c8",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "cycleId": {
+                "$input": "/cycleId"
+              },
+              "objectiveType": {
+                "$input": "/objectiveType"
+              },
+              "id": {
+                "$input": "/pointId"
+              },
+              "name": {
+                "$input": "/name"
+              },
+              "sortKey": {
+                "$input": "/sortKey"
+              },
+              "sortValue": {
+                "$input": "/sortValue"
+              }
+            }
+          },
+          "prepare": "web-export-okr-report"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.okr-cycles-objectives-export",
+      "command": "okr cycles objectives export",
+      "description": "按周期导出目标和关键结果。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "okr/objectives"
+      ],
+      "examples": [
+        "rsq okr cycles objectives export --cycle-ids 123"
+      ],
+      "relatedCommands": [
+        "okr cycles context",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cycleIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "一个或多个可见目标周期 ID，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "typeIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "目标类型 ID，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "userIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        "required": [
+          "cycleIds"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "cycleIds",
+          "option": "cycle-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "一个或多个可见目标周期 ID，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "typeIds",
+          "option": "type-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "目标类型 ID，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "userIds",
+          "option": "user-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "cycles",
+          "operationId": "rsq.9f150c681d78",
+          "description": "读取当前公司可见的 OKR 周期。",
+          "input": {}
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.0bebad8d2cfd",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "cycleIds": {
+                "$input": "/cycleIds"
+              },
+              "typeIds": {
+                "$input": "/typeIds"
+              },
+              "userIds": {
+                "$input": "/userIds"
+              }
+            }
+          },
+          "prepare": "web-export-okr-cycles"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.okr-indicator-data-export",
+      "command": "okr indicator data export",
+      "description": "按指标及时间导出指标数值。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "okr/indicators"
+      ],
+      "examples": [
+        "rsq okr indicator data export --indicator-ids 123 --time-type month --start-time 2026-10 --end-time 2026-11 --data-type done"
+      ],
+      "relatedCommands": [
+        "okr indicator library list",
+        "okr export optional-indicator list",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "indicatorIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "可选指标定义 ID，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "timeType": {
+            "type": "string",
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "quarter",
+              "semiannual",
+              "year"
+            ],
+            "description": "选择网页统计时间粒度。"
+          },
+          "startTime": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "description": "开始周期，按所选粒度格式。"
+          },
+          "endTime": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "description": "结束周期，按所选粒度格式。"
+          },
+          "dataType": {
+            "type": "string",
+            "enum": [
+              "done",
+              "target",
+              "done,target",
+              "target,done"
+            ],
+            "description": "选择完成值、目标值或两者。"
+          }
+        },
+        "required": [
+          "indicatorIds",
+          "timeType",
+          "startTime",
+          "endTime",
+          "dataType"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "indicatorIds",
+          "option": "indicator-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "可选指标定义 ID，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "timeType",
+          "option": "time-type",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "quarter",
+              "semiannual",
+              "year"
+            ],
+            "description": "选择网页统计时间粒度。"
+          }
+        },
+        {
+          "name": "startTime",
+          "option": "start-time",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "description": "开始周期，按所选粒度格式。"
+          }
+        },
+        {
+          "name": "endTime",
+          "option": "end-time",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "description": "结束周期，按所选粒度格式。"
+          }
+        },
+        {
+          "name": "dataType",
+          "option": "data-type",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "done",
+              "target",
+              "done,target",
+              "target,done"
+            ],
+            "description": "选择完成值、目标值或两者。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "sidebar",
+          "operationId": "rsq.f4a02b17a086",
+          "description": "读取 OKR 菜单和当前角色权限。",
+          "input": {}
+        },
+        {
+          "id": "indicatorOptions",
+          "operationId": "rsq.707e363e4dfc",
+          "description": "读取可导出的指标定义目录。",
+          "input": {}
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.2f8783c3e6c5",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "indicatorIds": {
+                "$input": "/indicatorIds"
+              },
+              "timeType": {
+                "$input": "/timeType"
+              },
+              "startTime": {
+                "$input": "/startTime"
+              },
+              "endTime": {
+                "$input": "/endTime"
+              },
+              "dataType": {
+                "$input": "/dataType"
+              }
+            }
+          },
+          "prepare": "web-export-indicator-data"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.okr-indicator-records-export",
+      "command": "okr indicator records export",
+      "description": "导出指标数据底表。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "okr/indicators"
+      ],
+      "examples": [
+        "rsq okr indicator records export --definition-id 123"
+      ],
+      "relatedCommands": [
+        "okr indicator definition inspect",
+        "okr indicator records context",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "definitionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "指标详情页的指标定义 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        "required": [
+          "definitionId"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "definitionId",
+          "option": "definition-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "指标详情页的指标定义 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "sidebar",
+          "operationId": "rsq.f4a02b17a086",
+          "description": "读取 OKR 菜单和当前角色权限。",
+          "input": {}
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.fe8b043f1748",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/definitionId"
+              }
+            }
+          },
+          "prepare": "web-export-indicator-records"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.action-tasks-export",
+      "command": "action tasks export",
+      "description": "导出行动视图任务或临时任务。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "action/items"
+      ],
+      "examples": [
+        "rsq action tasks export --type my --view-id 123 --range view --start-date 2026.11.01 --end-date 2026.11.30"
+      ],
+      "relatedCommands": [
+        "action view list",
+        "action view filter get",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "my",
+              "person",
+              "dept",
+              "group",
+              "all"
+            ],
+            "description": "行动侧栏范围。"
+          },
+          "typeId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "人员、部门、小组范围对应的 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "viewId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "行动视图 ID。省略时采用当前唯一选中视图。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "range": {
+            "type": "string",
+            "enum": [
+              "view",
+              "temp"
+            ],
+            "description": "按视图或当前临时任务导出。"
+          },
+          "startDate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "视图开始日期，格式 YYYY.MM.DD。",
+            "pattern": "^\\d{4}\\.\\d{2}\\.\\d{2}$"
+          },
+          "endDate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "视图结束日期，格式 YYYY.MM.DD。",
+            "pattern": "^\\d{4}\\.\\d{2}\\.\\d{2}$"
+          },
+          "filterMyType": {
+            "type": "string",
+            "enum": [
+              "executive",
+              "participant",
+              "create"
+            ],
+            "description": "我的行动成员角色。"
+          },
+          "filterDeptType": {
+            "type": "string",
+            "enum": [
+              "dept",
+              "deptAndChildDept"
+            ],
+            "description": "部门筛选是否含下级部门。"
+          }
+        },
+        "required": [
+          "type",
+          "range",
+          "startDate",
+          "endDate"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "person",
+                    "dept",
+                    "group"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "typeId"
+              ]
+            }
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "type",
+          "option": "type",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "my",
+              "person",
+              "dept",
+              "group",
+              "all"
+            ],
+            "description": "行动侧栏范围。"
+          }
+        },
+        {
+          "name": "typeId",
+          "option": "type-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "人员、部门、小组范围对应的 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "viewId",
+          "option": "view-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "行动视图 ID。省略时采用当前唯一选中视图。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "range",
+          "option": "range",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "view",
+              "temp"
+            ],
+            "description": "按视图或当前临时任务导出。"
+          }
+        },
+        {
+          "name": "startDate",
+          "option": "start-date",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "视图开始日期，格式 YYYY.MM.DD。",
+            "pattern": "^\\d{4}\\.\\d{2}\\.\\d{2}$"
+          }
+        },
+        {
+          "name": "endDate",
+          "option": "end-date",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "视图结束日期，格式 YYYY.MM.DD。",
+            "pattern": "^\\d{4}\\.\\d{2}\\.\\d{2}$"
+          }
+        },
+        {
+          "name": "filterMyType",
+          "option": "filter-my-type",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "executive",
+              "participant",
+              "create"
+            ],
+            "description": "我的行动成员角色。"
+          }
+        },
+        {
+          "name": "filterDeptType",
+          "option": "filter-dept-type",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "dept",
+              "deptAndChildDept"
+            ],
+            "description": "部门筛选是否含下级部门。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "views",
+          "operationId": "rsq.2e9ce5f7ad07",
+          "description": "读取目标行动范围的视图。",
+          "input": {
+            "query": {
+              "type": {
+                "$input": "/type"
+              },
+              "typeId": {
+                "$input": "/typeId"
+              }
+            }
+          }
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.785a7d7ce7e4",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "type": {
+                "$input": "/type"
+              },
+              "typeId": {
+                "$input": "/typeId"
+              },
+              "viewId": {
+                "$input": "/viewId"
+              },
+              "range": {
+                "$input": "/range"
+              },
+              "startDate": {
+                "$input": "/startDate"
+              },
+              "endDate": {
+                "$input": "/endDate"
+              },
+              "filterMyType": {
+                "$input": "/filterMyType"
+              },
+              "filterDeptType": {
+                "$input": "/filterDeptType"
+              }
+            }
+          },
+          "prepare": "web-export-action"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.ai-usage-export",
+      "command": "ai usage export",
+      "description": "导出 AI 生成使用记录。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "company-management/ai-star"
+      ],
+      "examples": [
+        "rsq ai usage export"
+      ],
+      "relatedCommands": [
+        "okr ai record list",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "开始日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "endDate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "结束日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        "additionalProperties": false,
+        "dependencies": {
+          "startDate": [
+            "endDate"
+          ],
+          "endDate": [
+            "startDate"
+          ]
+        }
+      },
+      "parameters": [
+        {
+          "name": "startDate",
+          "option": "start-date",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "开始日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "endDate",
+          "option": "end-date",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "结束日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "requestExport",
+          "operationId": "rsq.83e6ffcc17a4",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "startDate": {
+                "$input": "/startDate"
+              },
+              "endDate": {
+                "$input": "/endDate"
+              }
+            }
+          },
+          "prepare": "web-export-ai-usage"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.appraisal-result-entry-template-export",
+      "command": "appraisal result-entry template export",
+      "description": "生成绩效结果值批量录入模板。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "appraisal/fill"
+      ],
+      "examples": [
+        "rsq appraisal result-entry template export"
+      ],
+      "relatedCommands": [
+        "appraisal result-entry import preview",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "parameters": [],
+      "steps": [
+        {
+          "id": "initialized",
+          "operationId": "rsq.1d58b8a8e643",
+          "description": "检查绩效初始化状态。",
+          "input": {}
+        },
+        {
+          "id": "role",
+          "operationId": "rsq.14f1827f3736",
+          "description": "读取当前绩效角色。",
+          "input": {}
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.9dd8da18c11d",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {},
+          "prepare": "web-export-appraisal-entry"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.appraisal-template-indicator-sheet-export",
+      "command": "appraisal template indicator-sheet export",
+      "description": "生成绩效模板指标导入表。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "appraisal/templates"
+      ],
+      "examples": [
+        "rsq appraisal template indicator-sheet export"
+      ],
+      "relatedCommands": [
+        "appraisal templates list",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "parameters": [],
+      "steps": [
+        {
+          "id": "initialized",
+          "operationId": "rsq.1d58b8a8e643",
+          "description": "检查绩效初始化状态。",
+          "input": {}
+        },
+        {
+          "id": "role",
+          "operationId": "rsq.14f1827f3736",
+          "description": "读取当前绩效角色。",
+          "input": {}
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.40b919381185",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {},
+          "prepare": "web-export-appraisal-template"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.appraisal-assessments-export",
+      "command": "appraisal assessments export",
+      "description": "导出考核管理列表和所选考核内容。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "appraisal/score"
+      ],
+      "examples": [
+        "rsq appraisal assessments export --period 2026-10 --is-export-content false"
+      ],
+      "relatedCommands": [
+        "appraisal assessments managed",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "description": "网页考核周期代码。",
+            "pattern": "^\\d{4}(?:-\\d{1,2}|-[A-Za-z0-9]{1,12})?$"
+          },
+          "isExportContent": {
+            "type": "boolean",
+            "description": "包含考核内容。"
+          },
+          "userIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "deptId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "按部门筛选考核对象。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        "required": [
+          "period",
+          "isExportContent"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "period",
+          "option": "period",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "description": "网页考核周期代码。",
+            "pattern": "^\\d{4}(?:-\\d{1,2}|-[A-Za-z0-9]{1,12})?$"
+          }
+        },
+        {
+          "name": "isExportContent",
+          "option": "is-export-content",
+          "schema": {
+            "type": "boolean",
+            "description": "包含考核内容。"
+          }
+        },
+        {
+          "name": "userIds",
+          "option": "user-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "deptId",
+          "option": "dept-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "按部门筛选考核对象。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "initialized",
+          "operationId": "rsq.1d58b8a8e643",
+          "description": "检查绩效初始化状态。",
+          "input": {}
+        },
+        {
+          "id": "role",
+          "operationId": "rsq.14f1827f3736",
+          "description": "读取当前绩效角色。",
+          "input": {}
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.bf5e9bdf4804",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "body": {
+              "period": {
+                "$input": "/period"
+              },
+              "isExportContent": {
+                "$input": "/isExportContent"
+              },
+              "userIds": {
+                "$input": "/userIds"
+              },
+              "deptId": {
+                "$input": "/deptId"
+              }
+            }
+          },
+          "prepare": "web-export-appraisal-assessments"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.appraisal-statistics-monthly-details-export",
+      "command": "appraisal statistics monthly details export",
+      "description": "导出绩效系统指标的月度考核数据明细。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "appraisal/statistics"
+      ],
+      "examples": [
+        "rsq appraisal statistics monthly details export --indicator-id 123"
+      ],
+      "relatedCommands": [
+        "appraisal assessments inspect",
+        "appraisal reports context",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "indicatorId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从绩效详情的系统指标取得的指标项 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        "required": [
+          "indicatorId"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "indicatorId",
+          "option": "indicator-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从绩效详情的系统指标取得的指标项 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "initialized",
+          "operationId": "rsq.1d58b8a8e643",
+          "description": "检查绩效初始化状态。",
+          "input": {}
+        },
+        {
+          "id": "role",
+          "operationId": "rsq.14f1827f3736",
+          "description": "读取当前绩效角色。",
+          "input": {}
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.98f0aecad227",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "body": {
+              "indicatorId": {
+                "$input": "/indicatorId"
+              }
+            }
+          },
+          "prepare": "web-export-appraisal"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.appraisal-statistics-department-details-export",
+      "command": "appraisal statistics department details export",
+      "description": "导出绩效系统指标的部门考核数据明细。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "appraisal/statistics"
+      ],
+      "examples": [
+        "rsq appraisal statistics department details export --indicator-id 123"
+      ],
+      "relatedCommands": [
+        "appraisal assessments inspect",
+        "appraisal reports context",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "indicatorId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从绩效详情的系统指标取得的指标项 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        "required": [
+          "indicatorId"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "indicatorId",
+          "option": "indicator-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从绩效详情的系统指标取得的指标项 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "initialized",
+          "operationId": "rsq.1d58b8a8e643",
+          "description": "检查绩效初始化状态。",
+          "input": {}
+        },
+        {
+          "id": "role",
+          "operationId": "rsq.14f1827f3736",
+          "description": "读取当前绩效角色。",
+          "input": {}
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.d4b28b5804bd",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "body": {
+              "indicatorId": {
+                "$input": "/indicatorId"
+              }
+            }
+          },
+          "prepare": "web-export-appraisal"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.appraisal-reports-export",
+      "command": "appraisal reports export",
+      "description": "导出绩效统计报表。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "appraisal/reports"
+      ],
+      "examples": [
+        "rsq appraisal reports export --start-date 2026-10-01 --end-date 2026-11-30 --column-type monthly --total averageScoreWithScoreCycle --show-level true"
+      ],
+      "relatedCommands": [
+        "appraisal reports context",
+        "appraisal reports list",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "开始日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "endDate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "结束日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "columnType": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "quarter",
+              "semester",
+              "yearly"
+            ],
+            "description": "网页报表的周期类型。"
+          },
+          "total": {
+            "type": "string",
+            "enum": [
+              "averageScoreWithScoreCycle",
+              "averageScoreAllCycle",
+              "cumulativeScore"
+            ],
+            "description": "报表总计方式。"
+          },
+          "userIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "绩效可见成员 ID。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "deptIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "绩效可见部门 ID。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "sortKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          },
+          "sortValue": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
+          },
+          "showLevel": {
+            "type": "boolean",
+            "description": "同时导出等级。"
+          },
+          "max": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "按当前报表页大小。"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000,
+            "description": "按当前报表页码。"
+          }
+        },
+        "required": [
+          "startDate",
+          "endDate",
+          "columnType",
+          "total",
+          "showLevel"
+        ],
+        "additionalProperties": false,
+        "dependencies": {
+          "startDate": [
+            "endDate"
+          ],
+          "endDate": [
+            "startDate"
+          ],
+          "sortKey": [
+            "sortValue"
+          ],
+          "sortValue": [
+            "sortKey"
+          ]
+        }
+      },
+      "parameters": [
+        {
+          "name": "startDate",
+          "option": "start-date",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "开始日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "endDate",
+          "option": "end-date",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "结束日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "columnType",
+          "option": "column-type",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "quarter",
+              "semester",
+              "yearly"
+            ],
+            "description": "网页报表的周期类型。"
+          }
+        },
+        {
+          "name": "total",
+          "option": "total",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "averageScoreWithScoreCycle",
+              "averageScoreAllCycle",
+              "cumulativeScore"
+            ],
+            "description": "报表总计方式。"
+          }
+        },
+        {
+          "name": "userIds",
+          "option": "user-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "绩效可见成员 ID。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "deptIds",
+          "option": "dept-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "绩效可见部门 ID。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "sortKey",
+          "option": "sort-key",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          }
+        },
+        {
+          "name": "sortValue",
+          "option": "sort-value",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
+          }
+        },
+        {
+          "name": "showLevel",
+          "option": "show-level",
+          "schema": {
+            "type": "boolean",
+            "description": "同时导出等级。"
+          }
+        },
+        {
+          "name": "max",
+          "option": "max",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "按当前报表页大小。"
+          }
+        },
+        {
+          "name": "offset",
+          "option": "offset",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000,
+            "description": "按当前报表页码。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "initialized",
+          "operationId": "rsq.1d58b8a8e643",
+          "description": "检查绩效初始化状态。",
+          "input": {}
+        },
+        {
+          "id": "role",
+          "operationId": "rsq.14f1827f3736",
+          "description": "读取当前绩效角色。",
+          "input": {}
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.c05c65202f7f",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "body": {
+              "startDate": {
+                "$input": "/startDate"
+              },
+              "endDate": {
+                "$input": "/endDate"
+              },
+              "columnType": {
+                "$input": "/columnType"
+              },
+              "total": {
+                "$input": "/total"
+              },
+              "filterUser": {
+                "$input": "/userIds"
+              },
+              "filterDept": {
+                "$input": "/deptIds"
+              },
+              "sortKey": {
+                "$input": "/sortKey"
+              },
+              "sortValue": {
+                "$input": "/sortValue"
+              },
+              "isShowLevel": {
+                "$input": "/showLevel"
+              },
+              "max": {
+                "$input": "/max"
+              },
+              "offset": {
+                "$input": "/offset"
+              }
+            }
+          },
+          "prepare": "web-export-appraisal-report"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.appraisal-salary-reports-export",
+      "command": "appraisal salary reports export",
+      "description": "导出选定薪酬报表和周期。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "appraisal/salary"
+      ],
+      "examples": [
+        "rsq appraisal salary reports export --salary-report-id example --period 2026-11 --period-type monthly"
+      ],
+      "relatedCommands": [
+        "appraisal salary reports list",
+        "appraisal salary reports inspect",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "salaryReportId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从 appraisal salary reports list 取得的报表 ID。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          },
+          "period": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 7,
+            "description": "网页薪酬周期代码，如 2026-11。",
+            "pattern": "^\\d{4}(?:-\\d{2})?$"
+          },
+          "periodType": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "quarter",
+              "semiAnnual",
+              "annual"
+            ],
+            "description": "网页薪酬周期类型。"
+          }
+        },
+        "required": [
+          "salaryReportId",
+          "period",
+          "periodType"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "salaryReportId",
+          "option": "salary-report-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从 appraisal salary reports list 取得的报表 ID。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          }
+        },
+        {
+          "name": "period",
+          "option": "period",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 7,
+            "description": "网页薪酬周期代码，如 2026-11。",
+            "pattern": "^\\d{4}(?:-\\d{2})?$"
+          }
+        },
+        {
+          "name": "periodType",
+          "option": "period-type",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "quarter",
+              "semiAnnual",
+              "annual"
+            ],
+            "description": "网页薪酬周期类型。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "initialized",
+          "operationId": "rsq.1d58b8a8e643",
+          "description": "检查绩效初始化状态。",
+          "input": {}
+        },
+        {
+          "id": "role",
+          "operationId": "rsq.14f1827f3736",
+          "description": "读取当前绩效角色。",
+          "input": {}
+        },
+        {
+          "id": "salaryReports",
+          "operationId": "rsq.af9f8c909a86",
+          "description": "核对当前公司可管理的薪酬报表。",
+          "input": {},
+          "prepare": "web-export-appraisal-salary-list"
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.82ef56128756",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "body": {
+              "id": {
+                "$input": "/salaryReportId"
+              },
+              "period": {
+                "$input": "/period"
+              },
+              "periodType": {
+                "$input": "/periodType"
+              }
+            }
+          },
+          "prepare": "web-export-appraisal-salary"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.appraisal-salary-template-export",
+      "command": "appraisal salary template export",
+      "description": "生成所选薪酬报表和周期的导入模板。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "appraisal/salary"
+      ],
+      "examples": [
+        "rsq appraisal salary template export --salary-report-id example --period 2026-11 --period-type monthly"
+      ],
+      "relatedCommands": [
+        "appraisal salary reports list",
+        "appraisal salary reports inspect",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "salaryReportId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从 appraisal salary reports list 取得的报表 ID。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          },
+          "period": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 7,
+            "description": "网页薪酬周期代码，如 2026-11。",
+            "pattern": "^\\d{4}(?:-\\d{2})?$"
+          },
+          "periodType": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "quarter",
+              "semiAnnual",
+              "annual"
+            ],
+            "description": "网页薪酬周期类型。"
+          }
+        },
+        "required": [
+          "salaryReportId",
+          "period",
+          "periodType"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "salaryReportId",
+          "option": "salary-report-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从 appraisal salary reports list 取得的报表 ID。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          }
+        },
+        {
+          "name": "period",
+          "option": "period",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 7,
+            "description": "网页薪酬周期代码，如 2026-11。",
+            "pattern": "^\\d{4}(?:-\\d{2})?$"
+          }
+        },
+        {
+          "name": "periodType",
+          "option": "period-type",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "quarter",
+              "semiAnnual",
+              "annual"
+            ],
+            "description": "网页薪酬周期类型。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "initialized",
+          "operationId": "rsq.1d58b8a8e643",
+          "description": "检查绩效初始化状态。",
+          "input": {}
+        },
+        {
+          "id": "role",
+          "operationId": "rsq.14f1827f3736",
+          "description": "读取当前绩效角色。",
+          "input": {}
+        },
+        {
+          "id": "salaryReports",
+          "operationId": "rsq.af9f8c909a86",
+          "description": "核对当前公司可管理的薪酬报表。",
+          "input": {},
+          "prepare": "web-export-appraisal-salary-list"
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.2a660c28110c",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "body": {
+              "id": {
+                "$input": "/salaryReportId"
+              },
+              "period": {
+                "$input": "/period"
+              },
+              "periodType": {
+                "$input": "/periodType"
+              }
+            }
+          },
+          "prepare": "web-export-appraisal-salary"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.replay-entry-export",
+      "command": "replay entry export",
+      "description": "导出一篇复盘正文。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "replay/content"
+      ],
+      "examples": [
+        "rsq replay entry export --replay-id 123"
+      ],
+      "relatedCommands": [
+        "replay report get",
+        "replay topic list",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "replayId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 replay report get 或 replay topic list 取得的复盘 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        "required": [
+          "replayId"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "replayId",
+          "option": "replay-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 replay report get 或 replay topic list 取得的复盘 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "requestExport",
+          "operationId": "rsq.de7bf533712b",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/replayId"
+              }
+            }
+          }
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.replay-collection-entries-export",
+      "command": "replay collection entries export",
+      "description": "按日期和成员导出复盘集。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "replay/collections"
+      ],
+      "examples": [
+        "rsq replay collection entries export --collection-id 123 --start-date 2026-11-01 --end-date 2026-11-30"
+      ],
+      "relatedCommands": [
+        "replay collection context",
+        "replay statistics list",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "collectionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从复盘集上下文取得的 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "startDate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "开始日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "endDate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "结束日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "userIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "deptIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见部门 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "groupIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见小组 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        "required": [
+          "collectionId",
+          "startDate",
+          "endDate"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "collectionId",
+          "option": "collection-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从复盘集上下文取得的 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "startDate",
+          "option": "start-date",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "开始日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "endDate",
+          "option": "end-date",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "结束日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "userIds",
+          "option": "user-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "deptIds",
+          "option": "dept-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见部门 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "groupIds",
+          "option": "group-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见小组 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "replayCollection",
+          "operationId": "rsq.75006cf4d29c",
+          "description": "核对所选复盘集。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/collectionId"
+              }
+            }
+          }
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.21ce03363cbb",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "body": {
+              "id": {
+                "$input": "/collectionId"
+              },
+              "startDate": {
+                "$input": "/startDate"
+              },
+              "endDate": {
+                "$input": "/endDate"
+              },
+              "userIds": {
+                "$input": "/userIds"
+              },
+              "deptIds": {
+                "$input": "/deptIds"
+              },
+              "groupIds": {
+                "$input": "/groupIds"
+              }
+            }
+          },
+          "prepare": "web-export-replay"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.replay-statistics-export",
+      "command": "replay statistics export",
+      "description": "导出复盘统计报表。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "replay/statistics"
+      ],
+      "examples": [
+        "rsq replay statistics export --collection-id 123 --year 2026 --month 11"
+      ],
+      "relatedCommands": [
+        "replay statistics list",
+        "replay statistics context",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "collectionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 replay statistics list 获取复盘集 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "year": {
+            "type": "integer",
+            "minimum": 2000,
+            "maximum": 2100,
+            "description": "报表年度。"
+          },
+          "month": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12,
+            "description": "日复盘报表的月份。"
+          },
+          "deptId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "按可见组织范围筛选。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "groupId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "按可见组织范围筛选。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "userIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        "required": [
+          "collectionId",
+          "year"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "collectionId",
+          "option": "collection-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 replay statistics list 获取复盘集 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "year",
+          "option": "year",
+          "schema": {
+            "type": "integer",
+            "minimum": 2000,
+            "maximum": 2100,
+            "description": "报表年度。"
+          }
+        },
+        {
+          "name": "month",
+          "option": "month",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12,
+            "description": "日复盘报表的月份。"
+          }
+        },
+        {
+          "name": "deptId",
+          "option": "dept-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "按可见组织范围筛选。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "groupId",
+          "option": "group-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "按可见组织范围筛选。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "userIds",
+          "option": "user-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "replayCollection",
+          "operationId": "rsq.75006cf4d29c",
+          "description": "核对所选复盘集。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/collectionId"
+              }
+            }
+          }
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.web-review-stat-report-export",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "body": {
+              "replayCollectId": {
+                "$input": "/collectionId"
+              },
+              "year": {
+                "$input": "/year"
+              },
+              "month": {
+                "$input": "/month"
+              },
+              "deptId": {
+                "$input": "/deptId"
+              },
+              "groupId": {
+                "$input": "/groupId"
+              },
+              "userIds": {
+                "$input": "/userIds"
+              }
+            }
+          },
+          "prepare": "web-export-replay"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.project-tasks-export",
+      "command": "project tasks export",
+      "description": "导出项目任务表格。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "project/lifecycle"
+      ],
+      "examples": [
+        "rsq project tasks export --project-id 123"
+      ],
+      "relatedCommands": [
+        "project list",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "实际普通项目 ID。从 project list 获取。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "fieldIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "导出字段 ID，逗号分隔。省略时采用网页接口给出的默认勾选列。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "filters": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "按网页视图的字段、操作符和值筛选。"
+          }
+        },
+        "required": [
+          "projectId"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "projectId",
+          "option": "project-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "实际普通项目 ID。从 project list 获取。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "fieldIds",
+          "option": "field-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "导出字段 ID，逗号分隔。省略时采用网页接口给出的默认勾选列。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "filters",
+          "option": "filters",
+          "schema": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "按网页视图的字段、操作符和值筛选。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "project",
+          "operationId": "rsq.87743b1e7fd8",
+          "description": "核对所属普通项目。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/projectId"
+              }
+            }
+          }
+        },
+        {
+          "id": "fields",
+          "operationId": "rsq.6beb58993fc5",
+          "description": "读取网页可导出字段和默认勾选。",
+          "input": {
+            "query": {
+              "kanbanId": {
+                "$input": "/projectId"
+              }
+            }
+          },
+          "prepare": "web-export-project-task-fields"
+        },
+        {
+          "id": "filter",
+          "operationId": "rsq.5d936a06c939",
+          "description": "按需向网页接口提交本次导出的视图筛选。",
+          "input": {},
+          "prepare": "web-export-project-task-filter"
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.2feb0c6d5406",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {},
+          "prepare": "web-export-project-tasks"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.project-module-tasks-export",
+      "command": "project module tasks export",
+      "description": "导出项目任务模块任务表格。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "project/modules"
+      ],
+      "examples": [
+        "rsq project module tasks export --project-id 123 --module-id 456"
+      ],
+      "relatedCommands": [
+        "project module list",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "实际普通项目 ID。从 project list 获取。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "fieldIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "导出字段 ID，逗号分隔。省略时采用网页接口给出的默认勾选列。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "moduleId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 project module list 取得的任务模块 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "filters": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "按网页视图的字段、操作符和值筛选。"
+          }
+        },
+        "required": [
+          "projectId",
+          "moduleId"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "projectId",
+          "option": "project-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "实际普通项目 ID。从 project list 获取。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "fieldIds",
+          "option": "field-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "导出字段 ID，逗号分隔。省略时采用网页接口给出的默认勾选列。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "moduleId",
+          "option": "module-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 project module list 取得的任务模块 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "filters",
+          "option": "filters",
+          "schema": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "按网页视图的字段、操作符和值筛选。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "project",
+          "operationId": "rsq.87743b1e7fd8",
+          "description": "核对所属普通项目。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/projectId"
+              }
+            }
+          }
+        },
+        {
+          "id": "modules",
+          "operationId": "rsq.0049502086e1",
+          "description": "核对当前项目任务模块。",
+          "input": {
+            "query": {
+              "kanbanId": {
+                "$input": "/projectId"
+              }
+            }
+          }
+        },
+        {
+          "id": "fields",
+          "operationId": "rsq.5062ee7ea053",
+          "description": "读取网页可导出字段和默认勾选。",
+          "input": {
+            "query": {
+              "kanbanChildId": {
+                "$input": "/moduleId"
+              }
+            }
+          },
+          "prepare": "web-export-project-task-fields"
+        },
+        {
+          "id": "filter",
+          "operationId": "rsq.5d936a06c939",
+          "description": "按需向网页接口提交本次导出的视图筛选。",
+          "input": {},
+          "prepare": "web-export-project-task-filter"
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.web-v4-kanbanchild-exportexcel",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {},
+          "prepare": "web-export-project-tasks"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.project-card-tasks-export",
+      "command": "project card tasks export",
+      "description": "导出项目卡片任务表格。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "project/modules"
+      ],
+      "examples": [
+        "rsq project card tasks export --project-id 123 --module-id 456 --card-id 789"
+      ],
+      "relatedCommands": [
+        "project card transport list",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "实际普通项目 ID。从 project list 获取。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "fieldIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "导出字段 ID，逗号分隔。省略时采用网页接口给出的默认勾选列。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "moduleId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "所属任务模块 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "cardId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从项目卡片列表取得的卡片 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "filters": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "按网页视图的字段、操作符和值筛选。"
+          }
+        },
+        "required": [
+          "projectId",
+          "moduleId",
+          "cardId"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "projectId",
+          "option": "project-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "实际普通项目 ID。从 project list 获取。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "fieldIds",
+          "option": "field-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "导出字段 ID，逗号分隔。省略时采用网页接口给出的默认勾选列。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "moduleId",
+          "option": "module-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "所属任务模块 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "cardId",
+          "option": "card-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从项目卡片列表取得的卡片 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "filters",
+          "option": "filters",
+          "schema": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "按网页视图的字段、操作符和值筛选。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "project",
+          "operationId": "rsq.87743b1e7fd8",
+          "description": "核对所属普通项目。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/projectId"
+              }
+            }
+          }
+        },
+        {
+          "id": "modules",
+          "operationId": "rsq.0049502086e1",
+          "description": "核对当前项目任务模块。",
+          "input": {
+            "query": {
+              "kanbanId": {
+                "$input": "/projectId"
+              }
+            }
+          }
+        },
+        {
+          "id": "cards",
+          "operationId": "rsq.390f385d1811",
+          "description": "核对当前模块卡片。",
+          "input": {
+            "query": {
+              "kanbanChildId": {
+                "$input": "/moduleId"
+              }
+            }
+          }
+        },
+        {
+          "id": "fields",
+          "operationId": "rsq.3323af62b712",
+          "description": "读取网页可导出字段和默认勾选。",
+          "input": {
+            "query": {
+              "kanbanCardId": {
+                "$input": "/cardId"
+              }
+            }
+          },
+          "prepare": "web-export-project-task-fields"
+        },
+        {
+          "id": "filter",
+          "operationId": "rsq.5d936a06c939",
+          "description": "按需向网页接口提交本次导出的视图筛选。",
+          "input": {},
+          "prepare": "web-export-project-task-filter"
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.web-v4-kanbancard-exportexcel",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {},
+          "prepare": "web-export-project-tasks"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.project-collection-tasks-export",
+      "command": "project collection tasks export",
+      "description": "导出项目集任务表格。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "project-collection/projects"
+      ],
+      "examples": [
+        "rsq project collection tasks export --collection-id 123"
+      ],
+      "relatedCommands": [
+        "project collection list",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "fieldIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "导出字段 ID，逗号分隔。省略时采用网页接口给出的默认勾选列。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "collectionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 project collection list 取得的项目集 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        "required": [
+          "collectionId"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "fieldIds",
+          "option": "field-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "导出字段 ID，逗号分隔。省略时采用网页接口给出的默认勾选列。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "collectionId",
+          "option": "collection-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 project collection list 取得的项目集 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "collection",
+          "operationId": "rsq.d20cb647092f",
+          "description": "核对当前项目集。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/collectionId"
+              }
+            }
+          }
+        },
+        {
+          "id": "fields",
+          "operationId": "rsq.86c6cf62374d",
+          "description": "读取网页可导出字段和默认勾选。",
+          "input": {
+            "query": {
+              "collectionId": {
+                "$input": "/collectionId"
+              }
+            }
+          },
+          "prepare": "web-export-project-task-fields"
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.web-v4-kanbancollection-exportexcel",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {},
+          "prepare": "web-export-project-tasks"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.project-schedule-export",
+      "command": "project schedule export",
+      "description": "导出项目模块的甘特图 Excel。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "project/gantt"
+      ],
+      "examples": [
+        "rsq project schedule export --project-id 123 --module-id 456"
+      ],
+      "relatedCommands": [
+        "project schedule context",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "实际普通项目 ID。从 project list 获取。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "moduleId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 project schedule context 取得的模块 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        "required": [
+          "projectId",
+          "moduleId"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "projectId",
+          "option": "project-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "实际普通项目 ID。从 project list 获取。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "moduleId",
+          "option": "module-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 project schedule context 取得的模块 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "project",
+          "operationId": "rsq.87743b1e7fd8",
+          "description": "核对所属普通项目。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/projectId"
+              }
+            }
+          }
+        },
+        {
+          "id": "modules",
+          "operationId": "rsq.0049502086e1",
+          "description": "核对当前项目任务模块。",
+          "input": {
+            "query": {
+              "kanbanId": {
+                "$input": "/projectId"
+              }
+            }
+          }
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.11343b5ecbc7",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "planId": {
+                "$input": "/moduleId"
+              }
+            }
+          },
+          "prepare": "web-export-gantt"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.statistics-company-workflow-export",
+      "command": "statistics company workflow export",
+      "description": "导出公司流程执行统计。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "company-statistics/workflow-analysis"
+      ],
+      "examples": [
+        "rsq statistics company workflow export"
+      ],
+      "relatedCommands": [
+        "statistics company workflow context",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "开始日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "endDate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "结束日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "sortKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          },
+          "sortValue": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
+          },
+          "userIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "deptIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见部门 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "groupIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见小组 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "applicationIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "可用流程应用 ID，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        "additionalProperties": false,
+        "dependencies": {
+          "startDate": [
+            "endDate"
+          ],
+          "endDate": [
+            "startDate"
+          ],
+          "sortKey": [
+            "sortValue"
+          ],
+          "sortValue": [
+            "sortKey"
+          ]
+        }
+      },
+      "parameters": [
+        {
+          "name": "startDate",
+          "option": "start-date",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "开始日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "endDate",
+          "option": "end-date",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "结束日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "sortKey",
+          "option": "sort-key",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          }
+        },
+        {
+          "name": "sortValue",
+          "option": "sort-value",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
+          }
+        },
+        {
+          "name": "userIds",
+          "option": "user-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "deptIds",
+          "option": "dept-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见部门 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "groupIds",
+          "option": "group-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见小组 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "applicationIds",
+          "option": "application-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "可用流程应用 ID，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "requestExport",
+          "operationId": "rsq.d7595b6ad188",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "startDate": {
+                "$input": "/startDate"
+              },
+              "endDate": {
+                "$input": "/endDate"
+              },
+              "sortKey": {
+                "$input": "/sortKey"
+              },
+              "sortValue": {
+                "$input": "/sortValue"
+              },
+              "userIds": {
+                "$input": "/userIds"
+              },
+              "deptIds": {
+                "$input": "/deptIds"
+              },
+              "groupIds": {
+                "$input": "/groupIds"
+              },
+              "applicationIds": {
+                "$input": "/applicationIds"
+              },
+              "statisticsFrom": "team"
+            }
+          },
+          "prepare": "web-export-team-statistics"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.workflow-statistics-team-export",
+      "command": "workflow statistics team export",
+      "description": "导出流程应用全局执行统计。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "workflow/statistics"
+      ],
+      "examples": [
+        "rsq workflow statistics team export"
+      ],
+      "relatedCommands": [
+        "workflow statistics context",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "开始日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "endDate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "结束日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "sortKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          },
+          "sortValue": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
+          },
+          "userIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "deptIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见部门 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "groupIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见小组 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          },
+          "applicationIds": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "可用流程应用 ID，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        "additionalProperties": false,
+        "dependencies": {
+          "startDate": [
+            "endDate"
+          ],
+          "endDate": [
+            "startDate"
+          ],
+          "sortKey": [
+            "sortValue"
+          ],
+          "sortValue": [
+            "sortKey"
+          ]
+        }
+      },
+      "parameters": [
+        {
+          "name": "startDate",
+          "option": "start-date",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "开始日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "endDate",
+          "option": "end-date",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "结束日期，按 GMT+8，格式 YYYY-MM-DD。",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "sortKey",
+          "option": "sort-key",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "网页统计表中的排序字段。"
+          }
+        },
+        {
+          "name": "sortValue",
+          "option": "sort-value",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "排序方向。"
+          }
+        },
+        {
+          "name": "userIds",
+          "option": "user-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见成员 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "deptIds",
+          "option": "dept-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见部门 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "groupIds",
+          "option": "group-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "按可见小组 ID 筛选，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        },
+        {
+          "name": "applicationIds",
+          "option": "application-ids",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "可用流程应用 ID，逗号分隔。",
+            "pattern": "^[1-9][0-9]*(?:,[1-9][0-9]*)*$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "requestExport",
+          "operationId": "rsq.d7595b6ad188",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "startDate": {
+                "$input": "/startDate"
+              },
+              "endDate": {
+                "$input": "/endDate"
+              },
+              "sortKey": {
+                "$input": "/sortKey"
+              },
+              "sortValue": {
+                "$input": "/sortValue"
+              },
+              "userIds": {
+                "$input": "/userIds"
+              },
+              "deptIds": {
+                "$input": "/deptIds"
+              },
+              "groupIds": {
+                "$input": "/groupIds"
+              },
+              "applicationIds": {
+                "$input": "/applicationIds"
+              },
+              "statisticsFrom": "workflow"
+            }
+          },
+          "prepare": "web-export-team-statistics"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.statistics-company-workflow-details-export",
+      "command": "statistics company workflow details export",
+      "description": "导出流程执行统计下钻明细。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "company-statistics/workflow-analysis"
+      ],
+      "examples": [
+        "rsq statistics company workflow details export --detail-id example"
+      ],
+      "relatedCommands": [
+        "statistics company workflow tasks list",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "detailId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从同一统计结果实际下钻得到的 detailId。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          }
+        },
+        "required": [
+          "detailId"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "detailId",
+          "option": "detail-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从同一统计结果实际下钻得到的 detailId。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "statisticsDetail",
+          "operationId": "rsq.e05ba413d85a",
+          "description": "核对当前账号可见的下钻数据。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/detailId"
+              },
+              "statisticsFrom": "team"
+            }
+          }
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.9359db657ff4",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/detailId"
+              }
+            }
+          },
+          "prepare": "web-export-statistics-detail"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.workflow-statistics-team-details-export",
+      "command": "workflow statistics team details export",
+      "description": "导出流程执行统计下钻明细。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "workflow/statistics"
+      ],
+      "examples": [
+        "rsq workflow statistics team details export --detail-id example"
+      ],
+      "relatedCommands": [
+        "workflow statistics team export",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "detailId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从同一统计结果实际下钻得到的 detailId。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          }
+        },
+        "required": [
+          "detailId"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "detailId",
+          "option": "detail-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从同一统计结果实际下钻得到的 detailId。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "statisticsDetail",
+          "operationId": "rsq.e05ba413d85a",
+          "description": "核对当前账号可见的下钻数据。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/detailId"
+              },
+              "statisticsFrom": "workflow"
+            }
+          }
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.9359db657ff4",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/detailId"
+              }
+            }
+          },
+          "prepare": "web-export-statistics-detail"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.workflow-statistics-efficiency-export",
+      "command": "workflow statistics efficiency export",
+      "description": "导出流程单个应用的效率统计。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "workflow/statistics"
+      ],
+      "examples": [
+        "rsq workflow statistics efficiency export --application-id 123"
+      ],
+      "relatedCommands": [
+        "workflow statistics context",
+        "workflow statistics efficiency list",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 workflow statistics context 获取的当前独立流程应用 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "efficiencyUserId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "startDate": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "endDate": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "sortKey": {
+            "type": "string",
+            "enum": [
+              "name",
+              "minTime",
+              "maxTime",
+              "avgTime",
+              "delayRate",
+              "oneShotRate"
+            ]
+          },
+          "sortValue": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ]
+          }
+        },
+        "required": [
+          "applicationId"
+        ],
+        "additionalProperties": false,
+        "dependencies": {
+          "startDate": [
+            "endDate"
+          ],
+          "endDate": [
+            "startDate"
+          ],
+          "sortKey": [
+            "sortValue"
+          ],
+          "sortValue": [
+            "sortKey"
+          ]
+        }
+      },
+      "parameters": [
+        {
+          "name": "applicationId",
+          "option": "application-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 workflow statistics context 获取的当前独立流程应用 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "efficiencyUserId",
+          "option": "efficiency-user-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "startDate",
+          "option": "start-date",
+          "schema": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "endDate",
+          "option": "end-date",
+          "schema": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "sortKey",
+          "option": "sort-key",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "name",
+              "minTime",
+              "maxTime",
+              "avgTime",
+              "delayRate",
+              "oneShotRate"
+            ]
+          }
+        },
+        {
+          "name": "sortValue",
+          "option": "sort-value",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ]
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "user",
+          "operationId": "rsq.d04c7521598b",
+          "description": "核对流程统计的实际 HTTP 上下文：user",
+          "input": {}
+        },
+        {
+          "id": "applications",
+          "operationId": "rsq.471c5e192b8d",
+          "description": "核对流程统计的实际 HTTP 上下文：applications",
+          "input": {},
+          "prepare": "workflow-statistics-applications"
+        },
+        {
+          "id": "source",
+          "operationId": "rsq.38741e60b872",
+          "description": "读取实际应用权限；该 GET 会保存默认应用并增加使用次数",
+          "input": {},
+          "prepare": "workflow-statistics-source"
+        },
+        {
+          "id": "steps",
+          "operationId": "rsq.c32e7009b4bf",
+          "description": "核对流程统计的实际 HTTP 上下文：steps",
+          "input": {},
+          "prepare": "workflow-statistics-steps"
+        },
+        {
+          "id": "directory",
+          "operationId": "rsq.8bc0510d9830",
+          "description": "核对流程统计的实际 HTTP 上下文：directory",
+          "input": {
+            "query": {
+              "cliContext": "fresh"
+            }
+          }
+        },
+        {
+          "id": "range",
+          "operationId": "rsq.44015605b3da",
+          "description": "读取流程实际成员可见范围；可能初始化和同步组织",
+          "input": {}
+        },
+        {
+          "id": "indicators",
+          "operationId": "rsq.3d137e511c59",
+          "description": "核对流程统计的实际 HTTP 上下文：indicators",
+          "input": {},
+          "prepare": "workflow-statistics-indicator"
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.46990328306e",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "applicationId": {
+                "$input": "/applicationId"
+              },
+              "efficiencyUserId": {
+                "$input": "/efficiencyUserId"
+              },
+              "startDate": {
+                "$input": "/startDate"
+              },
+              "endDate": {
+                "$input": "/endDate"
+              },
+              "sortKey": {
+                "$input": "/sortKey"
+              },
+              "sortValue": {
+                "$input": "/sortValue"
+              }
+            }
+          },
+          "prepare": "workflow-statistics-efficiency-export"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.workflow-statistics-execute-export",
+      "command": "workflow statistics execute export",
+      "description": "导出流程单个应用的执行统计。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "workflow/statistics"
+      ],
+      "examples": [
+        "rsq workflow statistics execute export --application-id 123"
+      ],
+      "relatedCommands": [
+        "workflow statistics context",
+        "workflow statistics execute list",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 workflow statistics context 获取的当前独立流程应用 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "stepId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "startDate": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "endDate": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "sortKey": {
+            "type": "string",
+            "enum": [
+              "assignee",
+              "stepCount",
+              "delayRate",
+              "delayDuration",
+              "delayCommitRate",
+              "delayCommitDuration"
+            ]
+          },
+          "sortValue": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ]
+          }
+        },
+        "required": [
+          "applicationId"
+        ],
+        "additionalProperties": false,
+        "dependencies": {
+          "startDate": [
+            "endDate"
+          ],
+          "endDate": [
+            "startDate"
+          ],
+          "sortKey": [
+            "sortValue"
+          ],
+          "sortValue": [
+            "sortKey"
+          ]
+        }
+      },
+      "parameters": [
+        {
+          "name": "applicationId",
+          "option": "application-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 19,
+            "description": "从 workflow statistics context 获取的当前独立流程应用 ID。",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "stepId",
+          "option": "step-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        },
+        {
+          "name": "startDate",
+          "option": "start-date",
+          "schema": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "endDate",
+          "option": "end-date",
+          "schema": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "sortKey",
+          "option": "sort-key",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "assignee",
+              "stepCount",
+              "delayRate",
+              "delayDuration",
+              "delayCommitRate",
+              "delayCommitDuration"
+            ]
+          }
+        },
+        {
+          "name": "sortValue",
+          "option": "sort-value",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ]
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "user",
+          "operationId": "rsq.d04c7521598b",
+          "description": "核对流程统计的实际 HTTP 上下文：user",
+          "input": {}
+        },
+        {
+          "id": "applications",
+          "operationId": "rsq.471c5e192b8d",
+          "description": "核对流程统计的实际 HTTP 上下文：applications",
+          "input": {},
+          "prepare": "workflow-statistics-applications"
+        },
+        {
+          "id": "source",
+          "operationId": "rsq.38741e60b872",
+          "description": "读取实际应用权限；该 GET 会保存默认应用并增加使用次数",
+          "input": {},
+          "prepare": "workflow-statistics-source"
+        },
+        {
+          "id": "steps",
+          "operationId": "rsq.c32e7009b4bf",
+          "description": "核对流程统计的实际 HTTP 上下文：steps",
+          "input": {},
+          "prepare": "workflow-statistics-steps"
+        },
+        {
+          "id": "directory",
+          "operationId": "rsq.8bc0510d9830",
+          "description": "核对流程统计的实际 HTTP 上下文：directory",
+          "input": {
+            "query": {
+              "cliContext": "fresh"
+            }
+          }
+        },
+        {
+          "id": "range",
+          "operationId": "rsq.44015605b3da",
+          "description": "读取流程实际成员可见范围；可能初始化和同步组织",
+          "input": {}
+        },
+        {
+          "id": "indicators",
+          "operationId": "rsq.3d137e511c59",
+          "description": "核对流程统计的实际 HTTP 上下文：indicators",
+          "input": {},
+          "prepare": "workflow-statistics-indicator"
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.60a3f05f697f",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "applicationId": {
+                "$input": "/applicationId"
+              },
+              "stepId": {
+                "$input": "/stepId"
+              },
+              "startDate": {
+                "$input": "/startDate"
+              },
+              "endDate": {
+                "$input": "/endDate"
+              },
+              "sortKey": {
+                "$input": "/sortKey"
+              },
+              "sortValue": {
+                "$input": "/sortValue"
+              }
+            }
+          },
+          "prepare": "workflow-statistics-execute-export"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.statistics-company-table-export",
+      "command": "statistics company table export",
+      "description": "导出公司任务汇总、个人／团队分析或项目工时分析。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "company-statistics/task-analysis"
+      ],
+      "examples": [
+        "rsq statistics company table export --statistics-type task-all"
+      ],
+      "relatedCommands": [
+        "statistics company task summary",
+        "statistics company project members list",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "statisticsType": {
+            "type": "string",
+            "enum": [
+              "task-all",
+              "task-person",
+              "task-team",
+              "plan-task",
+              "plan-hour"
+            ],
+            "description": "网页的统计页签。"
+          },
+          "deptIds": {
+            "type": "string",
+            "description": "筛选的部门id列表",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "筛选的结束日期",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "groupIds": {
+            "type": "string",
+            "description": "筛选的小组id列表",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          },
+          "memberIds": {
+            "type": "string",
+            "description": "筛选的执行人id列表",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          },
+          "planIds": {
+            "type": "string",
+            "description": "筛选的所属计划id列表",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          },
+          "projectIds": {
+            "type": "string",
+            "description": "筛选的所属项目id列表",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          },
+          "projectGroupIds": {
+            "type": "string",
+            "description": "筛选的所属项目分组id列表"
+          },
+          "startDate": {
+            "type": "string",
+            "description": "筛选的开始日期",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "hourFilterOption": {
+            "type": "string",
+            "description": "数据分析的类型（工时分析类型）"
+          },
+          "projectResponsibilityIds": {
+            "type": "string",
+            "description": "筛选的项目负责人id"
+          },
+          "projectStateIds": {
+            "type": "string",
+            "description": "筛选的项目状态id"
+          },
+          "projectOrProjectGroupType": {
+            "type": "string",
+            "enum": [
+              "project",
+              "projectGroup"
+            ],
+            "description": "按项目或项目分组筛选。"
+          },
+          "filters": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "按网页视图的字段、操作符和值筛选。"
+          }
+        },
+        "required": [
+          "statisticsType"
+        ],
+        "additionalProperties": false,
+        "dependencies": {
+          "startDate": [
+            "endDate"
+          ],
+          "endDate": [
+            "startDate"
+          ]
+        }
+      },
+      "parameters": [
+        {
+          "name": "statisticsType",
+          "option": "statistics-type",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "task-all",
+              "task-person",
+              "task-team",
+              "plan-task",
+              "plan-hour"
+            ],
+            "description": "网页的统计页签。"
+          }
+        },
+        {
+          "name": "deptIds",
+          "option": "dept-ids",
+          "schema": {
+            "type": "string",
+            "description": "筛选的部门id列表",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          }
+        },
+        {
+          "name": "endDate",
+          "option": "end-date",
+          "schema": {
+            "type": "string",
+            "description": "筛选的结束日期",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "groupIds",
+          "option": "group-ids",
+          "schema": {
+            "type": "string",
+            "description": "筛选的小组id列表",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          }
+        },
+        {
+          "name": "memberIds",
+          "option": "member-ids",
+          "schema": {
+            "type": "string",
+            "description": "筛选的执行人id列表",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          }
+        },
+        {
+          "name": "planIds",
+          "option": "plan-ids",
+          "schema": {
+            "type": "string",
+            "description": "筛选的所属计划id列表",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          }
+        },
+        {
+          "name": "projectIds",
+          "option": "project-ids",
+          "schema": {
+            "type": "string",
+            "description": "筛选的所属项目id列表",
+            "pattern": "^(?:[1-9][0-9]*(?:,[1-9][0-9]*)*)?$"
+          }
+        },
+        {
+          "name": "projectGroupIds",
+          "option": "project-group-ids",
+          "schema": {
+            "type": "string",
+            "description": "筛选的所属项目分组id列表"
+          }
+        },
+        {
+          "name": "startDate",
+          "option": "start-date",
+          "schema": {
+            "type": "string",
+            "description": "筛选的开始日期",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        {
+          "name": "hourFilterOption",
+          "option": "hour-filter-option",
+          "schema": {
+            "type": "string",
+            "description": "数据分析的类型（工时分析类型）"
+          }
+        },
+        {
+          "name": "projectResponsibilityIds",
+          "option": "project-responsibility-ids",
+          "schema": {
+            "type": "string",
+            "description": "筛选的项目负责人id"
+          }
+        },
+        {
+          "name": "projectStateIds",
+          "option": "project-state-ids",
+          "schema": {
+            "type": "string",
+            "description": "筛选的项目状态id"
+          }
+        },
+        {
+          "name": "projectOrProjectGroupType",
+          "option": "project-or-project-group-type",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "project",
+              "projectGroup"
+            ],
+            "description": "按项目或项目分组筛选。"
+          }
+        },
+        {
+          "name": "filters",
+          "option": "filters",
+          "schema": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "按网页视图的字段、操作符和值筛选。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "requestExport",
+          "operationId": "rsq.d60c7c05d736",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "body": {
+              "statisticsType": {
+                "$input": "/statisticsType"
+              },
+              "deptIds": {
+                "$input": "/deptIds"
+              },
+              "endDate": {
+                "$input": "/endDate"
+              },
+              "groupIds": {
+                "$input": "/groupIds"
+              },
+              "memberIds": {
+                "$input": "/memberIds"
+              },
+              "planIds": {
+                "$input": "/planIds"
+              },
+              "projectIds": {
+                "$input": "/projectIds"
+              },
+              "projectGroupIds": {
+                "$input": "/projectGroupIds"
+              },
+              "startDate": {
+                "$input": "/startDate"
+              },
+              "hourFilterOption": {
+                "$input": "/hourFilterOption"
+              },
+              "projectResponsibilityIds": {
+                "$input": "/projectResponsibilityIds"
+              },
+              "projectStateIds": {
+                "$input": "/projectStateIds"
+              },
+              "projectOrProjectGroupType": {
+                "$input": "/projectOrProjectGroupType"
+              },
+              "filter": {
+                "$input": "/filters"
+              }
+            }
+          },
+          "prepare": "web-export-company-statistics"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.statistics-company-detail-export",
+      "command": "statistics company detail export",
+      "description": "导出公司任务和项目统计的下钻明细。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "company-statistics/task-analysis"
+      ],
+      "examples": [
+        "rsq statistics company detail export --detail-id example"
+      ],
+      "relatedCommands": [
+        "statistics company task summary",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "detailId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从同一统计结果实际下钻得到的 detailId。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          }
+        },
+        "required": [
+          "detailId"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "detailId",
+          "option": "detail-id",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "从同一统计结果实际下钻得到的 detailId。",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "statisticsDetail",
+          "operationId": "rsq.173c6e8e5bf5",
+          "description": "核对当前统计明细上下文。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/detailId"
+              }
+            }
+          }
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.9335220c3e03",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {
+            "query": {
+              "id": {
+                "$input": "/detailId"
+              }
+            }
+          },
+          "prepare": "web-export-statistics-detail"
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。"
+    },
+    {
+      "id": "closure.export.statistics-project-chart-export",
+      "command": "statistics project chart export",
+      "description": "导出项目统计图表。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "project-statistics/charts"
+      ],
+      "examples": [
+        "rsq statistics project chart export --project-id 123 --dashboard-id example --chart-id example"
+      ],
+      "relatedCommands": [
+        "statistics project drilldown discover",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "实际普通项目 ID，从 project list 发现；与 collectionId 互斥。"
+          },
+          "collectionId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "当前账号可见项目集 ID，从 project collection list 发现；与 projectId 互斥。"
+          },
+          "dashboardId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,200}$",
+            "description": "该统计模块或项目集仪表盘列表返回的实际 UUID。"
+          },
+          "chartId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,200}$",
+            "description": "同一仪表盘中已保存图表的实际 UUID。"
+          },
+          "contextVersion": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "discover 返回的当前来源、配置和统计值摘要；发生变化时停止。"
+          }
+        },
+        "required": [
+          "dashboardId",
+          "chartId"
+        ],
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "required": [
+              "projectId"
+            ]
+          },
+          {
+            "required": [
+              "collectionId"
+            ]
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "projectId",
+          "option": "project-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "实际普通项目 ID，从 project list 发现；与 collectionId 互斥。"
+          }
+        },
+        {
+          "name": "collectionId",
+          "option": "collection-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "当前账号可见项目集 ID，从 project collection list 发现；与 projectId 互斥。"
+          }
+        },
+        {
+          "name": "dashboardId",
+          "option": "dashboard-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,200}$",
+            "description": "该统计模块或项目集仪表盘列表返回的实际 UUID。"
+          }
+        },
+        {
+          "name": "chartId",
+          "option": "chart-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,200}$",
+            "description": "同一仪表盘中已保存图表的实际 UUID。"
+          }
+        },
+        {
+          "name": "contextVersion",
+          "option": "context-version",
+          "schema": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "discover 返回的当前来源、配置和统计值摘要；发生变化时停止。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "identity",
+          "operationId": "rsq.d04c7521598b",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "project",
+          "operationId": "rsq.87743b1e7fd8",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "modules",
+          "operationId": "rsq.0049502086e1",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "collections",
+          "operationId": "rsq.f8295a4856c6",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "collection",
+          "operationId": "rsq.d20cb647092f",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "collectionProjects",
+          "operationId": "rsq.710a9c5c2216",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "dashboards",
+          "operationId": "rsq.8aa63553ff72",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "charts",
+          "operationId": "rsq.a6c0168189a9",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "chart",
+          "operationId": "rsq.28d71cc128c7",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.233059fd1402",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {}
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。",
+      "executor": "statistics-drilldown",
+      "statisticsDrilldownAction": "chart-export"
+    },
+    {
+      "id": "closure.export.statistics-project-drilldown-tasks-export",
+      "command": "statistics project drilldown tasks export",
+      "description": "导出项目统计任务明细。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "project-statistics/drilldown"
+      ],
+      "examples": [
+        "rsq statistics project drilldown tasks export --project-id 123 --dashboard-id example --chart-id example --selector /values/0"
+      ],
+      "relatedCommands": [
+        "statistics project drilldown discover",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "实际普通项目 ID，从 project list 发现；与 collectionId 互斥。"
+          },
+          "collectionId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "当前账号可见项目集 ID，从 project collection list 发现；与 projectId 互斥。"
+          },
+          "dashboardId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,200}$",
+            "description": "该统计模块或项目集仪表盘列表返回的实际 UUID。"
+          },
+          "chartId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,200}$",
+            "description": "同一仪表盘中已保存图表的实际 UUID。"
+          },
+          "contextVersion": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "discover 返回的当前来源、配置和统计值摘要；发生变化时停止。"
+          },
+          "selector": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "从 drilldown discover 选择的单元格 selector。"
+          }
+        },
+        "required": [
+          "dashboardId",
+          "chartId",
+          "selector"
+        ],
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "required": [
+              "projectId"
+            ]
+          },
+          {
+            "required": [
+              "collectionId"
+            ]
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "projectId",
+          "option": "project-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "实际普通项目 ID，从 project list 发现；与 collectionId 互斥。"
+          }
+        },
+        {
+          "name": "collectionId",
+          "option": "collection-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "当前账号可见项目集 ID，从 project collection list 发现；与 projectId 互斥。"
+          }
+        },
+        {
+          "name": "dashboardId",
+          "option": "dashboard-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,200}$",
+            "description": "该统计模块或项目集仪表盘列表返回的实际 UUID。"
+          }
+        },
+        {
+          "name": "chartId",
+          "option": "chart-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,200}$",
+            "description": "同一仪表盘中已保存图表的实际 UUID。"
+          }
+        },
+        {
+          "name": "contextVersion",
+          "option": "context-version",
+          "schema": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "discover 返回的当前来源、配置和统计值摘要；发生变化时停止。"
+          }
+        },
+        {
+          "name": "selector",
+          "option": "selector",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "从 drilldown discover 选择的单元格 selector。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "identity",
+          "operationId": "rsq.d04c7521598b",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "project",
+          "operationId": "rsq.87743b1e7fd8",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "modules",
+          "operationId": "rsq.0049502086e1",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "collections",
+          "operationId": "rsq.f8295a4856c6",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "collection",
+          "operationId": "rsq.d20cb647092f",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "collectionProjects",
+          "operationId": "rsq.710a9c5c2216",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "dashboards",
+          "operationId": "rsq.8aa63553ff72",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "charts",
+          "operationId": "rsq.a6c0168189a9",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "chart",
+          "operationId": "rsq.28d71cc128c7",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "details",
+          "operationId": "rsq.dc293eb59112",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "permissions",
+          "operationId": "rsq.173c6e8e5bf5",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.9335220c3e03",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {}
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。",
+      "executor": "statistics-drilldown",
+      "statisticsDrilldownAction": "tasks-export"
+    },
+    {
+      "id": "closure.export.statistics-project-drilldown-workflows-export",
+      "command": "statistics project drilldown workflows export",
+      "description": "导出项目统计流程明细。返回受理回执，通过 export watch 接收原文件。",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "capabilities": [
+        "project-statistics/drilldown"
+      ],
+      "examples": [
+        "rsq statistics project drilldown workflows export --project-id 123 --dashboard-id example --chart-id example --selector /values/0"
+      ],
+      "relatedCommands": [
+        "statistics project drilldown discover",
+        "export watch"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "实际普通项目 ID，从 project list 发现；与 collectionId 互斥。"
+          },
+          "collectionId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "当前账号可见项目集 ID，从 project collection list 发现；与 projectId 互斥。"
+          },
+          "dashboardId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,200}$",
+            "description": "该统计模块或项目集仪表盘列表返回的实际 UUID。"
+          },
+          "chartId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,200}$",
+            "description": "同一仪表盘中已保存图表的实际 UUID。"
+          },
+          "contextVersion": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "discover 返回的当前来源、配置和统计值摘要；发生变化时停止。"
+          },
+          "selector": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "从 drilldown discover 选择的单元格 selector。"
+          }
+        },
+        "required": [
+          "dashboardId",
+          "chartId",
+          "selector"
+        ],
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "required": [
+              "projectId"
+            ]
+          },
+          {
+            "required": [
+              "collectionId"
+            ]
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "projectId",
+          "option": "project-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "实际普通项目 ID，从 project list 发现；与 collectionId 互斥。"
+          }
+        },
+        {
+          "name": "collectionId",
+          "option": "collection-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "当前账号可见项目集 ID，从 project collection list 发现；与 projectId 互斥。"
+          }
+        },
+        {
+          "name": "dashboardId",
+          "option": "dashboard-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,200}$",
+            "description": "该统计模块或项目集仪表盘列表返回的实际 UUID。"
+          }
+        },
+        {
+          "name": "chartId",
+          "option": "chart-id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,200}$",
+            "description": "同一仪表盘中已保存图表的实际 UUID。"
+          }
+        },
+        {
+          "name": "contextVersion",
+          "option": "context-version",
+          "schema": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "discover 返回的当前来源、配置和统计值摘要；发生变化时停止。"
+          }
+        },
+        {
+          "name": "selector",
+          "option": "selector",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "从 drilldown discover 选择的单元格 selector。"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "id": "identity",
+          "operationId": "rsq.d04c7521598b",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "project",
+          "operationId": "rsq.87743b1e7fd8",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "modules",
+          "operationId": "rsq.0049502086e1",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "collections",
+          "operationId": "rsq.f8295a4856c6",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "collection",
+          "operationId": "rsq.d20cb647092f",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "collectionProjects",
+          "operationId": "rsq.710a9c5c2216",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "dashboards",
+          "operationId": "rsq.8aa63553ff72",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "charts",
+          "operationId": "rsq.a6c0168189a9",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "chart",
+          "operationId": "rsq.28d71cc128c7",
+          "input": {},
+          "description": "按实际目标分支读取当前 HTTP 上下文；明细返回前重新核对来源，原生数据不自动写入或重放。"
+        },
+        {
+          "id": "requestExport",
+          "operationId": "rsq.efd83f9fdf4a",
+          "description": "发起网页原生导出，文件另由账号通知送达。",
+          "input": {}
+        }
+      ],
+      "output": {
+        "status": "accepted",
+        "receiver": "export watch"
+      },
+      "resultSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "receiver": {
+            "const": "export watch"
+          }
+        },
+        "required": [
+          "status",
+          "receiver"
+        ],
+        "additionalProperties": false
+      },
+      "recovery": "先启动 rsq export watch --output ./exports，看到 listening 后用同一 profile 发起。受理后通过文件事件核对结果。失败时先检查接收进程与已完成步骤，提交结果未知时避免重复发起。",
+      "executor": "statistics-drilldown",
+      "statisticsDrilldownAction": "workflows-export"
     }
   ]
 }
