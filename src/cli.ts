@@ -17,6 +17,7 @@ import { builtinCommands, configureBuiltin, globalParameters } from './builtins.
 import { upgradeRelease, agentSkillPath, type UpgradeOptions } from './release.js'
 import { cliDiagnostic } from './cli-errors.js'
 import { CliOutput, outputContract, outputFormats, type OutputFormat } from './output.js'
+import { watchExports } from './export-watch.js'
 
 const app = new Command()
   .name('rsq')
@@ -176,6 +177,17 @@ configureBuiltin(app.command('logout'), 'logout').action(async () => {
   await removeSession(ctx)
   await emit({ ...ctx, state: 'missing' })
 })
+configureBuiltin(app.command('export').description('接收当前账号的导出文件').command('watch'), 'export watch')
+  .action(async (options: { output: string }) => {
+    const stop = new AbortController(), cancel = () => stop.abort()
+    process.once('SIGINT', cancel)
+    process.once('SIGTERM', cancel)
+    try { await watchExports(selectedContext(), options.output, value => emit(value, true), stop.signal) }
+    finally {
+      process.off('SIGINT', cancel)
+      process.off('SIGTERM', cancel)
+    }
+  })
 app.command('skill').description('输出随包 Agent Skill 的位置与正文').action(async () => {
   const location = new URL('../skills/rsq-cli/SKILL.md', import.meta.url)
   await emit({ name: 'rsq-cli', path: fileURLToPath(location), content: readFileSync(location, 'utf8') })

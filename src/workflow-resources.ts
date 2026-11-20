@@ -175,7 +175,7 @@ export function describeWorkflowResource(resource: WorkflowResource) {
   const operations = resource.kind === 'application' ? ['form records list', 'instance start'] : ['instance fill', 'instance act']
   return {
     ...resource, target: workflowTarget(resource),
-    exportTarget: { command: 'workflow export', ...(resource.kind === 'application' ? { applicationId: resource.id } : { processId: resource.id }) },
+    ...(resource.kind === 'application' && { exportTarget: { command: 'workflow export', applicationId: resource.id } }),
     relatedCommands: operations.map(operation => workflowCommand(resource.scope, operation)),
   }
 }

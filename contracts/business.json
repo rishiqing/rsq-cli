@@ -493,11 +493,11 @@
       }
     ],
     "operationAudit": {
-      "reviewedContracts": 1346,
+      "reviewedContracts": 1350,
       "executable": 763,
-      "requiresBusinessContext": 583,
+      "requiresBusinessContext": 587,
       "verified": 0,
-      "pending": 23,
+      "pending": 27,
       "stale": 1323,
       "independentlyObserved": 0
     },
@@ -90298,39 +90298,51 @@
               ]
             },
             {
-              "operationId": "rsq.bcae04df8eb2",
+              "operationId": "rsq.workflow-export-fields",
               "context": "workflow export",
               "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/process/info/export/record/list",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.workflow-export-prepare",
+              "context": "workflow export",
+              "role": "write",
               "method": "POST",
-              "route": "/task/workflow/process/info/sheet/list",
-              "effect": "read",
-              "status": "available",
-              "executableCommands": [
-                "workflow export"
-              ]
-            },
-            {
-              "operationId": "rsq.aecc6286dfc1",
-              "context": "workflow export",
-              "role": "discover",
-              "method": "GET",
-              "route": "/task/workflow/process/info/step",
-              "effect": "read",
-              "status": "available",
-              "executableCommands": [
-                "workflow export"
-              ]
-            },
-            {
-              "operationId": "rsq.12722ecef099",
-              "context": "workflow export",
-              "role": "discover",
-              "method": "GET",
-              "route": "/task/workflow/process/info/step/list/auditsAndForms",
+              "route": "/task/workflow/process/info/export/record/url/add",
               "effect": "write",
               "status": "available",
               "executableCommands": [
                 "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.workflow-export-start",
+              "context": "workflow export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/workflow/excel/export/application/process/list",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.task-mention-connection.v1",
+              "context": "export watch",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/api/v3/comment/mention/connection",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "export watch"
               ]
             }
           ],
@@ -90404,6 +90416,9 @@
           "missing": [
             "契约尚未全部重新复核",
             "正式组织场景与适用身份尚未全部验收"
+          ],
+          "builtinCommands": [
+            "builtin.export.watch"
           ]
         },
         {
@@ -96691,12 +96706,36 @@
               ]
             },
             {
-              "operationId": "rsq.bcae04df8eb2",
+              "operationId": "rsq.workflow-export-fields",
               "context": "workflow export",
               "role": "discover",
-              "method": "POST",
-              "route": "/task/workflow/process/info/sheet/list",
+              "method": "GET",
+              "route": "/task/workflow/process/info/export/record/list",
               "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.workflow-export-prepare",
+              "context": "workflow export",
+              "role": "write",
+              "method": "POST",
+              "route": "/task/workflow/process/info/export/record/url/add",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.workflow-export-start",
+              "context": "workflow export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/workflow/excel/export/application/process/list",
+              "effect": "write",
               "status": "available",
               "executableCommands": [
                 "workflow export"
@@ -104920,6 +104959,42 @@
               "status": "available",
               "executableCommands": [
                 "workflow find"
+              ]
+            },
+            {
+              "operationId": "rsq.workflow-export-fields",
+              "context": "workflow export",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/workflow/process/info/export/record/list",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.workflow-export-prepare",
+              "context": "workflow export",
+              "role": "write",
+              "method": "POST",
+              "route": "/task/workflow/process/info/export/record/url/add",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
+              ]
+            },
+            {
+              "operationId": "rsq.workflow-export-start",
+              "context": "workflow export",
+              "role": "write",
+              "method": "GET",
+              "route": "/task/workflow/excel/export/application/process/list",
+              "effect": "write",
+              "status": "available",
+              "executableCommands": [
+                "workflow export"
               ]
             }
           ],
@@ -214936,6 +215011,74 @@
       ],
       "issues": [
         "缺少本轮复核：independent-request"
+      ]
+    },
+    "rsq.workflow-export-fields": {
+      "status": "pending",
+      "verifiedChecks": [],
+      "evidenceStatus": {
+        "caller": "pending",
+        "independent-request": "pending"
+      },
+      "missingChecks": [
+        "independent-request"
+      ],
+      "missingEvidence": [
+        "independent-request"
+      ],
+      "issues": [
+        "本地契约验证，端到端证据单独记录。"
+      ]
+    },
+    "rsq.workflow-export-prepare": {
+      "status": "pending",
+      "verifiedChecks": [],
+      "evidenceStatus": {
+        "caller": "pending",
+        "independent-request": "pending"
+      },
+      "missingChecks": [
+        "independent-request"
+      ],
+      "missingEvidence": [
+        "independent-request"
+      ],
+      "issues": [
+        "本地契约验证，端到端证据单独记录。"
+      ]
+    },
+    "rsq.workflow-export-start": {
+      "status": "pending",
+      "verifiedChecks": [],
+      "evidenceStatus": {
+        "caller": "pending",
+        "independent-request": "pending"
+      },
+      "missingChecks": [
+        "independent-request"
+      ],
+      "missingEvidence": [
+        "independent-request"
+      ],
+      "issues": [
+        "本地契约验证，端到端证据单独记录。"
+      ]
+    },
+    "rsq.task-mention-connection.v1": {
+      "status": "pending",
+      "verifiedChecks": [],
+      "evidenceStatus": {
+        "caller": "pending",
+        "independent-request": "pending"
+      },
+      "missingChecks": [
+        "independent-request"
+      ],
+      "missingEvidence": [
+        "independent-request"
+      ],
+      "issues": [
+        "本地契约验证，端到端证据单独记录。"
       ]
     }
   }

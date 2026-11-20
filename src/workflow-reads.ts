@@ -2,7 +2,7 @@ import type { JsonObject } from './core.js'
 import type { WorkflowScope } from './workflow-resources.js'
 import { requireUsage, usageData, usageDate, usageError, usageId, usageList, usageRows, type UsageRuntime } from './usage-runtime.js'
 
-export async function visibleInstances(r: UsageRuntime, applicationId: string, input: JsonObject, limit: number, offset: number) {
+export function workflowInstanceFilters(input: JsonObject) {
   const filter: JsonObject[] = []
   if (input.name !== undefined) filter.push({ key: 'name', include: true, value: String(input.name).trim() })
   if (input.status && input.status !== 'all') filter.push({ key: 'isFinished', include: true, value: input.status === 'doing' ? '3' : '2' })
@@ -11,6 +11,11 @@ export async function visibleInstances(r: UsageRuntime, applicationId: string, i
     if (start > end) usageError('INVALID_INPUT', '创建日期开始不能晚于结束。')
     filter.push({ key: 'dateCreated', include: true, value: start.replaceAll('-', '.') + '-' + end.replaceAll('-', '.') })
   }
+  return filter
+}
+
+export async function visibleInstances(r: UsageRuntime, applicationId: string, input: JsonObject, limit: number, offset: number) {
+  const filter = workflowInstanceFilters(input)
   const items = usageList(await r.call('POST', '/task/workflow/process/info/sheet/list', { body: { flowApplicationId: applicationId, max: limit, offset, filter } }))
   requireUsage(items.length <= limit && items.every(row => String(row.flowAppId) === applicationId), '表格实例结果超出当前应用或分页窗口。')
   return { items, filter }

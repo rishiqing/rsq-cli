@@ -29445,5 +29445,126 @@
         ]
       }
     }
+  ],
+  "rsq.workflow-export-fields": [
+    {
+      "origin": "handwritten-caller-fixture",
+      "input": {
+        "query": {
+          "applicationId": "123"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "/task/workflow/process/info/export/record/list?applicationId=123"
+      },
+      "response": {
+        "code": 200,
+        "data": {
+          "processMessage": [
+            {
+              "exportFieldName": "processInfoName",
+              "isChecked": true
+            }
+          ],
+          "formMessage": []
+        }
+      }
+    }
+  ],
+  "rsq.workflow-export-prepare": [
+    {
+      "origin": "handwritten-caller-fixture",
+      "input": {
+        "body": {
+          "applicationId": "123",
+          "headerKeys": "processInfoName,stepStatus_45",
+          "stepKeysList": [
+            {
+              "stepInfoId": "45",
+              "keysList": [
+                "stepStatus_45"
+              ]
+            }
+          ],
+          "exportFilterList": [
+            {
+              "key": "isFinished",
+              "include": true,
+              "value": "2"
+            }
+          ],
+          "fieldFilter": null
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "/task/workflow/process/info/export/record/url/add",
+        "body": {
+          "applicationId": "123",
+          "headerKeys": "processInfoName,stepStatus_45",
+          "stepKeysList": [
+            {
+              "stepInfoId": "45",
+              "keysList": [
+                "stepStatus_45"
+              ]
+            }
+          ],
+          "exportFilterList": [
+            {
+              "key": "isFinished",
+              "include": true,
+              "value": "2"
+            }
+          ],
+          "fieldFilter": null
+        }
+      },
+      "response": {
+        "code": 200,
+        "data": {
+          "exportId": "fixture-export"
+        }
+      }
+    }
+  ],
+  "rsq.workflow-export-start": [
+    {
+      "origin": "handwritten-caller-fixture",
+      "input": {
+        "query": {
+          "exportId": "fixture-export"
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "/task/workflow/excel/export/application/process/list?exportId=fixture-export"
+      },
+      "response": {
+        "code": 200,
+        "msg": "success",
+        "data": null,
+        "ext": null
+      }
+    }
+  ],
+  "rsq.task-mention-connection.v1": [
+    {
+      "origin": "handwritten-caller-fixture",
+      "input": {},
+      "request": {
+        "method": "GET",
+        "url": "/task/api/v3/comment/mention/connection"
+      },
+      "response": {
+        "userId": "1",
+        "teamId": "7",
+        "url": "https://push.rishiqing.com:441",
+        "room": "fixture-account-room",
+        "enabled": true,
+        "onlineOnly": true
+      }
+    }
   ]
 }

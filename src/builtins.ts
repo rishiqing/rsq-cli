@@ -8,8 +8,12 @@ export const globalParameters = {
   json: { type: 'boolean', default: false, option: '--json', description: '等同 --format json，终端错误也使用 JSON。' },
 }
 
-type Option = { flags: string; description: string; parameter: string; schema: JsonObject; presentValue?: boolean }
-type Builtin = { command: string; description: string; effect: 'read' | 'write'; localOnly: boolean; requiresSession: boolean; options: Option[]; limitations: string[]; examples: string[] }
+type Option = { flags: string; description: string; parameter: string; schema: JsonObject; presentValue?: boolean; required?: boolean }
+type Builtin = {
+  command: string; description: string; effect: 'read' | 'write'; localOnly: boolean; requiresSession: boolean
+  options: Option[]; limitations: string[]; examples: string[]
+  resultSchema?: JsonObject; transport?: string[]; stream?: 'ndjson'; relatedCommands?: string[]
+}
 const definitions: Builtin[] = [
   { command: 'upgrade', description: '有新版本自动升级，无更新直接结束', effect: 'write', localOnly: false, requiresSession: false, options: [
     { flags: '--check', description: '只检查更新', parameter: 'check', schema: { type: 'boolean', default: false }, presentValue: true },
@@ -28,6 +32,26 @@ const definitions: Builtin[] = [
   { command: 'auth status', description: '查看本地会话，不访问网络', effect: 'read', localOnly: true, requiresSession: false, options: [], limitations: ['只报告 missing/expired/active 及本地身份，不证明服务端会话有效；随后 whoami 核对。'], examples: ['rsq auth status --profile work', 'rsq whoami --profile work'] },
   { command: 'whoami', description: '核对当前日事清账号和组织', effect: 'write', localOnly: false, requiresSession: true, options: [], limitations: ['通过当前身份对应服务的 authAjax 核对用户与组织；此旧接口可能初始化会话数据，保守按写副作用声明。', '输出仅身份和 profile，不输出服务端令牌或 Cookie。'], examples: ['rsq whoami --profile work'] },
   { command: 'logout', description: '清除当前 profile 的本地会话', effect: 'write', localOnly: true, requiresSession: false, options: [], limitations: ['删除当前 profile 的本地凭证文件；不注销组织、不撤销其他终端或其他 profile。'], examples: ['rsq logout --profile work'] },
+  {
+    command: 'export watch', description: '通过 HTTP 长轮询接收当前账号的导出原文件',
+    effect: 'write', localOnly: false, requiresSession: true, stream: 'ndjson',
+    options: [
+      { flags: '--output <dir>', description: '导出文件保存目录，不存在时创建', parameter: 'output', schema: { type: 'string', minLength: 1, pattern: '\\S' }, required: true },
+    ],
+    transport: ['GET 当前登录账号的消息连接配置', 'Socket.IO HTTP 长轮询', 'GET 日事清文件服务的导出文件'],
+    resultSchema: { oneOf: [
+      { type: 'object', properties: { type: { const: 'connection' }, phase: { enum: ['listening', 'reconnecting'] } }, required: ['type', 'phase'] },
+      { type: 'object', properties: { type: { const: 'file' }, output: { type: 'string' }, bytes: { type: 'integer', minimum: 0 } }, required: ['type', 'output', 'bytes'] },
+      { type: 'object', properties: { type: { const: 'download_error' }, code: { type: 'string' }, message: { type: 'string' } }, required: ['type', 'code', 'message'] },
+    ] },
+    limitations: [
+      '请先运行接收命令，看到 listening 后再在另一终端发起导出。按 Ctrl+C 停止。',
+      '接收当前账号的在线导出通知，包括网页发起的导出。每个账号运行一个接收进程，文件以服务器名称保存，同名时追加编号。',
+      '成功文件以 file 事件逐行输出。通知和文件不与某一条发起命令绑定。只能接收在线期间送达的消息。',
+    ],
+    examples: ['rsq export watch --output ./exports', 'rsq export watch --output ./exports --profile work'],
+    relatedCommands: ['workflow export'],
+  },
 ]
 export const builtinCommands = definitions.map(definition => ({
   id: 'builtin.' + definition.command.replaceAll(' ', '.'), kind: 'builtin', command: definition.command, description: definition.description,
@@ -35,17 +59,25 @@ export const builtinCommands = definitions.map(definition => ({
   supportsDryRun: false, inputMode: definition.command === 'login' ? 'flags-and-hidden-terminal-or-password-stdin' : 'flags', inputFileSupported: false,
   parameters: Object.fromEntries(definition.options.map(option => [option.parameter, { ...option.schema, option: option.flags.includes(', ') ? option.flags.split(', ')[1].split(' ')[0] : option.flags.split(' ')[0], description: option.description, ...(option.presentValue !== undefined && { presentValue: option.presentValue }) }])),
   globalParameters,
-  inputSchema: { type: 'object', properties: Object.fromEntries(definition.options.map(option => [option.parameter, option.schema])), additionalProperties: false },
+  inputSchema: {
+    type: 'object', properties: Object.fromEntries(definition.options.map(option => [option.parameter, option.schema])), additionalProperties: false,
+    ...(definition.options.some(option => option.required) && { required: definition.options.filter(option => option.required).map(option => option.parameter) }),
+  },
+  ...(definition.stream && { stream: definition.stream }),
   ...(definition.command === 'login' && { nonInteractive: { required: ['method'], byMethod: { feishu: { forbiddenOptions: ['username', 'passwordStdin'] }, wps: { forbiddenOptions: ['username', 'passwordStdin'] }, dingtalk: { forbiddenOptions: ['username', 'passwordStdin'] }, wecom: { forbiddenOptions: ['username', 'passwordStdin'] }, password: { required: ['username', 'passwordStdin'], requiredValues: { passwordStdin: true, browser: true }, stdin: 'password-text-from-pipe; max4096bytes; one-trailing-newline-removed', passwordSaved: false } } } }),
-  resultSchema: definition.command === 'upgrade' ? { type: 'object', properties: { status: { type: 'string' }, currentVersion: { type: 'string' }, targetVersion: { type: 'string' }, skillPath: { type: 'string' }, versions: { type: 'array' } }, required: ['status', 'currentVersion'] } : definition.command === 'whoami' ? { type: 'object', properties: { profile: { type: 'string' }, method: { enum: ['password', 'wecom', 'dingtalk', 'feishu', 'wps'] }, identity: { type: 'object', properties: { userId: { type: 'string' }, teamId: { type: 'string' }, username: { type: 'string' } }, required: ['userId', 'username'] } }, required: ['profile', 'method', 'identity'] } : { type: 'object', properties: { profile: { type: 'string' }, state: { enum: definition.command === 'login' ? ['active'] : definition.command === 'logout' ? ['missing'] : ['missing', 'expired', 'active'] }, method: { enum: ['password', 'wecom', 'dingtalk', 'feishu', 'wps'] }, expiresAt: { type: 'string' }, identity: { type: 'object' } }, required: ['profile', 'state'] },
-  transport: definition.command === 'upgrade' ? ['GET https://raw.githubusercontent.com/rishiqing/rsq-cli/main/latest.json', 'GET https://api.github.com/repos/rishiqing/rsq-cli/releases', 'GET https://github.com/rishiqing/rsq-cli/releases/download/{tag}/{asset}'] : definition.command === 'login' ? { password: ['POST /task/j_spring_security_check', 'GET /task/login/authAjax'], feishu: ['POST /backauth/cli-auth/device', 'POST /backauth/cli-auth/exchange', 'GET /task/login/authAjax'], wps: ['POST /backauth/cli-auth/device', 'POST /backauth/cli-auth/exchange', 'GET /task/login/authAjax'], dingtalk: ['POST /backauth/cli-auth/device', 'POST /backauth/cli-auth/exchange', 'GET /task/login/authAjax'], wecom: ['POST /qywxbackauth/cli-auth/device', 'POST /qywxbackauth/cli-auth/exchange', 'GET /task/login/authAjax'] } : definition.command === 'whoami' ? ['GET /task/login/authAjax'] : [],
-  limitations: definition.limitations, examples: definition.examples, relatedCommands: definitions.filter(row => row.command !== definition.command).map(row => row.command),
+  resultSchema: definition.resultSchema ?? (definition.command === 'upgrade' ? { type: 'object', properties: { status: { type: 'string' }, currentVersion: { type: 'string' }, targetVersion: { type: 'string' }, skillPath: { type: 'string' }, versions: { type: 'array' } }, required: ['status', 'currentVersion'] } : definition.command === 'whoami' ? { type: 'object', properties: { profile: { type: 'string' }, method: { enum: ['password', 'wecom', 'dingtalk', 'feishu', 'wps'] }, identity: { type: 'object', properties: { userId: { type: 'string' }, teamId: { type: 'string' }, username: { type: 'string' } }, required: ['userId', 'username'] } }, required: ['profile', 'method', 'identity'] } : { type: 'object', properties: { profile: { type: 'string' }, state: { enum: definition.command === 'login' ? ['active'] : definition.command === 'logout' ? ['missing'] : ['missing', 'expired', 'active'] }, method: { enum: ['password', 'wecom', 'dingtalk', 'feishu', 'wps'] }, expiresAt: { type: 'string' }, identity: { type: 'object' } }, required: ['profile', 'state'] }),
+  transport: definition.transport ?? (definition.command === 'upgrade' ? ['GET https://raw.githubusercontent.com/rishiqing/rsq-cli/main/latest.json', 'GET https://api.github.com/repos/rishiqing/rsq-cli/releases', 'GET https://github.com/rishiqing/rsq-cli/releases/download/{tag}/{asset}'] : definition.command === 'login' ? { password: ['POST /task/j_spring_security_check', 'GET /task/login/authAjax'], feishu: ['POST /backauth/cli-auth/device', 'POST /backauth/cli-auth/exchange', 'GET /task/login/authAjax'], wps: ['POST /backauth/cli-auth/device', 'POST /backauth/cli-auth/exchange', 'GET /task/login/authAjax'], dingtalk: ['POST /backauth/cli-auth/device', 'POST /backauth/cli-auth/exchange', 'GET /task/login/authAjax'], wecom: ['POST /qywxbackauth/cli-auth/device', 'POST /qywxbackauth/cli-auth/exchange', 'GET /task/login/authAjax'] } : definition.command === 'whoami' ? ['GET /task/login/authAjax'] : []),
+  limitations: definition.limitations, examples: definition.examples,
+  relatedCommands: definition.relatedCommands ?? definitions.filter(row => row.command !== definition.command).map(row => row.command),
 }))
 export function configureBuiltin(command: Command, name: string) {
   const definition = definitions.find(row => row.command === name)
   if (!definition) throw Error('Unknown builtin: ' + name)
   command.description(definition.description)
-  for (const option of definition.options) command.option(option.flags, option.description)
+  for (const option of definition.options) {
+    if (option.required) command.requiredOption(option.flags, option.description)
+    else command.option(option.flags, option.description)
+  }
   command.addHelpText('after', '\nSchema: rsq schema "' + name + '"\n' + definition.limitations.join('\n'))
   return command
 }

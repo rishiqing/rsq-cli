@@ -610296,6 +610296,792 @@
       "examples": [
         "rsq schema \"todo workflow inspect\""
       ]
+    },
+    {
+      "id": "rsq.workflow-export-fields",
+      "command": "workflow transport export fields",
+      "description": "读取当前账号的网页导出字段、步骤分组和选中状态。",
+      "method": "GET",
+      "route": "/task/workflow/process/info/export/record/list",
+      "service": "account",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "effect": "read",
+      "idempotency": "idempotent",
+      "response": "business",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "applicationId": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$",
+                "maxLength": 19
+              }
+            },
+            "required": [
+              "applicationId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "processMessage": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "exportFieldName": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "isChecked": {
+                      "anyOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "exportFieldName"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "formMessage": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "stepInfoId": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^[1-9][0-9]*$",
+                              "maxLength": 19
+                            },
+                            {
+                              "type": "integer",
+                              "minimum": 1
+                            }
+                          ]
+                        },
+                        "fieldList": {
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "exportFieldName": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "isChecked": {
+                                    "anyOf": [
+                                      {
+                                        "type": "boolean"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "exportFieldName"
+                                ],
+                                "additionalProperties": true
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "stepList": {
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "exportFieldName": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "isChecked": {
+                                    "anyOf": [
+                                      {
+                                        "type": "boolean"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "exportFieldName"
+                                ],
+                                "additionalProperties": true
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "stepInfoId"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "processMessage"
+            ],
+            "additionalProperties": true
+          },
+          {
+            "type": "object",
+            "properties": {
+              "code": {
+                "enum": [
+                  0,
+                  "0",
+                  200,
+                  "200",
+                  200000,
+                  "200000"
+                ]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "processMessage": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "exportFieldName": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "isChecked": {
+                          "anyOf": [
+                            {
+                              "type": "boolean"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "exportFieldName"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "formMessage": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "stepInfoId": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^[1-9][0-9]*$",
+                                  "maxLength": 19
+                                },
+                                {
+                                  "type": "integer",
+                                  "minimum": 1
+                                }
+                              ]
+                            },
+                            "fieldList": {
+                              "anyOf": [
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "exportFieldName": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "isChecked": {
+                                        "anyOf": [
+                                          {
+                                            "type": "boolean"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "exportFieldName"
+                                    ],
+                                    "additionalProperties": true
+                                  }
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "stepList": {
+                              "anyOf": [
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "exportFieldName": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "isChecked": {
+                                        "anyOf": [
+                                          {
+                                            "type": "boolean"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "exportFieldName"
+                                    ],
+                                    "additionalProperties": true
+                                  }
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "stepInfoId"
+                          ],
+                          "additionalProperties": true
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "processMessage"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "data"
+            ],
+            "additionalProperties": true
+          }
+        ]
+      },
+      "fields": [],
+      "review": "reviewed",
+      "requiresBusinessContext": [
+        "workflow export"
+      ],
+      "examples": [
+        "rsq schema \"workflow export\""
+      ]
+    },
+    {
+      "id": "rsq.workflow-export-prepare",
+      "command": "workflow transport export prepare",
+      "description": "按网页协议登记导出参数并取得导出 ID。",
+      "method": "POST",
+      "route": "/task/workflow/process/info/export/record/url/add",
+      "service": "account",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "encoding": "json",
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "business",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "object",
+            "properties": {
+              "applicationId": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$",
+                "maxLength": 19
+              },
+              "headerKeys": {
+                "type": "string",
+                "minLength": 1
+              },
+              "stepKeysList": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "stepInfoId": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]*$",
+                      "maxLength": 19
+                    },
+                    "keysList": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "required": [
+                    "stepInfoId",
+                    "keysList"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "exportFilterList": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "enum": [
+                        "name",
+                        "isFinished",
+                        "dateCreated"
+                      ]
+                    },
+                    "include": {
+                      "const": true
+                    },
+                    "value": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "include",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "fieldFilter": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "applicationId",
+              "headerKeys",
+              "stepKeysList",
+              "exportFilterList",
+              "fieldFilter"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "exportId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{1,128}$"
+              }
+            },
+            "required": [
+              "exportId"
+            ],
+            "additionalProperties": true
+          },
+          {
+            "type": "object",
+            "properties": {
+              "code": {
+                "enum": [
+                  0,
+                  "0",
+                  200,
+                  "200",
+                  200000,
+                  "200000"
+                ]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "exportId": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{1,128}$"
+                  }
+                },
+                "required": [
+                  "exportId"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "data"
+            ],
+            "additionalProperties": true
+          }
+        ]
+      },
+      "fields": [],
+      "review": "reviewed",
+      "requiresBusinessContext": [
+        "workflow export"
+      ],
+      "examples": [
+        "rsq schema \"workflow export\""
+      ]
+    },
+    {
+      "id": "rsq.workflow-export-start",
+      "command": "workflow transport export start",
+      "description": "发起网页的后台 Excel 导出任务。HTTP 回执表示已受理。",
+      "method": "GET",
+      "route": "/task/workflow/excel/export/application/process/list",
+      "service": "account",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "effect": "write",
+      "idempotency": "unknown",
+      "response": "json-or-empty",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "exportId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{1,128}$"
+              }
+            },
+            "required": [
+              "exportId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "code": {
+                "enum": [
+                  0,
+                  "0",
+                  200,
+                  "200",
+                  200000,
+                  "200000"
+                ]
+              },
+              "success": {
+                "const": true
+              }
+            },
+            "required": [],
+            "additionalProperties": true,
+            "anyOf": [
+              {
+                "required": [
+                  "code"
+                ]
+              },
+              {
+                "required": [
+                  "success"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "fields": [],
+      "review": "reviewed",
+      "requiresBusinessContext": [
+        "workflow export"
+      ],
+      "examples": [
+        "rsq schema \"workflow export\""
+      ]
+    },
+    {
+      "id": "rsq.task-mention-connection.v1",
+      "command": "task mention connection",
+      "description": "读取当前登录账号的消息连接配置。",
+      "method": "GET",
+      "route": "/task/api/v3/comment/mention/connection",
+      "service": "account",
+      "auth": "token",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "effect": "read",
+      "idempotency": "idempotent",
+      "response": "business",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "responseSchema": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^[1-9][0-9]*$",
+                        "maxLength": 19
+                      },
+                      {
+                        "type": "integer",
+                        "minimum": 1
+                      }
+                    ]
+                  },
+                  "teamId": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^[1-9][0-9]*$",
+                            "maxLength": 19
+                          },
+                          {
+                            "type": "integer",
+                            "minimum": 1
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "room": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "userId",
+                  "url",
+                  "room"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "const": false
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "additionalProperties": true
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "code": {
+                "enum": [
+                  0,
+                  "0",
+                  200,
+                  "200",
+                  200000,
+                  "200000"
+                ]
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "userId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^[1-9][0-9]*$",
+                            "maxLength": 19
+                          },
+                          {
+                            "type": "integer",
+                            "minimum": 1
+                          }
+                        ]
+                      },
+                      "teamId": {
+                        "anyOf": [
+                          {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]*$",
+                                "maxLength": 19
+                              },
+                              {
+                                "type": "integer",
+                                "minimum": 1
+                              }
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "url": {
+                        "type": "string"
+                      },
+                      "room": {
+                        "type": "string"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "userId",
+                      "url",
+                      "room"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "const": false
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "additionalProperties": true
+                  }
+                ]
+              }
+            },
+            "required": [
+              "data"
+            ],
+            "additionalProperties": true
+          }
+        ]
+      },
+      "fields": [],
+      "review": "reviewed",
+      "requiresBusinessContext": [
+        "export watch"
+      ],
+      "examples": [
+        "rsq schema \"export watch\""
+      ]
     }
   ]
 }

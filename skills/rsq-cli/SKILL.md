@@ -14,7 +14,7 @@ description: 使用 rsq CLI 查询或修改日事清流程、绩效、OKR、行�
 5. 普通命令 stdout 默认 JSON；所有模块共用 `--format json|pretty|table|ndjson`，Agent 可显式使用 `--format json`（或 `--json`），人工查看可选 pretty/table。错误和提示走 stderr；机器模式按 JSON 行处理，错误读取 `error.code/message/hint/actions/details`，进度、预览、提示使用 `type=progress/preview/prompt`。SSE/NDJSON 操作始终逐行输出 JSON。分页根据叶子 Schema 的游标和返回结构逐页调用，不猜测 `--all`、自动翻页参数或总条数。
 6. 写请求失败、超时或返回结构变化时，检查 `failedStep/completedSteps/resources/writeOutcome`，通过读命令核对结果后再决定是否重试；CLI 不自动重放写请求或回滚。`writeOutcome: unknown` 表示可能已生效。不要在重新登录后直接重发创建、评分、提交等操作。错误对象不会包含令牌和完整服务端业务内容。
 
-业务编排命令成功时，stdout 顶层包含 `command`、`completedSteps`、`resources` 和 `result`。叶子 Schema 的 `resultSchema` 描述 `.result` 内的业务数据。先检查退出码，再读取业务字段。`workflow find` 的匹配项在 `.result.items`，`workflow export` 的文件路径在 `.result.output`，`todo workflow inspect` 对指定步骤返回的可用动作在 `.result.step.actions`。`--dry-run` 的计划在顶层以 `dryRun: true` 标记。
+业务编排命令成功时，stdout 顶层包含 `command`、`completedSteps`、`resources` 和 `result`。叶子 Schema 的 `resultSchema` 描述 `.result` 内的业务数据。先检查退出码，再读取业务字段。`workflow find` 的匹配项在 `.result.items`，`workflow export` 的受理状态在 `.result.status`，`todo workflow inspect` 对指定步骤返回的可用动作在 `.result.step.actions`。`--dry-run` 的计划在顶层以 `dryRun: true` 标记。
 
 日常待办先用 `todo context` 发现日期和筛选，再用 `todo list`。用返回的 `target` 打开选定待办。流程待办统一走 `todo workflow inspect`，从 `target` 传入 `processId` 和可选的 `stepId`。它会自动核对项目流程或独立流程的归属、权限和实际步骤，再给出后续命令。`todo pending list` 和 `cooperation workflow list` 也提供这个入口。分页使用 `nextCursor`，列表变化时从第一页重新发现。`todo calendar` 返回本人的日期标记。
 
@@ -22,7 +22,9 @@ description: 使用 rsq CLI 查询或修改日事清流程、绩效、OKR、行�
 
 只有流程名称时用 `workflow find --name <名称>`。已有应用或实例 ID 时用相应 ID 参数。查找覆盖当前账号可见的项目流程与独立流程。按结果中的 `target` 读取配置或实例，按具体步骤的可用动作办理。若有多个匹配，先用已有的项目、应用、实例或日期信息缩小范围，再让用户确认具体对象。
 
-导出流程用 `workflow export --name <名称>` 或调用查找结果中的 `exportTarget`。可传 `--form-name`、`--status`、`--created-between` 限定记录。导出核对实际应用权限与可见范围，保存为 Excel，stdout 返回 `output` 和记录数。省略 `--output` 时在当前目录自动选文件名。用户指定文件或目录时按其路径保存，已有文件保持原样。
+先在一个进程运行 `rsq export watch --output ./exports`，等待 NDJSON 事件 `{"type":"connection","phase":"listening"}`。再用同一 profile 运行 `workflow export --name <应用名称>`，或者使用应用查找结果中的 `exportTarget`。网页导出按应用和条件筛选。`--instance-name` 按标题包含匹配，`--status` 和 `--created-between` 筛选实例，`--form-name` 或 `--form-id` 选择表单列。发起命令返回 `.result.status = "accepted"` 及 `.result.exportId`。
+
+接收进程用 HTTP 长轮询收取当前账号的在线导出通知，原样保存服务器文件。同名文件追加编号。保存后从该进程的 `file` 事件读取 `output` 和 `bytes`，每个账号使用一个接收进程。文件按账号接收，可能由网页或其他命令发起，不能用受理标识匹配某个文件。停止或断线期间的通知无法补收。
 
 已知项目时可用 `project workflow modules list --project-id <项目ID>` 直接发现模块。项目命令按 `PLAN` + `PLAN_WORKFLOW` 及实际模块校验，独立流程命令按 `WORKFLOW` 校验。
 

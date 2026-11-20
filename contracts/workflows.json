@@ -250598,16 +250598,12 @@
                     "applicationId": {
                       "type": "string",
                       "pattern": "^[1-9][0-9]*$",
-                      "description": "从名称查询结果取得的流程应用 ID。"
-                    },
-                    "processId": {
-                      "type": "string",
-                      "pattern": "^[1-9][0-9]*$",
-                      "description": "从名称查询结果取得的流程应用 ID。"
+                      "maxLength": 19
                     }
                   },
                   "required": [
-                    "command"
+                    "command",
+                    "applicationId"
                   ],
                   "additionalProperties": false
                 },
@@ -250623,8 +250619,7 @@
                 "id",
                 "name",
                 "scope",
-                "target",
-                "exportTarget"
+                "target"
               ],
               "additionalProperties": true
             }
@@ -250875,43 +250870,41 @@
       "command": "workflow export",
       "id": "closure.workflow.export",
       "usageAction": "workflow-export",
-      "description": "自动定位实际流程，按导出权限把可见实例、步骤和表单数据保存为 Excel。默认在当前目录生成 .xlsx 文件。",
+      "description": "按网页设置发起流程应用的 Excel 导出，返回受理结果。用 export watch 接收原文件。",
       "capabilities": [
         "workflow/application",
         "workflow/instance",
         "workflow/forms"
       ],
       "examples": [
-        "rsq workflow export --name \"供应商审核\" --output ./供应商.xlsx",
-        "rsq workflow export --process-id 123",
-        "rsq workflow export --application-id 123 --form-name \"基本信息\""
+        "rsq export watch --output ./exports",
+        "rsq workflow export --name \"供应商审核\"",
+        "rsq workflow export --application-id 123 --instance-name \"供应商\" --form-name \"基本信息\""
       ],
       "relatedCommands": [
         "workflow find",
         "workflow form records list",
-        "project workflow form records list"
+        "project workflow form records list",
+        "export watch"
       ],
       "resultSchema": {
         "type": "object",
         "properties": {
-          "output": {
-            "type": "string"
+          "status": {
+            "const": "accepted"
           },
-          "fileFormat": {
-            "const": "xlsx"
+          "exportId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,128}$"
           },
-          "bytes": {
-            "type": "integer",
-            "minimum": 1
+          "receiver": {
+            "const": "export watch"
           },
           "target": {
             "type": "object",
             "properties": {
               "kind": {
-                "enum": [
-                  "application",
-                  "instance"
-                ]
+                "const": "application"
               },
               "id": {
                 "type": "string",
@@ -250994,16 +250987,12 @@
                   "applicationId": {
                     "type": "string",
                     "pattern": "^[1-9][0-9]*$",
-                    "description": "从名称查询结果取得的流程应用 ID。"
-                  },
-                  "processId": {
-                    "type": "string",
-                    "pattern": "^[1-9][0-9]*$",
-                    "description": "从名称查询结果取得的流程应用 ID。"
+                    "maxLength": 19
                   }
                 },
                 "required": [
-                  "command"
+                  "command",
+                  "applicationId"
                 ],
                 "additionalProperties": false
               },
@@ -251048,32 +251037,18 @@
             ],
             "additionalProperties": false
           },
-          "instances": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "steps": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "records": {
-            "type": "integer",
-            "minimum": 0
-          },
           "formId": {
             "type": "string",
-            "pattern": "^[1-9][0-9]*$"
+            "pattern": "^[1-9][0-9]*$",
+            "maxLength": 19
           }
         },
         "required": [
-          "output",
-          "fileFormat",
-          "bytes",
+          "status",
+          "exportId",
+          "receiver",
           "target",
-          "scope",
-          "instances",
-          "steps",
-          "records"
+          "scope"
         ],
         "additionalProperties": false
       },
@@ -251094,7 +251069,7 @@
             "minLength": 1,
             "maxLength": 400,
             "pattern": "\\S",
-            "description": "流程应用或已发起实例的名称。项目流程也可用「项目名称-应用名称」。"
+            "description": "选择流程应用。项目流程也可用「项目名称-应用名称」。"
           },
           "applicationId": {
             "type": "string",
@@ -251104,33 +251079,26 @@
           "processId": {
             "type": "string",
             "pattern": "^[1-9][0-9]*$",
-            "description": "从待办、链接或名称查询取得的实例 ID。"
+            "description": "网页导出按应用及筛选条件受理。指定实例 ID 时返回范围提示。"
           },
           "kind": {
             "enum": [
               "application",
               "instance"
             ],
-            "description": "已明确对象层次时可限定查询范围。"
-          },
-          "output": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 4096,
-            "pattern": "\\S",
-            "description": "已有目录，或新 .xlsx 文件路径。省略时在当前目录自动命名。已存在文件不会覆盖。"
+            "description": "可限定流程应用。网页导出不支持精确按实例 ID。"
           },
           "formName": {
             "type": "string",
             "minLength": 1,
             "maxLength": 400,
             "pattern": "\\S",
-            "description": "按表单名称限定导出范围。"
+            "description": "按表单名称选择导出列。"
           },
           "formId": {
             "type": "string",
             "pattern": "^[1-9][0-9]*$",
-            "description": "按表单 ID 限定导出范围。"
+            "description": "按表单 ID 选择导出列。"
           },
           "status": {
             "enum": [
@@ -251149,6 +251117,13 @@
             "minItems": 2,
             "maxItems": 2,
             "description": "创建日期范围 [开始,结束]，含结束日，按 GMT+8。"
+          },
+          "instanceName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "pattern": "\\S",
+            "description": "按网页的流程标题筛选，使用包含匹配。"
           }
         },
         "oneOf": [
@@ -251195,7 +251170,7 @@
             "minLength": 1,
             "maxLength": 400,
             "pattern": "\\S",
-            "description": "流程应用或已发起实例的名称。项目流程也可用「项目名称-应用名称」。"
+            "description": "选择流程应用。项目流程也可用「项目名称-应用名称」。"
           }
         },
         {
@@ -251213,7 +251188,7 @@
           "schema": {
             "type": "string",
             "pattern": "^[1-9][0-9]*$",
-            "description": "从待办、链接或名称查询取得的实例 ID。"
+            "description": "网页导出按应用及筛选条件受理。指定实例 ID 时返回范围提示。"
           }
         },
         {
@@ -251224,18 +251199,7 @@
               "application",
               "instance"
             ],
-            "description": "已明确对象层次时可限定查询范围。"
-          }
-        },
-        {
-          "name": "output",
-          "option": "output",
-          "schema": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 4096,
-            "pattern": "\\S",
-            "description": "已有目录，或新 .xlsx 文件路径。省略时在当前目录自动命名。已存在文件不会覆盖。"
+            "description": "可限定流程应用。网页导出不支持精确按实例 ID。"
           }
         },
         {
@@ -251246,7 +251210,7 @@
             "minLength": 1,
             "maxLength": 400,
             "pattern": "\\S",
-            "description": "按表单名称限定导出范围。"
+            "description": "按表单名称选择导出列。"
           }
         },
         {
@@ -251255,7 +251219,7 @@
           "schema": {
             "type": "string",
             "pattern": "^[1-9][0-9]*$",
-            "description": "按表单 ID 限定导出范围。"
+            "description": "按表单 ID 选择导出列。"
           }
         },
         {
@@ -251282,6 +251246,17 @@
             "minItems": 2,
             "maxItems": 2,
             "description": "创建日期范围 [开始,结束]，含结束日，按 GMT+8。"
+          }
+        },
+        {
+          "name": "instanceName",
+          "option": "instance-name",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "pattern": "\\S",
+            "description": "按网页的流程标题筛选，使用包含匹配。"
           }
         }
       ],
@@ -251371,24 +251346,31 @@
           "input": {}
         },
         {
-          "id": "http14",
-          "operationId": "rsq.bcae04df8eb2",
-          "description": "分页读取当前用户可见实例。",
+          "id": "exportFormSteps",
+          "operationId": "rsq.c840bc10f2ec",
+          "description": "指定表单时解析它所在的可见步骤。",
           "input": {}
         },
         {
-          "id": "http15",
-          "operationId": "rsq.aecc6286dfc1",
-          "description": "根据实例可见步骤核对实际步骤和表单。",
+          "id": "exportFields",
+          "operationId": "rsq.workflow-export-fields",
+          "description": "读取网页导出列的选择和步骤分组。",
           "input": {}
         },
         {
-          "id": "http16",
-          "operationId": "rsq.12722ecef099",
-          "description": "读取可见字段与表单值。此过程可能刷新计算字段。",
+          "id": "prepareExport",
+          "operationId": "rsq.workflow-export-prepare",
+          "description": "按网页协议提交选列、步骤分组和筛选，取得导出 ID。",
+          "input": {}
+        },
+        {
+          "id": "startExport",
+          "operationId": "rsq.workflow-export-start",
+          "description": "发起任务。Excel 文件由账号级接收进程保存。",
           "input": {}
         }
-      ]
+      ],
+      "recovery": "先开启 export watch 再发起导出。发起回执代表已受理，文件从当前账号的导出通知单独接收。网络不明确时先核对结果，避免重复提交。"
     }
   ]
 }

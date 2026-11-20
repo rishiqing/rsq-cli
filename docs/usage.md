@@ -35,15 +35,22 @@ rsq task get --id '<任务ID>' --profile work
 
 ## 项目流程和独立流程
 
-只有流程名称时，先用 `workflow find`。`.result.items` 中的匹配项分别标出应用和已发起实例，并给出实际归属、`target` 和 `exportTarget`。名称重合时，按项目、应用、实例或创建时间辨认具体对象。已知 ID 时可直接传 `--application-id` 或 `--process-id`。
+只有流程名称时，先用 `workflow find`。`.result.items` 中的匹配项分别标出应用和已发起实例，并给出实际归属和 `target`。应用结果包含 `exportTarget`。名称重合时，按项目、应用、实例或创建时间辨认具体对象。查找支持 `--application-id` 和 `--process-id`。
 
 ```sh
 rsq --format json workflow find --name '供应商审核' | jq -e '.result.items'
-rsq workflow export --name '供应商审核' --output ./供应商审核.xlsx
+
+# 先在一个终端启动接收进程
+rsq export watch --output ./exports
+
+# 看到 listening 后，在另一个终端用同一 profile 发起
+rsq workflow export --name '供应商审核'
 rsq workflow export --application-id '<应用ID>' --form-name '基本信息'
 ```
 
-导出按实际应用的导出权限读取可见实例、步骤和表单，保存为 Excel。可以用 `--status`、`--created-between` 或表单名称缩小范围。省略 `--output` 时保存到当前目录并自动命名。传入已有目录时按相同规则命名，显式文件名必须是新的 `.xlsx` 路径。文件路径读取 `.result.output`，计数读取 `.result.instances`、`.result.steps` 和 `.result.records`。
+网页导出按应用和筛选条件发起。`--instance-name` 按流程标题做包含匹配，`--status` 和 `--created-between` 进一步筛选实例。`--form-name` 或 `--form-id` 可指定表单列。省略表单选择时使用当前账号在网页保存的导出字段。
+
+`.result.status` 为 `accepted` 说明流程服务已受理，`.result.exportId` 是受理标识。接收进程通过 HTTP 长轮询收取当前账号的在线通知并保存原文件，包括从网页发起的导出。文件保存后输出一行 NDJSON，`type` 为 `file`，`output` 为本地路径，`bytes` 为文件大小。原文件名相同时追加编号。每个账号启动一个接收进程，文件事件按账号接收，无法对应某一次发起。按 Ctrl+C 停止接收。断线或未运行期间的通知无法补收。
 
 项目里的流程模块用 `project workflow`。先从项目取得 `projectId`，再从模块目录取得 `applicationId`。CLI 校验项目流程功能及实际模块归属。
 

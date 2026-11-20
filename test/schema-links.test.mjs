@@ -1,12 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { builtinCommands } from '../dist/builtins.js'
 import { catalog } from '../dist/operations.js'
 import { workflows } from '../dist/workflows.js'
 import { validateReplayTopicWorkflow } from '../dist/replay-topic.js'
 import { readdirSync, readFileSync } from 'node:fs'
 
 test('every related business command resolves to a real command or coverage discovery', () => {
-  const commands = new Set(['login', 'logout', 'whoami', 'auth status', ...[...catalog.operations, ...workflows.workflows].map(row => row.command)])
+  const commands = new Set([...builtinCommands, ...catalog.operations, ...workflows.workflows].map(row => row.command))
   const missing = workflows.workflows.flatMap(flow => (flow.relatedCommands ?? []).filter(command => !commands.has(command) && !/^rsq coverage [a-z-]+(?: [a-z-]+)?$/.test(command)).map(command => ({ source: flow.command, target: command })))
   assert.deepEqual(missing, [])
 })

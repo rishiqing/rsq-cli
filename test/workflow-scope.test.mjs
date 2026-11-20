@@ -1,9 +1,5 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises'
-import { join } from 'node:path'
-import { tmpdir } from 'node:os'
-import { unzipSync, strFromU8 } from 'fflate'
 import { executeOperation, executeWorkflow } from '../dist/dispatch.js'
 import { cliDiagnostic } from '../dist/cli-errors.js'
 import { catalog } from '../dist/operations.js'
@@ -66,6 +62,24 @@ function fixture(options = {}) {
       enterTable: true, viewAllProcess: true, viewPrivateSteps: true, flowConfig: true, exportFlow: true, ...options.permissions,
     } })
     if (path.endsWith('/form/list')) return business([{ id: formId, name: '表单' }])
+    if (path.endsWith('/process/info/export/record/list')) {
+      assert.deepEqual(query, { applicationId })
+      return business({
+        processMessage: options.noExportFields ? [] : [{ exportFieldName: 'processInfoName', isChecked: true }],
+        formMessage: options.noExportFields ? [] : [
+          { stepInfoId: '9501', fieldList: [{ exportFieldName: 'field_9501', isChecked: false }],
+            stepList: [{ exportFieldName: 'stepStatus_9501', isChecked: true }] },
+          { stepInfoId: '9502', fieldList: [{ exportFieldName: 'field_9502', isChecked: true }] },
+        ],
+      })
+    }
+    if (path.endsWith('/process/info/export/record/url/add')) {
+      calls.at(-1).body = JSON.parse(init.body)
+      return business({ exportId: 'fixture-export' })
+    }
+    if (path.endsWith('/excel/export/application/process/list')) {
+      return options.refusedExport ? response({ code: 401007 }) : business(null)
+    }
     if (path.endsWith('/form/content/tableHeader')) return business([{ id: 'f-' + fieldId, name: field.name, selected: true }])
     if (path.endsWith('/form/content/tableElement')) {
       assert.deepEqual(query, { formId, pageNum: '2', pageSize: '1' })
@@ -86,13 +100,7 @@ function fixture(options = {}) {
       return business([{ id: '9102' }])
     }
     if (path.endsWith('/process/info/step')) return business({ id: stepId, processInfoId: processId, applicationId, formId, editControl: { fillStepForm: true } })
-    if (path.endsWith('/auditsAndForms')) return business({ formId, formName: '表单', editControl: { fillStepForm: options.fill !== false }, fields: [
-      field, ...(options.exportFields ? [
-        { id: '11', type: 1, name: '隐藏字段', value: 'private-hidden-fixture', isHidden: true },
-        { id: '12', type: 3, name: '判断', value: '1', selector: [{ value: '1', name: '通过' }] },
-        { id: '13', type: 1, name: '原文', value: '=1+1' },
-      ] : []),
-    ] })
+    if (path.endsWith('/auditsAndForms')) return business({ formId, formName: '表单', editControl: { fillStepForm: options.fill !== false }, fields: [field] })
     if (path.endsWith('/operate/status')) return business({ finish: true })
     if (path.endsWith('/process/info/form') && init.method === 'PUT') {
       const body = JSON.parse(init.body)
@@ -261,50 +269,60 @@ test('workflow find resolves names to visible project and standalone targets wit
   assert.ok(denied.calls.every(call => !call.path.endsWith('/process/info/details')))
 })
 
-test('workflow export writes an Excel file for visible records, preserves text, and leaves existing files intact', async () => {
-  const folder = await mkdtemp(join(tmpdir(), 'rsq-workflow-fixtures-'))
-  try {
-    const f = fixture({ exportFields: true, permissions: { enterTable: false, viewAllProcess: false, viewPrivateSteps: false } })
-    const out = (await f.run('workflow export', { name: '供应商', formName: '表单', output: folder, createdBetween: ['2026-11-19', '2026-11-19'] })).result
-    assert.equal(out.scope.kind, 'project')
-    assert.deepEqual([out.instances, out.steps, out.records], [1, 1, 1])
-    const bytes = await readFile(out.output), workbook = unzipSync(bytes)
-    assert.equal(bytes.length, out.bytes)
-    assert.equal(Object.keys(workbook).filter(path => path.startsWith('xl/worksheets/')).length, 3)
-    const strings = strFromU8(workbook['xl/sharedStrings.xml'])
-    for (const text of ['实例', '表单', '已提交的样例', '通过', '=1+1']) assert.ok(strings.includes(text))
-    assert.ok(!strings.includes('private-hidden-fixture'))
-    assert.ok(!strFromU8(workbook['xl/worksheets/sheet3.xml']).includes('<f>'))
-    assert.ok(f.calls.every(call => !call.path.includes('/form/content/') && !call.path.includes('/export/record')))
-    const before = f.calls.length
-    await assert.rejects(f.run('workflow export', { processId, output: out.output }), { code: 'OUTPUT_EXISTS' })
-    assert.ok(f.calls.slice(before).every(call => !call.path.includes('/task/workflow/')))
-    const another = (await f.run('workflow export', { applicationId, formId, output: folder })).result
-    assert.notEqual(another.output, out.output)
-    assert.deepEqual(await readFile(out.output), bytes)
-    assert.equal((await readdir(folder)).length, 2)
-  } finally { await rm(folder, { recursive: true, force: true }) }
+test('workflow export submits the webpage column groups and filters, and returns acceptance', async () => {
+  const f = fixture({ permissions: { enterTable: false, viewAllProcess: false, viewPrivateSteps: false } })
+  const out = (await f.run('workflow export', {
+    name: '供应商', formName: '表单', instanceName: '实例', status: 'doing', createdBetween: ['2026-11-19', '2026-11-19'],
+  })).result
+  assert.equal(out.scope.kind, 'project')
+  assert.equal(out.status, 'accepted')
+  assert.equal(out.exportId, 'fixture-export')
+  assert.equal(out.receiver, 'export watch')
+  assert.equal(out.formId, formId)
+  assert.ok(!('output' in out))
+  assert.deepEqual(f.calls.find(call => call.path.endsWith('/export/record/url/add')).body, {
+    applicationId, headerKeys: 'processInfoName,field_9501,stepStatus_9501',
+    stepKeysList: [{ stepInfoId: '9501', keysList: ['field_9501', 'stepStatus_9501'] }],
+    exportFilterList: [
+      { key: 'name', include: true, value: '实例' },
+      { key: 'isFinished', include: true, value: '3' },
+      { key: 'dateCreated', include: true, value: '2026.11.19-2026.11.19' },
+    ],
+    fieldFilter: null,
+  })
+  assert.deepEqual(f.calls.at(-1), {
+    path: '/task/workflow/excel/export/application/process/list', query: { exportId: 'fixture-export' }, method: 'GET',
+  })
 })
 
-test('export separates matching from authorization and only asks about genuine ambiguity', async () => {
-  const folder = await mkdtemp(join(tmpdir(), 'rsq-workflow-matching-'))
-  try {
-    const f = fixture({ features: [], useFlow: true })
-    await assert.rejects(f.run('workflow export', { name: '供应商', output: folder }), error => {
-      assert.equal(error.code, 'AMBIGUOUS_TARGET')
-      assert.deepEqual(error.details.candidates.map(row => row.scope.kind).sort(), ['project', 'standalone'])
-      return true
-    })
-    assert.ok(f.calls.every(call => !call.path.endsWith('/application') && !call.path.endsWith('/auditsAndForms')))
-    const blocked = fixture({ permissions: { exportFlow: false } })
-    await assert.rejects(blocked.run('workflow export', { applicationId, output: folder }), { code: 'FORBIDDEN' })
-    assert.ok(blocked.calls.every(call => !call.path.endsWith('/sheet/list')))
-    const empty = fixture({ unlisted: true })
-    await assert.rejects(empty.run('workflow export', { applicationId, output: folder }), { code: 'NO_RECORDS' })
-    const standalone = fixture({ standalone: true, features: [{ funcName: 'PLAN_WORKFLOW', status: 'disable' }], useFlow: true })
-    const result = (await standalone.run('workflow export', { processId, output: folder })).result
-    assert.equal(result.scope.kind, 'standalone')
-    assert.equal(result.instances, 1)
-    assert.equal((await readdir(folder)).length, 1)
-  } finally { await rm(folder, { recursive: true, force: true }) }
+test('export submits only after scope and permission are confirmed and does not replay a failed start', async () => {
+  const f = fixture({ features: [], useFlow: true })
+  await assert.rejects(f.run('workflow export', { name: '供应商' }), error => {
+    assert.equal(error.code, 'AMBIGUOUS_TARGET')
+    assert.deepEqual(error.details.candidates.map(row => row.scope.kind).sort(), ['project', 'standalone'])
+    return true
+  })
+  const prepare = call => call.path.endsWith('/export/record/url/add')
+  const start = call => call.path.endsWith('/excel/export/application/process/list')
+  assert.ok(f.calls.every(call => !prepare(call) && !start(call)))
+  const blocked = fixture({ permissions: { exportFlow: false } })
+  await assert.rejects(blocked.run('workflow export', { applicationId }), { code: 'FORBIDDEN' })
+  assert.ok(blocked.calls.every(call => !prepare(call) && !start(call)))
+  const empty = fixture({ noExportFields: true })
+  await assert.rejects(empty.run('workflow export', { applicationId }), { code: 'NO_EXPORT_FIELDS' })
+  assert.ok(empty.calls.every(call => !prepare(call) && !start(call)))
+  const exact = fixture()
+  await assert.rejects(exact.run('workflow export', { processId }), { code: 'EXPORT_SCOPE_UNSUPPORTED' })
+  await assert.rejects(exact.run('workflow export', { name: '实例' }), { code: 'EXPORT_SCOPE_UNSUPPORTED' })
+  assert.ok(exact.calls.every(call => !prepare(call) && !start(call)))
+
+  const standalone = fixture({ standalone: true, features: [{ funcName: 'PLAN_WORKFLOW', status: 'disable' }], useFlow: true })
+  const out = (await standalone.run('workflow export', { applicationId })).result
+  assert.equal(out.scope.kind, 'standalone')
+  assert.equal(out.status, 'accepted')
+  assert.equal(standalone.calls.find(prepare).body.headerKeys, 'processInfoName,stepStatus_9501,field_9502')
+  const refused = fixture({ refusedExport: true })
+  await assert.rejects(refused.run('workflow export', { applicationId }))
+  assert.equal(refused.calls.filter(prepare).length, 1)
+  assert.equal(refused.calls.filter(start).length, 1)
 })
