@@ -139099,7 +139099,8 @@
             "closure.doc.draft.inspect",
             "closure.doc.draft.publish",
             "closure.doc.template.apply",
-            "closure.doc.body.get"
+            "closure.doc.body.get",
+            "closure.doc.read"
           ],
           "contract": "pending",
           "validation": {
