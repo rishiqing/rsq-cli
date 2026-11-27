@@ -42077,6 +42077,91 @@
       "recovery": "先核对资源 ID 和最终状态；不自动重放未知写入。目录/元信息 GET 可能写最近使用和显示顺序，不承诺纯只读。"
     },
     {
+      "id": "closure.doc.read",
+      "command": "doc read",
+      "description": "按文档 ID 核对当前身份、编辑器预览权限与文档详情，通过 Reditor HTTP 读取完整正文快照；支持知识文集、协作文档及项目内文档模块，拒绝无预览权限、已删除及旧日报/周报/月报",
+      "effect": "write",
+      "methods": [
+        "password",
+        "wecom",
+        "dingtalk",
+        "feishu",
+        "wps"
+      ],
+      "executor": "document",
+      "docAction": "read",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "目标日事清文档 ID（可来自知识文集、协作文档或项目文档模块链接）。"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "schema": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "目标日事清文档 ID（可来自知识文集、协作文档或项目文档模块链接）。"
+          },
+          "option": "id"
+        }
+      ],
+      "steps": [
+        {
+          "id": "identity",
+          "operationId": "rsq.d04c7521598b",
+          "description": "核对服务端当前用户与公司，凭证不输出",
+          "input": {}
+        },
+        {
+          "id": "authority",
+          "operationId": "rsq.20b195e14e49",
+          "description": "用当前编辑器 authority 检查预览权限，拒绝删除/noPreview；不能依赖旧详情接口的宽松检查",
+          "input": {}
+        },
+        {
+          "id": "before",
+          "operationId": "rsq.b1d919c5ebc3",
+          "description": "读取文档元信息，校验 ID、非目录、可展示且排除旧日报/周报/月报",
+          "input": {}
+        },
+        {
+          "id": "content",
+          "operationId": "rsq.4594cf138d6c",
+          "description": "通过已核对的 Reditor HTTP 读取完整文档 Delta 快照；先完成身份与编辑器预览权限检查",
+          "input": {}
+        }
+      ],
+      "output": {},
+      "capabilities": [
+        "doc/content"
+      ],
+      "examples": [
+        "rsq schema \"doc read\"",
+        "rsq doc read --id 12345"
+      ],
+      "relatedCommands": [
+        "doc body get",
+        "doc spaces list",
+        "doc tree inspect",
+        "doc inspect",
+        "organization access inspect"
+      ],
+      "limits": {
+        "bodyBytes": 4194304
+      },
+      "recovery": "先核对文档 ID、预览权限与正文哈希；元信息 GET 可能写最近使用，不承诺纯只读。"
+    },
+    {
       "id": "closure.doc.rename",
       "command": "doc rename",
       "description": "按当前 editNote 权限重命名文档，独立读取目录及详情；不改变正文",

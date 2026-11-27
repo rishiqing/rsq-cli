@@ -96823,7 +96823,8 @@
         "doc draft new",
         "doc template inspect",
         "doc template create",
-        "doc collaboration"
+        "doc collaboration",
+        "doc read"
       ],
       "semanticReason": "读取普通文档或本人草稿详情；普通文档必须先核对完整可见目录与 authority.status，原 getAvailableNote 的权限异常被注释，不能直接信任返回详情。此 GET 会写最近使用或清理重复成员。",
       "fields": [
@@ -97578,7 +97579,8 @@
         "doc draft new",
         "doc template inspect",
         "doc template create",
-        "doc collaboration"
+        "doc collaboration",
+        "doc read"
       ],
       "fields": [
         {
@@ -97668,6 +97670,7 @@
       },
       "requiresBusinessContext": [
         "doc body get",
+        "doc read",
         "doc collaboration"
       ],
       "review": "reviewed",

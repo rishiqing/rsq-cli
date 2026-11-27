@@ -14,7 +14,7 @@ import { docGroupActions, docGroupSteps, runDocGroups, type DocGroupAction } fro
 import { docActivityPage, describeDocActivities } from './doc-activities.js'
 import type { Workflow } from './workflows.js'
 
-export type DocAction = 'activities' | DocGroupAction | DocPublicationAction | DocSharingAction | DocCollaborationAction | 'visibility-set' | 'body-inspect' | 'spaces' | 'space-inspect' | 'space-create' | 'space-update' | 'space-remove' | 'tree' | 'create' | 'inspect' | 'rename' | 'remove' | 'folder-create' | 'folder-rename' | 'folder-remove' | 'copy' | 'move' | 'comments' | 'comment-context' | 'comment-create' | 'comment-remove' | 'drafts' | 'draft-create' | 'draft-inspect' | 'draft-rename' | 'draft-remove' | 'draft-publish' | 'templates' | 'template-inspect' | 'template-create' | 'template-rename' | 'template-remove' | 'template-apply' | 'template-save'
+export type DocAction = 'read' | 'activities' | DocGroupAction | DocPublicationAction | DocSharingAction | DocCollaborationAction | 'visibility-set' | 'body-inspect' | 'spaces' | 'space-inspect' | 'space-create' | 'space-update' | 'space-remove' | 'tree' | 'create' | 'inspect' | 'rename' | 'remove' | 'folder-create' | 'folder-rename' | 'folder-remove' | 'copy' | 'move' | 'comments' | 'comment-context' | 'comment-create' | 'comment-remove' | 'drafts' | 'draft-create' | 'draft-inspect' | 'draft-rename' | 'draft-remove' | 'draft-publish' | 'templates' | 'template-inspect' | 'template-create' | 'template-rename' | 'template-remove' | 'template-apply' | 'template-save'
 type Route = [string,string,string,boolean?]
 const corpus = '/task/v1/corpus',summary = corpus+'/summary',template = corpus+'/templateSummary'
 const invalid = (message: string): never => { throw new RsqError('INVALID_INPUT',message,2) }
@@ -80,6 +80,7 @@ export function docSteps(action: DocAction): Route[] {
   if (docSharingActions.includes(action as DocSharingAction)) return [identity,...target,...(action === 'share-inspect' ? [] : [changed('PUT',summary+'/{id}'),verified]),['public','GET',summary+'/getShareNote']]
   if (action === 'visibility-set') return [identity,...target,changed('PUT',summary+'/{id}'),verified]
   if (action === 'inspect') return [identity,...target,delta]
+  if (action === 'read') return [identity,['authority','GET',summary+'/authority'],['before','GET',summary],['content','GET','/task/reditor/client/resource/get-delta']]
   if (action === 'body-inspect') return [identity,...target,['content','GET','/task/reditor/client/resource/get-delta']]
   if (action === 'activities') return [identity,...target,['activities','GET',summary+'/actions'],['moreActivities','GET',summary+'/hasSummaryAction']]
   if (action === 'copy' || action === 'move') return [identity,...target,delta,['destination','GET',corpus+'/{id}'],['destinationTree','GET',summary+'/list'],changed('POST',summary+'/'+action),afterTree,['verifiedDestinationTree','GET',summary+'/list'],verified,verifyDelta]
@@ -88,7 +89,7 @@ export function docSteps(action: DocAction): Route[] {
   return [identity,...target,changed(action === 'remove' ? 'DELETE' : 'PUT',summary+'/{id}'),afterTree,...(action === 'remove' ? [] : [verified])]
 }
 export function validateDocWorkflow(flow: Workflow) {
-  const actions = [...docPublicationActions,...docSharingActions,'visibility-set','body-inspect','spaces','space-inspect','space-create','space-update','space-remove','tree','create','inspect','rename','remove','folder-create','folder-rename','folder-remove','copy','move','comments','comment-context','comment-create','comment-remove','drafts','draft-create','draft-inspect','draft-rename','draft-remove','draft-publish','templates','template-inspect','template-create','template-rename','template-remove','template-apply','template-save']
+  const actions = [...docPublicationActions,...docSharingActions,'read','visibility-set','body-inspect','spaces','space-inspect','space-create','space-update','space-remove','tree','create','inspect','rename','remove','folder-create','folder-rename','folder-remove','copy','move','comments','comment-context','comment-create','comment-remove','drafts','draft-create','draft-inspect','draft-rename','draft-remove','draft-publish','templates','template-inspect','template-create','template-rename','template-remove','template-apply','template-save']
   if (![...actions,...docCollaborationActions,...docGroupActions,'activities'].includes(flow.docAction ?? '')) throw new RsqError('INVALID_CONTRACT','未知文档业务。',6)
   const expected = docSteps(flow.docAction!)
   if (flow.executor !== 'document' || !flow.docAction || expected.length !== flow.steps.length || expected.some(([id,method,route,folder],index) => {
@@ -139,7 +140,7 @@ export async function runDoc(ctx: Context,flow: Workflow,input: JsonObject,suppl
   }
   const visibleSpace = (spaces: JsonObject[],id: string) => { const row = spaces.find(row => idOf(row.id) === id);if (!row) throw new RsqError('RESOURCE_NOT_VISIBLE','目标文集未在当前公司的可见文集中找到。',4);if (row.type !== 'essays') throw new RsqError('RETIRED_BUSINESS','仅支持当前普通知识文集；旧日报/周报/月报请使用复盘。',6);return row }
   const parent = (tree: Map<string,JsonObject>,space: JsonObject,folderId: unknown,createFolder = false) => { const id = folderId == null ? undefined : requiredId(folderId),row = id ? tree.get(id) : space;if (!row || id && row.isNoteBook !== true) invalid('父目录不在当前文集的可见 HTTP 目录中。');permission(row!,createFolder ? 'createNoteBook' : 'createNote');return id ? { noteBookId: id } : { corpusId: requiredId(space.id) } }
-  const delta = async (stepId: string,id: string,isTemplate = false) => action === 'body-inspect'
+  const delta = async (stepId: string,id: string,isTemplate = false) => action === 'body-inspect' || action === 'read'
     ? docDelta(list(await call(stepId,{ query: { id,type: 'doc' } })))
     : receivedDelta(await call(stepId,{ query: { id: isTemplate ? id : 'normal-'+id } }))
   const detail = async (stepId: string,id: string,spaceId?: string,draft = false) => {
@@ -156,6 +157,17 @@ export async function runDoc(ctx: Context,flow: Workflow,input: JsonObject,suppl
   try {
     const identity = asObject(await call('identity'))
     if (idOf(identity.id) !== session.identity.userId || idOf(asObject(identity.team).id ?? identity.teamId) !== session.identity.teamId) throw new RsqError('IDENTITY_CHANGED','当前用户或公司与 profile 不一致。',3)
+    if (action === 'read') {
+      const id = requiredId(input.id)
+      resources.documentId = id
+      const authority = asObject(await call('authority',{ query: { id } }))
+      if (!['','noEdit'].includes(String(authority.status)) || !authority.auth || !Object.keys(asObject(authority.auth)).length) throw new RsqError('RESOURCE_FORBIDDEN','文档预览权限已失效或资源已删除，未读取正文。',4)
+      const row = asObject(await call('before',{ query: { id } }))
+      if (idOf(row.id) !== id || row.isNoteBook !== false || row.isDisplay === false) failed('文档详情与真实资源不一致，或目标为目录或不可展示项。')
+      if (['day','daily','week','month','monthly'].includes(String(row.corpusType))) throw new RsqError('RETIRED_BUSINESS','旧日报、周报和月报文档不在当前范围，请使用复盘。',6)
+      const snapshot = await delta('content',id)
+      return { workflow: flow.id,completedSteps: completed,resources,result: { document: describeDoc(row),content: snapshot,contentHash: digest(snapshot),concurrency: 'HTTP snapshot; no atomic content replacement endpoint verified' } }
+    }
     if (action === 'drafts') { const drafts = await pages('drafts');return { workflow: flow.id,completedSteps: completed,resources,result: { drafts: drafts.map(describeDoc) } } }
     if (action === 'templates') return { workflow: flow.id,completedSteps: completed,resources,result: { templates: catalogue(await call('templates')).map(describeDoc) } }
     let company: JsonObject = {}

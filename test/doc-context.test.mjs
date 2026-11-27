@@ -33,8 +33,8 @@ function fixture(options = {}) {
   if (space) { const row = spaces.get(space[1]);assert.ok(row);if (method === 'GET') return json(row);if (method === 'PUT') { if (!options.ignoredWrite) Object.assign(row,data);return json(row) }if (method === 'DELETE') { spaces.delete(space[1]);for (const [id,doc] of docs) if (String(doc.corpusId) === space[1]) docs.delete(id);return new Response(null,{ status: 204 }) } }
   if (path === base+'/list') { const parent = q.noteBookId ? docs.get(q.noteBookId) : undefined;assert.ok(!q.noteBookId || parent?.isNoteBook);assert.equal(q.allData,'true');const rows = [...docs.values()].filter(doc => String(doc.corpusId) === (parent ? String(parent.corpusId) : q.corpusId) && (doc.noteBookId == null ? !q.noteBookId : String(doc.noteBookId) === q.noteBookId));return json(options.foreignTree ? rows.map(row => ({ ...row,corpusId: '999' })) : rows) }
   if (path === base+'/draftList') { assert.ok(+q.max >= 1 && +q.max <= 50);const rows = [...docs.values()].filter(row => row.corpusId == null).sort((a,b) => String(a.id).localeCompare(String(b.id))).filter(row => !q.lastId || String(row.id) > q.lastId).slice(0,+q.max).map(row => ({ id: row.id,name: row.name,brief: '' }));return json(rows) }
-  if (path === base+'/authority') return json({ auth: fullPermissions,status: options.noPreview ? 'noPreview' : options.deleted ? 'docDelete' : '' })
-  if (path === base && method === 'GET') { const row = docs.get(q.id);assert.ok(row && !row.isNoteBook);return json(options.foreignDetail ? { ...row,corpusId: '999' } : row) }
+  if (path === base+'/authority') return json({ auth: options.emptyAuth ? {} : fullPermissions,status: options.noPreview ? 'noPreview' : options.deleted ? 'docDelete' : options.noEdit ? 'noEdit' : '' })
+  if (path === base && method === 'GET') { const row = docs.get(q.id);assert.ok(row);if (!options.allowFolderDetail) assert.ok(!row.isNoteBook);return json(options.foreignDetail ? { ...row,corpusId: '999' } : options.mismatchedId ? { ...row,id: '888888' } : row) }
   if (path === base && method === 'POST') { const parent = data.noteBookId ? docs.get(data.noteBookId) : undefined;const row = add(String(++next),{ name: data.name,isNoteBook: data.isNoteBook,corpusId: parent ? parent.corpusId : data.corpusId ?? null,noteBookId: data.noteBookId ?? null });contents.set('normal-'+row.id,data.note ? JSON.parse(data.note) : { ops: [] });if (options.unknownCreate) return json({ id: row.id,isNoteBook: 'invalid' });return json(row) }
   const doc = /^\/task\/v1\/corpus\/summary\/([0-9]+)$/.exec(path)
   if (doc) { const row = docs.get(doc[1]);assert.ok(row);if (method === 'PUT') { if (options.timeout) throw Error('connection lost');if (!options.ignoredWrite) Object.assign(row,data);return json(row) }if (method === 'DELETE') { const removed = new Set([doc[1]]);let count=0;while(count!==removed.size) {count=removed.size;for(const [id,row] of docs) if(removed.has(String(row.noteBookId))) removed.add(id)}for(const id of removed) docs.delete(id);return new Response(null,{ status: 204 }) } }
@@ -65,6 +65,42 @@ test('rcode HTTP body reader verifies visible document context before fetching a
  const invalid=fixture({invalidEditorResponse:true});await assert.rejects(run('doc body get',input,invalid),{code:'RESPONSE_SCHEMA_MISMATCH'})
  const raw=catalog.operations.find(op=>op.route==='/task/reditor/client/resource/get-delta');const offline=fixture()
  await assert.rejects(executeOperation(ctx,raw,{query:{type:'doc',id:input.id}},session,{transport:offline.transport}),{code:'BUSINESS_CONTEXT_REQUIRED'});assert.equal(offline.calls.length,0)
+})
+test('doc read resolves standalone, read-only and project-module documents by ID while rejecting unauthorized, folder or retired targets',async()=>{
+ const f=fixture()
+ f.add('5001',{ name:'项目需求文档',corpusId:'8801',corpusType:'kanban',lastUpdated:'2026-11-27 10:00:00' })
+ const standalone=(await run('doc read',{ id:'9007199254740993123' },f)).result
+ assert.equal(standalone.document.id,'9007199254740993123')
+ assert.deepEqual(standalone.content,body);assert.match(standalone.contentHash,/^[a-f0-9]{64}$/)
+ assert.ok(!f.calls.some(call=>call.path===root+'/list'||call.path===base+'/list'))
+ const projectDoc=(await run('doc read',{ id:'5001' },f)).result
+ assert.equal(projectDoc.document.name,'项目需求文档');assert.equal(projectDoc.document.corpusId,'8801');assert.equal(projectDoc.document.lastUpdated,'2026-11-27 10:00:00')
+ assert.deepEqual(projectDoc.content,body)
+ const readonly=fixture({ noEdit:true })
+ assert.deepEqual((await run('doc read',{ id:'9007199254740993123' },readonly)).result.content,body)
+ for(const [option,code] of [['noPreview','RESOURCE_FORBIDDEN'],['deleted','RESOURCE_FORBIDDEN'],['emptyAuth','RESOURCE_FORBIDDEN'],['changedIdentity','IDENTITY_CHANGED'],['mismatchedId','BUSINESS_ASSERTION_FAILED']]){
+  const denied=fixture({ [option]:true })
+  await assert.rejects(run('doc read',{ id:'9007199254740993123' },denied),{ code })
+  assert.ok(!denied.calls.some(call=>call.path==='/task/reditor/client/resource/get-delta'),option)
+ }
+ const folderFixture=fixture({ allowFolderDetail:true })
+ await assert.rejects(run('doc read',{ id:'201' },folderFixture),{ code:'BUSINESS_ASSERTION_FAILED' })
+ assert.ok(!folderFixture.calls.some(call=>call.path==='/task/reditor/client/resource/get-delta'))
+ const hiddenFixture=fixture();hiddenFixture.add('5002',{ isDisplay:false })
+ await assert.rejects(run('doc read',{ id:'5002' },hiddenFixture),{ code:'BUSINESS_ASSERTION_FAILED' })
+ assert.ok(!hiddenFixture.calls.some(call=>call.path==='/task/reditor/client/resource/get-delta'))
+ for(const retiredType of ['day','daily','week','month','monthly']){
+  const retired=fixture();retired.add('5003',{ corpusType:retiredType })
+  await assert.rejects(run('doc read',{ id:'5003' },retired),{ code:'RETIRED_BUSINESS' })
+  assert.ok(!retired.calls.some(call=>call.path==='/task/reditor/client/resource/get-delta'),retiredType)
+ }
+ const invalid=fixture({ invalidEditorResponse:true })
+ await assert.rejects(run('doc read',{ id:'9007199254740993123' },invalid),{ code:'RESPONSE_SCHEMA_MISMATCH' })
+ const offline=fixture()
+ const plan=await run('doc read',{ id:'9007199254740993123' },offline,{ dryRun:true })
+ assert.equal(plan.dryRun,true);assert.equal(offline.calls.length,0)
+ await assert.rejects(run('doc read',{ id:'not-a-number' },offline),{ code:'INVALID_INPUT' });assert.equal(offline.calls.length,0)
+ const tampered=structuredClone(flow('doc read'));tampered.steps.splice(1,1);assert.throws(()=>validateDocWorkflow(tampered),{ code:'INVALID_CONTRACT' })
 })
 test('knowledge HTTP closure resolves nested context, creates real initial Delta, and preserves content through copy/move',async()=>{
  const f=fixture(),space=(await run('doc space create',{ name:'新文集',groupId:'301' },f)).result.space;assert.equal(space.creatorId,'81')
