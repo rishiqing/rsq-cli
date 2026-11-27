@@ -80,11 +80,15 @@ rsq schema "task get"
 
 # 查询任务
 rsq task get --id '<任务ID>'
+
+# 读取任务详情、字段、评论和媒体目录
+rsq task context read --task-id '<任务ID>'
 ```
 
 | 业务 | 发现命令 |
 | --- | --- |
 | 任务与日程 | `rsq schema task` |
+| 任务评论 @ | `rsq schema 'task mention watch'` |
 | 项目、项目集与项目模板 | `rsq schema project` |
 | 独立流程配置与审批 | `rsq schema workflow` |
 | 项目流程模块 | `rsq schema 'project workflow'` |
@@ -93,7 +97,7 @@ rsq task get --id '<任务ID>'
 | OKR、行动与执行台 | `rsq schema okr`、`rsq schema action`、`rsq schema execution` |
 | 复盘与绩效 | `rsq schema replay`、`rsq schema appraisal` |
 | 文档与数据表 | `rsq schema doc`、`rsq schema datasheet` |
-| 文件与交付物 | `rsq schema file`、`rsq schema deliverable` |
+| 文件与交付物 | `rsq schema file`、`rsq schema 'file download'`、`rsq schema deliverable` |
 | 统计与组织管理 | `rsq schema statistics`、`rsq schema organization`、`rsq schema contact` |
 
 复杂参数通过 `--input request.json` 或 `--input -` 传入。写操作可先使用 `--dry-run` 查看计划；删除等需要确认的操作，非交互执行时使用 `--yes`。

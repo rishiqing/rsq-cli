@@ -18,6 +18,7 @@ import { upgradeRelease, agentSkillPath, type UpgradeOptions } from './release.j
 import { cliDiagnostic } from './cli-errors.js'
 import { CliOutput, outputContract, outputFormats, type OutputFormat } from './output.js'
 import { watchExports } from './export-watch.js'
+import { downloadFile, downloadUrl, readTaskContext, watchMentions } from './task-channel.js'
 
 const app = new Command()
   .name('rsq')
@@ -363,6 +364,43 @@ for (const flow of workflows.workflows) {
     await emit(await runWorkflow(ctx, flow, input, opts.dryRun ? null : await loadSession(ctx), { dryRun: Boolean(opts.dryRun), approved }))
   })
 }
+
+function taskChannelCommand(path: string) {
+  const parts = path.split(' ')
+  let parent = app, prefix = ''
+  for (const part of parts.slice(0, -1)) {
+    prefix = prefix ? prefix + ' ' + part : part
+    let group = groups.get(prefix)
+    if (!group) {
+      group = parent.command(part).description(moduleDescriptions[part] ?? part + ' 业务')
+      groups.set(prefix, group)
+    }
+    parent = group
+  }
+  return configureBuiltin(parent.command(parts.at(-1)!), path)
+}
+taskChannelCommand('task context read').action(async (options: { taskId: string; projectId?: string; excludeDetails?: boolean }) => {
+  const ctx = selectedContext()
+  await emit(await readTaskContext(ctx, requireSession(await loadSession(ctx)), options.taskId, options.projectId, options.excludeDetails))
+})
+taskChannelCommand('file download-url').action(async (options: { fileId: string }) => {
+  const ctx = selectedContext()
+  await emit(await downloadUrl(ctx, requireSession(await loadSession(ctx)), options.fileId))
+})
+taskChannelCommand('file download').action(async (options: { fileId: string; output: string }) => {
+  const ctx = selectedContext()
+  await emit(await downloadFile(ctx, requireSession(await loadSession(ctx)), options.fileId, options.output))
+})
+taskChannelCommand('task mention watch').action(async () => {
+  const stop = new AbortController(), cancel = () => stop.abort()
+  process.once('SIGINT', cancel)
+  process.once('SIGTERM', cancel)
+  try { await watchMentions(selectedContext(), value => emit(value, true), stop.signal) }
+  finally {
+    process.off('SIGINT', cancel)
+    process.off('SIGTERM', cancel)
+  }
+})
 
 try {
   if (process.argv.length <= 2) app.outputHelp()

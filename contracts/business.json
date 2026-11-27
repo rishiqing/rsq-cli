@@ -52695,6 +52695,9 @@
             "契约尚未全部重新复核",
             "正式组织场景与适用身份尚未全部验收",
             "task-type-transition-remaining: 任务类型切换已按TaskEntityConverter → findSimple → TemplateDOConverter 的实际默认值加载和里程碑语义重新实现；普通项目和项目模板、字段切回存储、空值和已有值各分支仍须分别独立验收。不同身份、复杂计算/引用字段和多角色不由基本字段样例外推。"
+          ],
+          "builtinCommands": [
+            "builtin.task.context.read"
           ]
         },
         {
@@ -57084,6 +57087,18 @@
                 ],
                 "issues": []
               }
+            },
+            {
+              "operationId": "rsq.task-mention-connection.v1",
+              "context": "task mention watch",
+              "role": "discover",
+              "method": "GET",
+              "route": "/task/api/v3/comment/mention/connection",
+              "effect": "read",
+              "status": "available",
+              "executableCommands": [
+                "task mention watch"
+              ]
             }
           ],
           "prerequisites": [
@@ -57209,6 +57224,9 @@
           "missing": [
             "契约尚未全部重新复核",
             "正式组织场景与适用身份尚未全部验收"
+          ],
+          "builtinCommands": [
+            "builtin.task.mention.watch"
           ]
         },
         {
@@ -144663,6 +144681,10 @@
             "契约尚未全部重新复核",
             "正式组织场景与适用身份尚未全部验收",
             "cloud-http-remaining: 普通顶级库子目录的完整 HTTP 遍历、创建、属性维护、移动与删除，以及文件发现/元信息/创建/复制/移动已编排；项目嵌入目录、混合批次、归档及不同角色仍须分别验收。"
+          ],
+          "builtinCommands": [
+            "builtin.file.download-url",
+            "builtin.file.download"
           ]
         },
         {

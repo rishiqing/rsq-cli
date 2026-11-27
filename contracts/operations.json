@@ -611544,7 +611544,8 @@
       "fields": [],
       "review": "reviewed",
       "requiresBusinessContext": [
-        "export watch"
+        "export watch",
+        "task mention watch"
       ],
       "examples": [
         "rsq schema \"export watch\""

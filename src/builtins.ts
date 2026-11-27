@@ -14,6 +14,10 @@ type Builtin = {
   options: Option[]; limitations: string[]; examples: string[]
   resultSchema?: JsonObject; transport?: string[]; stream?: 'ndjson'; relatedCommands?: string[]
 }
+const fileIdOption: Option = {
+  flags: '--file-id <id>', description: '日事清文件 ID', parameter: 'fileId',
+  schema: { type: 'string', pattern: '^[1-9][0-9]*$' }, required: true,
+}
 const definitions: Builtin[] = [
   { command: 'upgrade', description: '有新版本自动升级，无更新直接结束', effect: 'write', localOnly: false, requiresSession: false, options: [
     { flags: '--check', description: '只检查更新', parameter: 'check', schema: { type: 'boolean', default: false }, presentValue: true },
@@ -32,6 +36,74 @@ const definitions: Builtin[] = [
   { command: 'auth status', description: '查看本地会话，不访问网络', effect: 'read', localOnly: true, requiresSession: false, options: [], limitations: ['只报告 missing/expired/active 及本地身份，不证明服务端会话有效；随后 whoami 核对。'], examples: ['rsq auth status --profile work', 'rsq whoami --profile work'] },
   { command: 'whoami', description: '核对当前日事清账号和组织', effect: 'write', localOnly: false, requiresSession: true, options: [], limitations: ['通过当前身份对应服务的 authAjax 核对用户与组织；此旧接口可能初始化会话数据，保守按写副作用声明。', '输出仅身份和 profile，不输出服务端令牌或 Cookie。'], examples: ['rsq whoami --profile work'] },
   { command: 'logout', description: '清除当前 profile 的本地会话', effect: 'write', localOnly: true, requiresSession: false, options: [], limitations: ['删除当前 profile 的本地凭证文件；不注销组织、不撤销其他终端或其他 profile。'], examples: ['rsq logout --profile work'] },
+  {
+    command: 'task context read', description: '读取任务详情、字段、评论及其中的媒体目录',
+    effect: 'read', localOnly: false, requiresSession: true,
+    options: [
+      { flags: '--task-id <id>', description: '任务 ID', parameter: 'taskId', schema: { type: 'string', minLength: 1 }, required: true },
+      { flags: '--project-id <id>', description: '项目 ID，省略时使用通用任务入口', parameter: 'projectId', schema: { type: 'string', pattern: '^[1-9][0-9]*$' } },
+      { flags: '--exclude-details', description: '省略任务正文及其媒体', parameter: 'excludeDetails', schema: { type: 'boolean', default: false }, presentValue: true },
+    ],
+    resultSchema: {
+      type: 'object', required: ['taskId', 'teamId', 'readAt', 'basic', 'fields', 'comments', 'media'],
+      properties: {
+        taskId: { type: 'string' }, teamId: { type: ['string', 'null'] }, readAt: { type: 'string' },
+        basic: { type: 'object' }, fields: {}, comments: { type: 'array' },
+        media: { type: 'array', items: { type: 'object', required: ['key', 'type', 'name', 'source'], properties: {
+          key: { type: 'string' }, type: { enum: ['image', 'video', 'file'] }, name: { type: 'string' },
+          source: { type: 'string' }, fileId: { type: 'string' }, url: { type: 'string' },
+        } } },
+      },
+    },
+    transport: ['GET 任务详情', 'GET 任务字段值', 'GET 任务评论'],
+    limitations: ['按当前账号的公司状态和任务可见性读取。--exclude-details 保留字段、评论及其中的媒体。'],
+    examples: ['rsq task context read --task-id <任务ID>', 'rsq task context read --task-id <任务ID> --exclude-details'],
+    relatedCommands: ['task get', 'task mention watch', 'file download'],
+  },
+  {
+    command: 'file download-url', description: '取得有权限的原文件临时下载地址',
+    effect: 'read', localOnly: false, requiresSession: true, options: [fileIdOption],
+    resultSchema: { type: 'object', required: ['id', 'url'], properties: {
+      id: { type: 'string' }, url: { type: 'string' }, name: { type: 'string' }, size: { type: 'integer', minimum: 0 },
+    } },
+    transport: ['GET 文件详情及下载权限'],
+    limitations: ['返回的临时签名用于下载，请勿写入普通日志或提示词。'],
+    examples: ['rsq file download-url --file-id <文件ID>'], relatedCommands: ['task context read', 'file download'],
+  },
+  {
+    command: 'file download', description: '将有权限的原文件保存到指定路径',
+    effect: 'write', localOnly: false, requiresSession: true,
+    options: [
+      fileIdOption,
+      { flags: '--output <file>', description: '新的本地文件路径', parameter: 'output', schema: { type: 'string', minLength: 1, pattern: '\\S' }, required: true },
+    ],
+    resultSchema: { type: 'object', required: ['id', 'output'], properties: {
+      id: { type: 'string' }, name: { type: 'string' }, output: { type: 'string' },
+    } },
+    transport: ['GET 文件详情及下载权限', 'GET 日事清原文件'],
+    limitations: ['结果保留原文件字节。已有路径会返回 OUTPUT_EXISTS。'],
+    examples: ['rsq file download --file-id <文件ID> --output ./原视频.mp4'],
+    relatedCommands: ['task context read', 'file download-url'],
+  },
+  {
+    command: 'task mention watch', description: '实时接收评论中对当前账号的 @',
+    effect: 'read', localOnly: false, requiresSession: true, stream: 'ndjson', options: [],
+    resultSchema: { oneOf: [
+      { type: 'object', required: ['type', 'phase', 'profile', 'onlineOnly'], properties: {
+        type: { const: 'connection' }, phase: { enum: ['connecting', 'connected', 'reconnecting', 'authentication_required', 'error', 'protocol_error'] },
+        profile: { type: 'string' }, onlineOnly: { const: true }, identity: { type: 'object' },
+        reason: { type: 'string' }, errorCode: { type: 'string' },
+      } },
+      { type: 'object', required: ['type', 'teamId', 'taskId', 'commentId', 'senderId', 'senderName', 'mentionIds', 'text', 'createdAt'], properties: {
+        type: { const: 'task_comment_mention' }, teamId: { type: 'string' }, taskId: { type: 'string' },
+        commentId: { type: 'string' }, senderId: { type: 'string' }, senderName: { type: 'string' },
+        mentionIds: { type: 'array', items: { type: 'string' } }, text: { type: 'string' }, createdAt: { type: 'string' },
+      } },
+    ] },
+    transport: ['GET 当前登录账号的消息连接配置', 'Socket.IO HTTP 长轮询'],
+    limitations: ['connected 表示已开始监听在线新评论。断线自动重连，通知只在在线期间接收。按 Ctrl+C 停止。'],
+    examples: ['rsq --profile work --format ndjson task mention watch'], relatedCommands: ['task context read', 'auth status'],
+  },
   {
     command: 'export watch', description: '通过 HTTP 长轮询接收当前账号的导出原文件',
     effect: 'write', localOnly: false, requiresSession: true, stream: 'ndjson',

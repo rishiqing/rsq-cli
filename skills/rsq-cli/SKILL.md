@@ -18,6 +18,10 @@ description: 使用 rsq CLI 查询或修改日事清流程、绩效、OKR、行�
 
 日常待办先用 `todo context` 发现日期和筛选，再用 `todo list`。用返回的 `target` 打开选定待办。流程待办统一走 `todo workflow inspect`，从 `target` 传入 `processId` 和可选的 `stepId`。它会自动核对项目流程或独立流程的归属、权限和实际步骤，再给出后续命令。`todo pending list` 和 `cooperation workflow list` 也提供这个入口。分页使用 `nextCursor`，列表变化时从第一页重新发现。`todo calendar` 返回本人的日期标记。
 
+用 `task context read --task-id <ID>` 一次获取任务、字段、评论及其中的媒体。`--exclude-details` 省略任务正文及其媒体。需要本地原件时，用 `media[].fileId` 调用 `file download --file-id <ID> --output <新文件路径>`。临时下载链接通过 `file download-url` 获取，仅用于下载。
+
+需要接收任务评论 @ 时，用相应 profile 运行 `task mention watch`，等待 NDJSON 的 `connected` 状态。收到 `task_comment_mention` 后，可用 `taskId` 读取任务上下文。监听范围是在线送达的消息，按 Ctrl+C 停止。
+
 保存的项目业务视图使用 `project view list/inspect`，模板视图使用 `project template view` 前缀。普通项目传 `projectId`，模板传封面 `coverId`，都绑定真实任务 `moduleId`。从 inspect 的动态筛选和显示字段发现参数，再创建/编辑，使用 `view tasks list` 核对筛选后的实际任务；`fields set` 保留首列 `taskName`。`view select` 保存个人选择，有写副作用；`project view set` 则是已有项目显示模式，两者目标不同。
 
 只有流程名称时用 `workflow find --name <名称>`。已有应用或实例 ID 时用相应 ID 参数。查找覆盖当前账号可见的项目流程与独立流程。按结果中的 `target` 读取配置或实例，按具体步骤的可用动作办理。若有多个匹配，先用已有的项目、应用、实例或日期信息缩小范围，再让用户确认具体对象。

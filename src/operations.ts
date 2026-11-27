@@ -219,14 +219,18 @@ function wireValue(value: unknown, schema: Schema, root: Schema): unknown {
     wireValue(item, schema.properties?.[key] ?? (typeof schema.additionalProperties === 'object' ? schema.additionalProperties : {}), root)]))
   return value
 }
-export async function saveNewOutput(data: Readable | Uint8Array, out: string) {
+export async function saveNewOutput(data: Readable | Uint8Array, out: string, expectedBytes?: number) {
   const temp = out + '.' + randomUUID() + '.part'
   try {
     await pipeline(data instanceof Readable ? data : Readable.from([data]), createWriteStream(temp, { flags: 'wx', mode: 0o600 }))
+    if (expectedBytes !== undefined && (await stat(temp)).size !== expectedBytes) {
+      throw new RsqError('DOWNLOAD_FAILED', '原文件大小与服务端记录不一致。', 5)
+    }
     // An existing path (including a symlink) is never overwritten.
     await link(temp, out)
     return { output: out }
   } catch (error) {
+    if (error instanceof RsqError) throw error
     if ((error as NodeJS.ErrnoException).code === 'EEXIST') throw new RsqError('OUTPUT_EXISTS', '输出路径已存在。', 2)
     throw new RsqError('DOWNLOAD_FAILED', '未能保存下载文件。', 5)
   } finally { await rm(temp, { force: true }) }

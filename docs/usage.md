@@ -33,6 +33,20 @@ rsq task get --id '<任务ID>' --profile work
 
 业务编排命令成功时，stdout 的 JSON 顶层包含 `command`、`completedSteps`、`resources` 和 `result`。叶子 Schema 的 `resultSchema` 对应 `.result` 内的业务数据。直接接口命令按自己的响应 Schema 读取。脚本先检查 CLI 的退出码，失败时从 stderr 查看错误。`--dry-run` 的计划由顶层的 `dryRun: true` 标记。
 
+## 任务详情、附件和评论 @
+
+```sh
+rsq task context read --task-id '<任务ID>'
+rsq file download --file-id '<文件ID>' --output ./原视频.mp4
+rsq --profile work --format ndjson task mention watch
+```
+
+`task context read` 返回任务、字段、评论及 `media` 目录。`--project-id` 可指定项目入口。`--exclude-details` 省略任务正文及其中的媒体，字段和评论保持完整。
+
+从 `media` 取得 `fileId` 后，`file download` 按文件权限保存原件，使用新的输出路径。`file download-url` 返回有权限的临时下载地址，请避免把地址写入普通日志。
+
+`task mention watch` 以 `connected` 事件报告开始监听，用 NDJSON 输出在线送达的评论 @。按 Ctrl+C 停止。
+
 ## 原文件导出
 
 先启动 `rsq export watch --output ./exports`。看到 `listening` 后，用同一 profile 在另一终端发起业务导出。
